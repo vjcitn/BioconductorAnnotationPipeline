@@ -1,0 +1,11 @@
+Package: InparanoidBaseBuilder
+Type: Package
+Title: collection of functions needed to build the Inparanoid packages
+Version: 2.0.1
+Date: 2010-03-04
+Depends: RSQLite
+Author: Marc Carlson
+Maintainer: Marc Carlson <mcarlson@fhcrc.org>
+Description: A collection of functions for parsing and preparing the DBs and packages that eventually become the inparanoid packages.
+License: Artistic License 2.0
+LazyLoad: yes

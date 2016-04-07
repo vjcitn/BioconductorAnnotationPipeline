@@ -1,0 +1,106 @@
+> source("../map_counts/script/compareDates.R")
+Comparing data from Tue_Mar_22_02:14:11_2016 to data from Thu_Oct__1_23:13:33_2015.
+There were 50 or more warnings (use warnings() to see the first 50)
+> warnings()
+Warning messages:
+1: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.819959523028115 in ACCNUM on database: chipsrc_bovine
+2: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.892007627714028 in CHR on database: chipsrc_bovine
+3: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT on database: chipsrc_bovine
+4: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT2GENE on database: chipsrc_bovine
+5: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS on database: chipsrc_bovine
+6: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS2GENE on database: chipsrc_bovine
+7: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.894308672023472 in ENTREZID on database: chipsrc_bovine
+8: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.894308672023472 in GENENAME on database: chipsrc_bovine
+9: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.806835764809903 in REFSEQ on database: chipsrc_bovine
+10: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.894308672023472 in SYMBOL on database: chipsrc_bovine
+11: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.864497297297297 in SYNONYM2GENE on database: chipsrc_bovine
+12: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.894308672023472 in TOTAL on database: chipsrc_bovine
+13: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT on database: chipsrc_canine
+14: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT2GENE on database: chipsrc_canine
+15: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS on database: chipsrc_canine
+16: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS2GENE on database: chipsrc_canine
+17: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT on database: chipsrc_chicken
+18: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT2GENE on database: chipsrc_chicken
+19: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS on database: chipsrc_chicken
+20: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS2GENE on database: chipsrc_chicken
+21: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT on database: chipsrc_chimp
+22: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT2GENE on database: chipsrc_chimp
+23: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS on database: chipsrc_chimp
+24: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS2GENE on database: chipsrc_chimp
+25: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.897427743622359 in ENSEMBL on database: chipsrc_human
+26: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT on database: chipsrc_human
+27: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT2GENE on database: chipsrc_human
+28: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS on database: chipsrc_human
+29: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS2GENE on database: chipsrc_human
+30: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT on database: chipsrc_mouse
+31: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT2GENE on database: chipsrc_mouse
+32: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS on database: chipsrc_mouse
+33: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS2GENE on database: chipsrc_mouse
+34: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT on database: chipsrc_rat
+35: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT2GENE on database: chipsrc_rat
+36: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS on database: chipsrc_rat
+37: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS2GENE on database: chipsrc_rat
+38: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.805371656170946 in ENSEMBL on database: chipsrc_rhesus
+39: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.841362221966117 in ENSEMBL2GENE on database: chipsrc_rhesus
+40: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT on database: chipsrc_rhesus
+41: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT2GENE on database: chipsrc_rhesus
+42: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS on database: chipsrc_rhesus
+43: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS2GENE on database: chipsrc_rhesus
+44: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT on database: chipsrc_zebrafish
+45: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLPROT2GENE on database: chipsrc_zebrafish
+46: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS on database: chipsrc_zebrafish
+47: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in ENSEMBLTRANS2GENE on database: chipsrc_zebrafish
+48: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.895986015656385 in PDB2AC on database: PFAM
+49: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in URL on database: PFAM
+50: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in URL2AC on database: PFAM
+

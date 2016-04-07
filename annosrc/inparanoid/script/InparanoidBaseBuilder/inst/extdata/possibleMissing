@@ -1,0 +1,16 @@
+fives	GenusAndSpecies
+# ASPFU	Aspergillus fumigatus ##(switched to name of teleomorph - more specific)
+CAPSP	Capitella spI ##
+# COPCI	Coprinopsis cinereus (alt spelling on species name)
+# CULPI	Culex pipiens (just more specific)
+CYAME	Cyanidioschyzon merolae ##
+# DROPS	Drosophila pseudoobscura (more specific name)
+# ESCCO	Escherichia coliK12 (more specific)
+FUSGR	Fusarium graminearum ## looks like a different thing...
+#GIALA	Giardia lamblia  (synonym)
+HELRO	Helobdella robusta ## just gone?
+LOTGI	Lottia gigantea ## just gone?
+MAGGR	Magnaporthe grisea ## Magnaporthe oryzae is also the rice blast fungus.  But same kind???
+PONPY	Pongo pygmaeus (bornean orangutang - now it's sumatran orangutang)
+#RHIOR	Rhizopus oryzae (more specific)
+#STANO	Stagonospora nodorum

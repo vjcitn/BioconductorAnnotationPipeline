@@ -1,0 +1,29 @@
+nohup: ignoring input
+This will take a long while we download a LOT of GO anotations
+Loading required package: RCurl
+Loading required package: bitops
+table metadata filled
+[1] TRUE
+$Canis_familiaris
+NULL
+
+$Sus_Scrofa
+NULL
+
+$Anopheles_gambiae
+NULL
+
+$Xenopus_laevis
+NULL
+
+$Macaca_mulatta
+NULL
+
+$Pan_troglodytes
+NULL
+
+[1] TRUE
+[1] TRUE
+[1] TRUE
+[1] TRUE
+[1] TRUE

@@ -1,0 +1,100 @@
+ACYPI	acyrthosiphon pisum
+AEDAE	aedes_aegypti
+ANOGA	anopheles_gambiae
+APIME	apis_mellifera
+ARATH	arabidopsis_thaliana
+ASPFU	aspergillus fumigatus
+BATDE	batrachochytrium dendrobatidis
+BOMMO	bombyx mori
+BOSTA	bos_taurus
+BRAFL	branchiostoma floridae
+BRUMA	brugia malayi
+CAEBRE	caenorhabditis brenneri
+CAEBR	caenorhabditis_briggsae
+CAEEL	caenorhabditis_elegans
+CAEJA	caenorhabditis japonica
+CAERE	caenorhabditis_remanei
+CANAL	candida albicans
+CANGL	candida_glabrata
+CANFA	canis_familiaris
+CAPSP	capitella spI
+CAVPO	cavia porcellus
+CHLRE	chlamydomonas reinhardtii
+CIOIN	ciona_intestinalis
+CIOSA	ciona savignyi
+COCIM	coccidioides immitis
+COPCI	coprinopsis cinereus
+CRYNE	cryptococcus_neoformans
+CRYHO	cryptosporidium hominis
+CRYPA	cryptosporidium parvum
+CULPI	culex pipiens
+CYAME	cyanidioschyzon merolae
+DANRE	danio_rerio
+DAPPU	daphnia pulex
+DEBHA	debaryomyces_hanseneii
+DICDI	dictyostelium_discoideum
+DROAN	drosophila ananassae
+DROGR	drosophila grimshawi
+DROME	drosophila_melanogaster
+DROMO	drosophila mojavensis
+DROPS	drosophila_pseudoobscura
+DROVI	drosophila virilis
+DROWI	drosophila willistoni
+ENTHI	entamoeba_histolytica
+EQUCA	equus caballus
+ESCCO	escherichia_coliK12
+FUSGR	fusarium graminearum
+GALGA	gallus_gallus
+GASAC	gasterosteus_aculeatus
+GIALA	giardia lamblia
+HELRO	Helobdella robusta
+HOMSA	homo_sapiens
+IXOSC	ixodes scapularis
+KLULA	kluyveromyces_lactis
+LEIMA	leishmania major
+LOTGI	lottia gigantea
+MACMU	macaca_mulatta
+MAGGR	magnaporthe grisea
+MONDO	monodelphis_domestica
+MONBR	monosiga brevicollis
+MUSMU	mus_musculus
+NASVI	nasonia vitripennis
+NEMVE	nematostella vectensis
+NEUCR	neurospora crassa
+ORNAN	ornithorhynchus anatinus
+ORYSA	oryza_sativa
+ORYLA	oryzias latipes
+OSTTA	ostreococcus tauri
+PANTR	pan_troglodytes
+PEDPA	pediculus humanus
+PHYPA	physcomitrella patens
+PHYRA	phytophthora ramorum
+PHYSO	phytophthora sojae
+PLAFA	plasmodium falciparum
+PLAVI	plasmodium vivax
+PONPY	pongo pygmaeus
+POPTR	populus trichocarpa
+PRIPA	pristionchus pacificus
+PUCGR	puccinia graminis
+RATNO	rattus_norvegicus
+RHIOR	rhizopus oryzae
+SACCE	saccharomyces_cerevisiae
+SCHMA	schistosoma mansoni
+SCHPO	schizosaccharomyces_pombe
+SCLSC	sclerotinia sclerotiorum
+SORBI	sorghum bicolor
+STANO	stagonospora nodorum
+STRPU	strongylocentrotus purpuratus
+TAKRU	takifugu_rubripes
+TETTH	tetrahymena thermophila
+TETNI	tetraodon_nigroviridis
+THAPS	thalassiosira pseudonana
+THEAN	theileria annulata
+THEPA	theileria parva
+TRICA	tribolium castaneum
+TRIVA	trichomonas vaginalis
+TRIAD	trichoplax adhaerens
+TRYCR	trypanosoma cruzi
+USTMA	ustilago maydis
+XENTR	xenopus_tropicalis
+YARLI	yarrowia_lipolytica
