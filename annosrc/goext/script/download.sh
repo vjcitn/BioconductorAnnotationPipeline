@@ -18,7 +18,6 @@ if [ "$LATEST_DATE" != "$GOEXTSOURCEDATE" ]; then
 	cd ../$LATEST_DATE
 	curl -O $BASE_URL/ec2go
 	cd ../script
-	#sh getsrc.sh
 else
 	echo "the latest $GOEXTSOURCENAME is still $GOEXTSOURCEDATE"
 fi

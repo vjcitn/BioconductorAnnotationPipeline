@@ -6,6 +6,13 @@ fi
 
 cd ../$PLASMOSOURCEDATE/
 
+## Clean and parse
+rm -f ALIAStable.txt
+rm -f GOtable.txt
+rm -f SYMBOLtable.txt
+rm -f plasmoDBSrc.sqlite
+dos2unix ../script/extractPlasmoDBtables.R
+R --slave < ../script/extractPlasmoDBtables.R
  
 ## remove the older DB and make a new one
 echo "build the db ..."
@@ -28,6 +35,3 @@ echo "INSERT INTO metadata VALUES('PLASMOSOURCEURL', '$PLASMOSOURCEURL');" >> te
 sqlite3 -bail plasmoDBSrc.sqlite < temp_metadata.sql
 rm -f temp_metadata.sql
 echo "done!"
-
-## #Moved the following into getdb.sh
-## #cp plasmoDBSrc.sqlite ../../db/

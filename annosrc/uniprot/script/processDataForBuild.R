@@ -9,11 +9,10 @@
 
 library("RSQLite")
 library("UniProt.ws")
-##Connect to the DB
 drv <- dbDriver("SQLite")
 
 ## Path to all the Db's.
-dir <- file.path("/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/db")
+dir <- file.path("/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/db")
 
 ## For now just get data for the ones that we have traditionally supported
 ## I don't even know if the other species are available...
@@ -21,28 +20,16 @@ speciesList = c("chipsrc_human.sqlite",
   "chipsrc_rat.sqlite",
   "chipsrc_chicken.sqlite",
   "chipsrc_zebrafish.sqlite",
-  #  "chipsrc_worm.sqlite",
-  #  "chipsrc_fly.sqlite",
   "chipsrc_mouse.sqlite",
-  "chipsrc_bovine.sqlite"#,
-  #  "chipsrc_arabidopsis.sqlite"  ## this is available and could be "activated"
-  ## But to activate arabidopsis, remember you have to pre-add the tables...
-  #  "chipsrc_canine.sqlite",
-  #  "chipsrc_rhesus.sqlite",
-  #  "chipsrc_chimp.sqlite",
-  #  "chipsrc_anopheles.sqlite"
-  )
+  "chipsrc_bovine.sqlite")
 
 ## Modified to get uniprots where we may not have an IPI
 getuniProtAndIPIs <- function(genes, dbFile){
 
   ups <- UniProt.ws:::mapUniprot(from='P_ENTREZGENEID',to='ACC',query=genes)
-  ## get the IPI IDs
-  ##upKeys <- as.character(t(ups$ACC))
-
 
   ## NOW hack in the old IPI data
-  baseDir <- "/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/uniprot/TEMPOLDCHIPSRC"
+  baseDir <- "/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/uniprot/TEMPOLDCHIPSRC"
   con <- dbConnect(drv,dbname=file.path(baseDir, dbFile))
   pf_ipi <- dbGetQuery(con, 'select g.gene_id AS P_ENTREZGENEID, p.ipi_id AS P_IPI from pfam AS p, genes AS g WHERE p._id=g._id')
   ps_ipi <- dbGetQuery(con, 'select g.gene_id AS P_ENTREZGENEID, p.ipi_id AS P_IPI from prosite AS p, genes AS g WHERE p._id=g._id')

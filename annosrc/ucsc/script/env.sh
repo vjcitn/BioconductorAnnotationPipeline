@@ -1,20 +1,22 @@
 #!/bin/sh
 set -e
-export GPSOURCEDATE_human=2010-Mar22
-export GPSOURCEDATE_mouse=2012-Mar8
-export GPSOURCEDATE_rat=2014-Aug1
+
+export UCSCBASEURL="ftp://hgdownload.cse.ucsc.edu/goldenPath/"
+export UCSCREFLINKURL="http://hgdownload.cse.ucsc.edu/goldenPath/hgFixed/database/refLink.txt.gz"
+
+export GPSOURCEDATE_human=2016-Sep16
+export GPSOURCEDATE_mouse=2016-Sep16
+export GPSOURCEDATE_rat=2016-Aug31
 export GPSOURCEDATE_fly=2014-Dec12
-export GPSOURCEDATE_fish=2015-Apr1
-export GPSOURCEDATE_yeast=2011-Oct11
-export GPSOURCEDATE_canine=2012-Jun21
-export GPSOURCEDATE_bovine=2012-Jun11
-export GPSOURCEDATE_worm=2010-Mar23
-# export GPSOURCEDATE_pig=
-export GPSOURCEDATE_chicken=2012-Jun11
-# export GPSOURCEDATE_arabidopsis=
-export GPSOURCEDATE_rhesus=2012-Dec1
-export GPSOURCEDATE_anopheles=2009-Jul5
-export GPSOURCEDATE_chimp=2012-Nov21
+export GPSOURCEDATE_fish=2016-Aug31
+export GPSOURCEDATE_yeast=2012-Jan4
+export GPSOURCEDATE_canine=2015-Dec21
+export GPSOURCEDATE_bovine=2015-Feb17
+export GPSOURCEDATE_worm=2016-Mar23
+export GPSOURCEDATE_chicken=2016-Aug31
+export GPSOURCEDATE_rhesus=2016-Apr14
+export GPSOURCEDATE_anopheles=2014-Dec12
+export GPSOURCEDATE_chimp=2015-Oct26
 
 export GPSOURCENAME_human="UCSC Genome Bioinformatics (Homo sapiens)"
 export GPSOURCENAME_mouse="UCSC Genome Bioinformatics (Mus musculus)"
@@ -25,43 +27,23 @@ export GPSOURCENAME_yeast="UCSC Genome Bioinformatics (Saccaromyces cerevisiae)"
 export GPSOURCENAME_canine="UCSC Genome Bioinformatics (Canis familiaris)"
 export GPSOURCENAME_bovine="UCSC Genome Bioinformatics (Bos taurus)"
 export GPSOURCENAME_worm="UCSC Genome Bioinformatics (Caenorhabditis elegans)"
-# export GPSOURCENAME_pig="UCSC Genome Bioinformatics (Sus scrofa)"
 export GPSOURCENAME_chicken="UCSC Genome Bioinformatics (Gallus gallus)"
-# export GPSOURCENAME_arabidopsis="UCSC Genome Bioinformatics (Arabidopsis thaliana)"
 export GPSOURCENAME_rhesus="UCSC Genome Bioinformatics (Macaca mulatta)"
 export GPSOURCENAME_anopheles="UCSC Genome Bioinformatics (Anopheles gambiae)"
 export GPSOURCENAME_chimp="UCSC Genome Bioinformatics (Pan troglodytes)"
+# export GPSOURCENAME_pig="UCSC Genome Bioinformatics (Sus scrofa)"
+# export GPSOURCENAME_arabidopsis="UCSC Genome Bioinformatics (Arabidopsis thaliana)"
 
-export GPSOURCEURL_human="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Homo_sapiens"
-export GPSOURCEURL_mouse="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Mus_musculus"
-export GPSOURCEURL_rat="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Rattus_norvegicus"
-export GPSOURCEURL_fly="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Drosophila_melanogaster"
-export GPSOURCEURL_fish="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Danio_rerio"
-export GPSOURCEURL_yeast="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Saccharomyces_cerevisiae"
-export GPSOURCEURL_canine="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Canis_familiaris"
-export GPSOURCEURL_bovine="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Bos_taurus"
-export GPSOURCEURL_worm="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Caenorhabditis_elegans"
-# export GPSOURCEURL_pig="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Sus_scrofa"
-export GPSOURCEURL_chicken="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Gallus_gallus"
-# export GPSOURCEURL_arabidopsis="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Arabidposis_thaliana"
-export GPSOURCEURL_rhesus="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Rhesus_macaque"
-export GPSOURCEURL_anopheles="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Anopheles_gambiae"
-export GPSOURCEURL_chimp="ftp://hgdownload.cse.ucsc.edu/goldenPath/currentGenomes/Pan_troglodytes"
-
-## Hard coded links (so that we can specify the sources better)
-export HGPSOURCEURL_human="ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19"
-export HGPSOURCEURL_mouse="ftp://hgdownload.cse.ucsc.edu/goldenPath/mm10"
-export HGPSOURCEURL_rat="ftp://hgdownload.cse.ucsc.edu/goldenPath/rn6"
-export HGPSOURCEURL_fly="ftp://hgdownload.cse.ucsc.edu/goldenPath/dm6"
-export HGPSOURCEURL_fish="ftp://hgdownload.cse.ucsc.edu/goldenPath/danRer10" 
-export HGPSOURCEURL_yeast="ftp://hgdownload.cse.ucsc.edu/goldenPath/sacCer2"
-export HGPSOURCEURL_canine="ftp://hgdownload.cse.ucsc.edu/goldenPath/canFam3"
-export HGPSOURCEURL_bovine="ftp://hgdownload.cse.ucsc.edu/goldenPath/bosTau7"
-export HGPSOURCEURL_worm="ftp://hgdownload.cse.ucsc.edu/goldenPath/ce6"
-# export HGPSOURCEURL_pig="ftp://hgdownload.cse.ucsc.edu/goldenPath/???"
-export HGPSOURCEURL_chicken="ftp://hgdownload.cse.ucsc.edu/goldenPath/galGal4"
-# export HGPSOURCEURL_arabidopsis="ftp://hgdownload.cse.ucsc.edu/goldenPath/???"
-export HGPSOURCEURL_rhesus="ftp://hgdownload.cse.ucsc.edu/goldenPath/rheMac3"
-export HGPSOURCEURL_anopheles="ftp://hgdownload.cse.ucsc.edu/goldenPath/anoGam1"
-export HGPSOURCEURL_chimp="ftp://hgdownload.cse.ucsc.edu/goldenPath/panTro4"
-
+export BUILD_human="hg38"
+export BUILD_mouse="mm10"
+export BUILD_rat="rn6"
+export BUILD_fly="dm6"
+export BUILD_fish="danRer10" 
+export BUILD_yeast="sacCer3"
+export BUILD_canine="canFam3"
+export BUILD_bovine="bosTau8"
+export BUILD_worm="ce11"
+export BUILD_chicken="galGal5"
+export BUILD_rhesus="rheMac8"
+export BUILD_anopheles="anoGam1"
+export BUILD_chimp="panTro4"

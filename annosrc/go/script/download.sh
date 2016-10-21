@@ -1,9 +1,10 @@
 #!/bin/sh
 set -e
 . ./env.sh
+
 BASE_URL=$GOSOURCEURL
-LATEST_TAR=`curl -s -L --disable-epsv $BASE_URL/|grep -o -e "go\_[0-9]*-termdb-tables.tar.gz"|grep -m 1 -e "."`
-LATEST_DATE=`echo $LATEST_TAR|sed -e "s/go\_//g" -e "s/-termdb-tables.tar.gz//g"`
+THIS_YEAR=`date|awk '{print $6}'`
+LATEST_DATE=`curl -s -L $BASE_URL|grep -F $FILE|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 
 if [ -z "$LATEST_DATE" ]; then
        echo "download.sh: latest date from $GOSOURCEURL not found"
@@ -15,9 +16,8 @@ if [ "$LATEST_DATE" != "$GOSOURCEDATE" ]; then
         sed -i -e "s/ GOSOURCEDATE=.*$/ GOSOURCEDATE=$LATEST_DATE/g" env.sh    
         mkdir ../$LATEST_DATE
         cd ../$LATEST_DATE
-        curl -O $BASE_URL/$LATEST_TAR
+        curl -O $BASE_URL/$FILE
         cd ../script  
-        #sh getsrc.sh
 else
         echo "the latest $GOSOURCENAME is still $LATEST_DATE"
 fi

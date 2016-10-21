@@ -4,17 +4,15 @@ if [ "$TAIRSOURCEDATE" = "" ]; then
   . ./env.sh
 fi
 
-# In the following files, first line is column name
 cd ../$TAIRSOURCEDATE
 
-# split locus column by ;
-R --slave < ../script/parseLocus.R
+## Skip these steps - data are already parsed.
+## split locus column by ;
+#R --slave < ../script/parseLocus.R
+#echo "cleaning up the PMID sources"
+#R --slave < ../script/cleanOutWhitespaceButNotTabs.R
 
-
-echo "cleaning up the PMID sources"
-R --slave < ../script/cleanOutWhitespaceButNotTabs.R
-
-## create source sqlite db
+## Rebuild db to incorporate new GO
 rm -f tairsrc.sqlite
 
 echo "Creating low-level tables"
@@ -31,7 +29,6 @@ sqlite3 -bail tairsrc.sqlite < ../script/srcdb2.sql
 ## table
 R --slave < ../script/processGFFData.R
 
-
 ## record data download date
 echo "INSERT INTO metadata VALUES('TAIRSOURCENAME', '$TAIRSOURCENAME');" > temp_metadata.sql
 echo "INSERT INTO metadata VALUES('TAIRSOURCEDATE', '$TAIRSOURCEDATE');" >> temp_metadata.sql
@@ -46,5 +43,3 @@ echo "INSERT INTO metadata VALUES('TAIRATHURL', '$TAIRATHURL');" >> temp_metadat
 echo "INSERT INTO metadata VALUES('TAIRAGURL', '$TAIRAGURL');" >> temp_metadata.sql
 sqlite3 -bail tairsrc.sqlite < temp_metadata.sql
 rm -f temp_metadata.sql
-
-

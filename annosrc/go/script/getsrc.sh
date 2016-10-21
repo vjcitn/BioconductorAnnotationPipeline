@@ -4,9 +4,8 @@ if [ "$GOSOURCEDATE" = "" ]; then
   . ./env.sh
 fi
 
-## unpack source data
-GOTERM_DIR=go_$GOSOURCEDATE-termdb-tables
-GOTERM_TAR=$GOTERM_DIR.tar.gz
+GOTERM_DIR=go_weekly-termdb-tables
+GOTERM_TAR=$FILE
 cd ../$GOSOURCEDATE
 rm -rf $GOTERM_DIR
 tar xvfz $GOTERM_TAR

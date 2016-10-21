@@ -1,4 +1,4 @@
-## This script is expecting 'outdir' and 'dbBaseDir' to be set; usually called from
+## This script is expecting 'outdir', 'dbBaseDir' and 'metaDataSrc' to be set; usually called from
 ## makeTerminalDBPkgs.R.
 
 ## occasionally: I get one bad gene record (null gene name in gene_info) here

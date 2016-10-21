@@ -20,7 +20,7 @@
 library("DBI")
 library("RSQLite")
 
-scriptDir = "/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/blast2go/script"
+scriptDir = "/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/blast2go/script"
 setwd(scriptDir)
 
 ## get the raw data from uniprot it and populate it into the DB.

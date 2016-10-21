@@ -130,6 +130,7 @@ speciesFrame <- data.frame(dataset=dataset, host=host, mart=mart,
 ## Download from biomart and create *EnsEG.tab files:
 ## NOTE: This function previously (years ago?) created transdata 
 ##       (transcript IDs) and protdata (protein IDs) tables
+message("creating EnsEG.tab files ...")
 apply(speciesFrame, 1, 
     function(x) {
         egdata <- getBM(attributes=c("ensembl_gene_id", "entrezgene"), 

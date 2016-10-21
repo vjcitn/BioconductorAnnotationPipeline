@@ -8,27 +8,32 @@ SRC_BASE=`pwd`
 # chipsrc_<organism>.sqlite
 # genesrc.sqlite
 # GO.sqlite  gosrc.sqlite
-# KEGG.sqlite keggsrc.sqlite
 # gpsrc.sqlite
 # ipisrc.sqlite
 # chrlength.sqlite
-# These sqlite dbs are mainly used to generate annotation packages
-# like hgu95av2
-# kegg depends on geneext, go/script/getdb2.sh depends on gene
 
-## 
-##Purge DBs is not comprehensive so don't count on it to remove EVERYTHING from db...  
-##In general, (for a CLEAN new build) you should just purge ALL except for the metadatasrc.sqlite file from ./db and then just start with "parse"
-### ###sh purge_DBs.sh
+## Propagate:
+# KEGG.sqlite keggsrc.sqlite
 
+## -----------------------------------------------------------------------
+## Create chipmapsrc_* dbs: order matters
+## -----------------------------------------------------------------------
+
+## Copies chrlength.sqlite to db/
+#echo "copy chrlength.sqlite to db/"
+#cd $SRC_BASE/chrlength; sh getdb.sh
+
+#echo "building unigene"
 #cd $SRC_BASE/unigene/script; sh getdb.sh 
-#echo "Finished unigene"
+#echo "finished unigene"
 
+## Creates genesrc.sqlite
+#echo "building gene"
 #cd $SRC_BASE/gene/script; sh getdb.sh  
-#echo "Finished gene"
-## Marc's notes that 
-## "...for some reason, genesrc.sqlite will get duplicate inserts after
-## precisely THIS point...
+#echo "finished gene"
+
+## Marc notes that genesrc.sqlite get duplicate inserts after
+## building 'gene'.
 ##echo "DELETE FROM metadata WHERE rowid > 3;" > temp.sql
 ##sqlite3 -bail db/genesrc.sqlite < temp.sql
 ##rm temp.sql
@@ -39,49 +44,61 @@ SRC_BASE=`pwd`
 #1 EGSOURCEDATE                           2016-Mar14
 #3  EGSOURCEURL ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
 
-#cd $SRC_BASE/blast2go/script; sh getdb.sh
-#echo "Finished blast2go"
-#cd $SRC_BASE/go/script; sh getdb1.sh
-#echo "Finished GO db1"
-#cd $SRC_BASE/go/script; sh getdb2.sh
-#echo "Finished GO db2"
-#cd $SRC_BASE/kegg/script; sh getdb.sh
-#echo "Finished kegg"
-#cd $SRC_BASE/ucsc/script; sh getdb.sh
-#echo "Finished ucsc"
-
-## DEAD:
-#cd $SRC_BASE/ipi/script; sh getdb.sh ## this is now dead
-##cd $SRC_BASE/chrlength; sh getdb.sh
+echo "building blast2go"
+cd $SRC_BASE/blast2go/script; sh getdb.sh
+echo "finished blast2go"
 
 ## -----------------------------------------------------------------------
-## Alls scripts below create and modify the chipsrc_* dbs: order matters
+## Create chipsrc_* dbs: order matters
 ## -----------------------------------------------------------------------
 
-## Skeleton chipsrc_* packages using genesrc.sqlite:
-#cd $SRC_BASE/organism_annotation/script; sh getdb.sh
-#echo "Finished organism_annotation"
+echo "building GO db1"
+cd $SRC_BASE/go/script; sh getdb1.sh
+echo "finished GO db1"
 
-#cd $SRC_BASE/yeast/script; sh getdb.sh 
-#echo "Finished yeast"
+echo "building GO db2"
+cd $SRC_BASE/go/script; sh getdb2.sh
+echo "finished GO db2"
 
-#cd $SRC_BASE/plasmoDB/script; sh getdb.sh  
-#echo "Finished plasmoDB"
+# Rebuilds KEGG.sqlite and keggsrc.sqlite with current GO
+echo "building kegg"
+cd $SRC_BASE/kegg/script; sh getdb.sh
+echo "finished kegg"
 
-## Modified to build only flybase:
-#cd $SRC_BASE/inparanoid/script; sh getdb.sh  
-#echo "Finished inparanoid"
+# builds gpsrc.sqlite from all organisms
+echo "building ucsc"
+cd $SRC_BASE/ucsc/script; sh getdb.sh
+echo "finished ucsc"
 
-#cd $SRC_BASE/ensembl/script; sh getdb.sh  
-#echo "Finished ensembl"
+# Skeleton chipsrc_* packages using genesrc.sqlite:
+echo "building organism_annotation"
+cd $SRC_BASE/organism_annotation/script; sh getdb.sh
+echo "finished organism_annotation"
+
+echo "building yeast"
+cd $SRC_BASE/yeast/script; sh getdb.sh 
+echo "finished yeast"
+
+echo "building plasmoDB"
+cd $SRC_BASE/plasmoDB/script; sh getdb.sh  
+echo "finished plasmoDB"
+
+## Modified to build only flybase
+echo "building inparanoid"
+cd $SRC_BASE/inparanoid/script; sh getdb.sh  
+echo "finished inparanoid"
+
+echo "building ensembl"
+cd $SRC_BASE/ensembl/script; sh getdb.sh  
+echo "finished ensembl"
 
 ## Inserts ipi identifiers in pfam and prosite tables of chipsrc_* sqlite dbs
-#cd $SRC_BASE/uniprot/script; sh getdb.sh
-#echo "Finished uniprot"
+echo "building uniprot"
+cd $SRC_BASE/uniprot/script; sh getdb.sh
+echo "finished uniprot"
 
-## -----------------------------------------------------------------------
-## Propagate but don't build as of Bioconductor 3.5 (April 2016)
-## Creates tairsrc.sqlite and writes to 
-## chipsrc_arabidopsis, chipmapsrc_arabidopsis dbs
+## Creates tairsrc.sqlite and writes to chipsrc_arabidopsis, 
+## chipmapsrc_arabidopsis 
+echo "building tair"
 cd $SRC_BASE/tair/script; sh getdb.sh  
-echo "Finished tair"
+echo "finished tair"

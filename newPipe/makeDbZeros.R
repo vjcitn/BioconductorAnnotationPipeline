@@ -1,12 +1,11 @@
 ## db0 pacakges must be generated and installed before creating OrgDb, ChipDb, etc.
 
 library(AnnotationForge)
-outDir = "./2016.03.23_DB0s"
+outDir = "./20161013_DB0s"
 if (!file.exists(outDir)) 
     dir.create(outDir)
-metaDataSrc = "/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/db/metadatasrc.sqlite"
 
-## Calls 
-wrapBaseDBPackages(dbPath = sub("metadatasrc.sqlite", "", metaDataSrc),
-                   destDir = outDir,
-                   version = "3.3.0")
+## Create db0s:
+version <- "3.4.1" 
+dbPath = "/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/db/"
+wrapBaseDBPackages(dbPath=dbPath, destDir=outDir, version=version)

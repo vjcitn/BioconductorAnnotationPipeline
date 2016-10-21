@@ -11,6 +11,9 @@ export IPSOURCEURL="http://inparanoid.sbc.su.se/download/current/sqltables/"
 # export ENSOURCENAME="Ensembl"
 # export ENSOURCEURL="ftp://ftp.ensembl.org/pub/current_fasta"
 
-export FBSOURCEDATE=2016-Dec21
+export FBSOURCEDATE=2016-Jul18
 export FBSOURCENAME="Flybase"
 export FBSOURCEURL="ftp://ftp.flybase.net/releases/current/precomputed_files/genes/"
+## Check and rename each time 
+FILE="fbgn_fbtr_fbpp_fb_2016_04.tsv.gz"
+UZFILE="fbgn_fbtr_fbpp_fb_2016_04.tsv"

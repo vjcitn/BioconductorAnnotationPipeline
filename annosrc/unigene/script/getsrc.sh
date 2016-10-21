@@ -5,7 +5,7 @@ if [ "$ORGANISM" = "" ]; then
     echo "Please give organism name (human, mouse or rat) as argument. For example, sh getsrc.sh human"
 else
     case $ORGANISM in
-        Human)
+        human)
                 DATANAME=Hs
                 ;;
         mouse)

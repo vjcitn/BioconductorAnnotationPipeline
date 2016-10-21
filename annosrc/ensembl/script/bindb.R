@@ -4,7 +4,7 @@
 library("RSQLite")
 drv <- dbDriver("SQLite")
 ## absolute path to ensembl.sqlite
-dir <- file.path("/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/db")
+dir <- file.path("/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/db")
 dbe <- file.path(dir,"ensembl.sqlite")
 
 ## list of supported species... (Keeping same list as before, but names this
@@ -62,9 +62,11 @@ popEnsembl2EGTable = function(table){
   dbGetQuery(db, sql)
 
   ## Attach the dbe (ensembl database)
+  message("attach ensembl database")
   dbGetQuery(db, paste("ATTACH DATABASE '",dbe,"' AS ens;",sep=""))
 
   ## Update metadata
+  message("update metadata")
   dbGetQuery(db, paste("DELETE FROM metadata WHERE name LIKE 'ENS%';"
                            ,sep=""))  
   dbGetQuery(db, paste("INSERT INTO metadata
@@ -258,7 +260,7 @@ wormBase <- getBM(attributes=c("ensembl_gene_id", "entrezgene", "wormbase_gene")
 ## Shortest path is to extract the _ids matched to entrez gene IDs 
 ## then insert only what we need.
 wcon <- dbConnect(dbDriver("SQLite"),
-                  dbname="/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/db/chipsrc_worm.sqlite")
+                  dbname="/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/db/chipsrc_worm.sqlite")
 
 ## get the _ids values.
 dbIds <- dbGetQuery(wcon, 'select * from genes')

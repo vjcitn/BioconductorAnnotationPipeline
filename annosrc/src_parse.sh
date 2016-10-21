@@ -4,15 +4,17 @@ set -e
 
 SRC_BASE=`pwd`
 
-
 ## Order doesn't matter; no dependencies
-## Remove all dbs in the db/ directory except metadata.sqlite
+## Remove all dbs in the db/ directory except metadata.sqlite,
+## KEGG.sqlite, kegg.sqlite
 
 ## go
+#echo "parsing go"
 #cd $SRC_BASE/go/script; sh getsrc.sh  
 #echo "finished parsing go"
 
 ## unigene
+#echo "parsing unigene"
 #cd $SRC_BASE/unigene/script; sh getsrc.sh human 
 #cd $SRC_BASE/unigene/script; sh getsrc.sh mouse
 #cd $SRC_BASE/unigene/script; sh getsrc.sh rat
@@ -30,14 +32,17 @@ SRC_BASE=`pwd`
 #echo "finished parsing unigene"
 
 ## gene 
+#echo "parsing gene"
 #cd $SRC_BASE/gene/script; sh getsrc.sh
 #echo "finished parsing gene"
 
 ## goext 
+#echo "parsing goext"
 #cd $SRC_BASE/goext/script; sh getsrc.sh
 #echo "finished parsing goext"
 
 ## ucsc
+#echo "parsing ucsc"
 #cd $SRC_BASE/ucsc/script; sh getsrc.sh human
 #cd $SRC_BASE/ucsc/script; sh getsrc.sh mouse
 #cd $SRC_BASE/ucsc/script; sh getsrc.sh rat
@@ -54,31 +59,36 @@ SRC_BASE=`pwd`
 #echo "finished parsing ucsc"
 
 ## yeast 
+#echo "parsing yeast"
 #cd $SRC_BASE/yeast/script; sh getsrc.sh
 #echo "finished parsing yeast"
 
 ## ensembl
 ## Builds ensembl.sqlite needed (by others) in build step 
+#echo "parsing ensembl"
 #cd $SRC_BASE/ensembl/script; sh getsrc.sh 
 #echo "finished parsing ensembl"
 
 ## plasmoDB 
+#echo "parsing plasmoDB"
 #cd $SRC_BASE/plasmoDB/script; sh getsrc.sh
 #echo "finished parsing plasmoDB"
 
 ## pfam 
-#cd $SRC_BASE/pfam/script; sh getsrc.sh
-#echo "finished parsing pfam"
+echo "parsing pfam"
+cd $SRC_BASE/pfam/script; sh getsrc.sh
+echo "finished parsing pfam"
 
 ## inparanoid:
 ## The inparanoid data are old but flybase and GO are current.
 ## The parse/build scripts update flybase and GO mappings in 
 ## inparanoid.sqlite.
+#echo "parsing inparanoid"
 #cd $SRC_BASE/inparanoid/script; sh getsrc.sh  
 #echo "finished parsing inparanoid"
 
-## NOTE: broken; downloads are TAIR10 (March 2015) so just
-##        parse and build to incorporate current GO.
 ## tair 
-#cd $SRC_BASE/tair/script; sh getsrc.sh ## this IS BUSTED till we fix data and reset.
+## NOTE: parse and build to incorporate current GO.
+#echo "parsing tair"
+#cd $SRC_BASE/tair/script; sh getsrc.sh 
 #echo "finished parsing tair"
