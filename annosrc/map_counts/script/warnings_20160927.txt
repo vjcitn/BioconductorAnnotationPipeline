@@ -1,0 +1,22 @@
+source("compareDates.R")
+Comparing data from Tue_Sep_27_22:56:16_2016 to data from Wed_Mar_23_13:34:00_2016Wed_Mar_23_16:12:02_2016.
+Warning messages:
+1: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.271895313034554 in CHRLENGTHS on database: chipsrc_bovine
+2: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.869313788118213 in ACCNUM on database: chipsrc_chicken
+3: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.865220028303794 in REFSEQ on database: chipsrc_chicken
+4: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.772871717678542 in GO on database: chipsrc_chimp
+5: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.765877771120431 in UNIPROT on database: chipsrc_chimp
+6: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0.874819832804843 in REFSEQ on database: chipsrc_mouse
+7: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in REJECTORF on database: chipsrc_yeast
+8: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in LOAD on database: PFAM
+9: In eval(expr, envir, enclos) :
+  Ratio of new to old mappings is only: 0 in LOAD2AC on database: PFAM
+
