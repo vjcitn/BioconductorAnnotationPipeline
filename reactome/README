@@ -1,0 +1,115 @@
+1) Have Willem Lightenberg create his reactome.sqlite database.
+
+2) Build reactome.sqlite using Marc's scripts
+
+NOTE: This requires mysql. To reset a password for root follow instructions at
+https://help.ubuntu.com/community/MysqlPasswordReset
+
+## download 2 dbs
+wget http://www.reactome.org/download/current/databases/gk_current.sql.gz
+wget http://www.reactome.org/download/current/databases/gk_current_dn.sql.gz
+
+gunzip gk_current_dn.sql.gz
+gunzip gk_current.sql.gz 
+
+mv gk_current_dn.sql sql_dn
+mv gk_current.sql sql
+
+## import mySQL dumps into sqlite 
+mysql -u root -p reactome < sql -p
+mysql -u root -p reactome_dn < sql_dn -p
+
+## export (re-dump) as ANSI
+mysqldump -u root -p --compatible=ansi reactome > ansi_dump.sql -p
+mysqldump -u root -p --compatible=ansi reactome_dn > ansi_dump_dn.sql -p
+
+## parse to extract the inserts
+sh mysql2sqlitePerlScript.sh ansi_dump_dn.sql
+mv InsertStmnts.sql InsertStmnts_dn.sql
+## then run one more time to get the regular InsertStmnts.sql
+sh mysql2sqlitePerlScript.sh ansi_dump.sql
+
+## re-dump again (this time only dump the table structure)
+mysqldump -u root -p --no-data --compatible=ansi reactome > ansi_CREATE_dump.sql -p 
+mysqldump -u root -p --no-data --compatible=ansi reactome_dn > ansi_CREATE_dump_dn.sql -p
+
+## Try just using the re-formatter (seems to work quite well on ANSI SQL)
+cat ansi_CREATE_dump.sql | ./mysql2sqlite_forDumps.sh > CreateStmnts.sql
+cat ansi_CREATE_dump_dn.sql | ./mysql2sqlite_forDumps.sh > CreateStmnts_dn.sql
+
+## import the table structure (fairly lightweight)
+sqlite3 -bail reactome.sqlite < CreateStmnts.sql
+sqlite3 -bail reactome_dn.sqlite < CreateStmnts_dn.sql
+
+## import the data (heavyweight)
+sqlite3 -bail reactome.sqlite < InsertStmnts.sql
+
+3) Load Marc's reactome.sqlite in sqlite and add all 6 of Willem's tables.
+This is assuming Marc's db does not have any of these tables defined ...
+this was the case when I last ran the script (Oct 2016).
+
+Willem's db has these tables (uses reactome_id instead of DB_ID):
+> dbListTables(con)
+[1] "map_counts"   "map_metadata" "metadata"     "pathway2gene" "pathway2name"
+[6] "reactome2go" 
+
+sqlite3 reactome.sqlite
+
+CREATE TABLE pathway2gene (
+  DB_ID VARCHAR(10) NOT NULL,                  -- Reactome DB_ID
+  gene_id VARCHAR(10) NOT NULL                  -- Entrez Gene
+);
+
+CREATE TABLE pathway2name (
+  DB_ID VARCHAR(10) NOT NULL,              -- Reactome DB_ID
+  path_name VARCHAR(150) NOT NULL         -- Reactome pathway name
+);
+
+CREATE TABLE reactome2go(
+  DB_ID VARCHAR(10) NOT NULL,
+  go_id VARCHAR(10)
+);
+
+CREATE TABLE metadata (
+  name VARCHAR(80) PRIMARY KEY,
+  value VARCHAR(255)
+);
+
+CREATE TABLE map_counts (
+  map_name VARCHAR(80) PRIMARY KEY,
+  count INTEGER NOT NULL
+);
+
+CREATE TABLE map_metadata (
+  map_name VARCHAR(80) NOT NULL,
+  source_name VARCHAR(80) NOT NULL,
+  source_url VARCHAR(255) NOT NULL,
+  source_date VARCHAR(20) NOT NULL
+);
+
+ATTACH 'reactome.db/inst/extdata/reactome.sqlite' as 'willem';
+
+INSERT INTO pathway2gene(DB_ID, gene_id) SELECT reactome_id, gene_id FROM willem.pathway2gene;
+INSERT INTO pathway2name(DB_ID, path_name) SELECT reactome_id, path_name FROM willem.pathway2name;
+INSERT INTO reactome2go(DB_ID, go_id) SELECT reactome_id, go_id FROM willem.reactome2go;
+INSERT INTO metadata(name, value) SELECT name, value FROM willem.metadata;
+INSERT INTO map_metadata SELECT map_name, source_name, source_url, source_date FROM willem.map_metadata;
+INSERT INTO map_counts SELECT map_name, count FROM willem.map_counts;
+
+4) Insert two extra lines in the metadata table
+
+INSERT INTO metadata VALUES('Supporting package', 'AnnotationDbi'), ('Db type', 'ReactomeDb');
+
+DBSCHEMA|REACTOME_DB
+DBSCHEMAVERSION|54
+SOURCENAME|Reactome
+SOURCEURL|http://www.reactome.org/pages/download-data/
+SOURCEDATE|2015-10-08
+Supporting package|AnnotationDbi
+Db type|ReactomeDb
+
+The last two lines are critical to loading the package correctly. 
+
+5) wget the reactome.db package from last release, unpack it and move the new 
+reactome.sqlite db into inst/extdata. Change the DESCRIPTION file and run
+R CMD build.

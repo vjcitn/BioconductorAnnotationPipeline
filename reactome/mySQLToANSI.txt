@@ -1,0 +1,92 @@
+## OK So the shortest path to victory seems to be to create a reactome
+   database inside of mysql, and then to the following
+## There are TWO DBs: 
+## wget http://www.reactome.org/download/current/sql_dn.gz
+## wget http://www.reactome.org/download/current/sql.gz
+## wget http://www.reactome.org:8000/download/current/sql.gz
+## wget http://www.reactome.org:8000/download/current/sql_dn.gz
+
+wget http://www.reactome.org/download/current/databases/gk_current.sql.gz
+wget http://www.reactome.org/download/current/databases/gk_current_dn.sql.gz
+
+gunzip gk_current_dn.sql.gz
+gunzip gk_current.sql.gz 
+
+mv gk_current_dn.sql sql_dn
+mv gk_current.sql sql
+
+
+
+
+## import the other DUMP (sql is the mySQL DUMP file)
+mysql -u mcarlson reactome < sql -p
+mysql -u mcarlson -p reactome_dn < sql_dn -p
+
+## export (re-dump) the SQL as ANSI
+mysqldump -u mcarlson --compatible=ansi reactome > ansi_dump.sql -p
+mysqldump -u mcarlson --compatible=ansi reactome_dn > ansi_dump_dn.sql -p
+
+## parse the re-dump to extract the inserts (do this on gladstone)
+sh mysql2sqlitePerlScript.sh ansi_dump_dn.sql
+mv InsertStmnts.sql InsertStmnts_dn.sql
+## then run one more time to get the regular InsertStmnts.sql
+sh mysql2sqlitePerlScript.sh ansi_dump.sql
+
+## re-dump again (this time only dump the table structure)
+mysqldump -u mcarlson --no-data --compatible=ansi reactome > ansi_CREATE_dump.sql -p 
+mysqldump -u mcarlson --no-data --compatible=ansi reactome_dn > ansi_CREATE_dump_dn.sql -p
+
+
+## Try just using the re-formatter (seems to work quite well on ANSI SQL)
+cat ansi_CREATE_dump.sql | ./mysql2sqlite_forDumps.sh > CreateStmnts.sql
+cat ansi_CREATE_dump_dn.sql | ./mysql2sqlite_forDumps.sh > CreateStmnts_dn.sql
+
+
+## then import the table structure (fairly lightweight)
+sqlite3 -bail reactome.sqlite < CreateStmnts.sql
+sqlite3 -bail reactome_dn.sqlite < CreateStmnts_dn.sql
+
+
+## this far (so far)             
+
+## and then import the data (will be very slow on /mnt/cpb_anno)
+sqlite3 -bail reactome.sqlite < InsertStmnts.sql
+sqlite3 -bail reactome_dn.sqlite < InsertStmnts_dn.sql
+
+
+
+
+## Some stuff I learned while troubleshooting a bad InsertStmnts_dn.sql file
+
+## a command to split all this into pieces of 1 million lines each...
+## split -l 1000000 InsertStmnts_dn.sql IS
+## Then make each file have the proper begin; and commit; lines
+## cat ISaa tail > foo
+## cat head ISab tail > foo2 ## etc.
+
+## sqlite3 -bail reactome_dn.sqlite < foo
+
+## so just trim 1st and last files, then loop over all files:
+
+## #!/bin/sh
+## #set -e
+## files=`ls IS*`
+
+## for file in $files
+##     do
+##         echo ${file}
+##         cat head ${file} tail > foo
+##         sqlite3 -bail reactome_dn.sqlite < foo
+##     done
+
+
+## Experiment by cutting in half: (may just work, or may just indicate the problem half...)
+## lets also try just cutting in half...
+## split -l 15000000 InsertStmnts_dn.sql HALF
+## cat HALFaa tail > bar
+## cat head HALFab  > bar2
+## this 1st half went OK.
+## sqlite3 -bail reactome_dn_HALF.sqlite < bar
+## will the 2nd half also be OK?
+## sqlite3 -bail reactome_dn_HALF.sqlite < bar2
+## 

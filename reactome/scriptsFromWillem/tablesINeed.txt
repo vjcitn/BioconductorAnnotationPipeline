@@ -1,0 +1,84 @@
+## I only want lines that start with the following:
+
+## INSERT INTO "Pathway_2_hasEveryComponent
+## INSERT INTO "Event_2_indirectIdentifier
+## INSERT INTO "DatabaseObject ## Not really needed!
+## INSERT INTO "Event_2_species ## Not really needed!
+
+
+grep "INSERT INTO \"Pathway_2_hasEveryComponent" InsertStmnts_dn.sql > simplePath_dn.sql
+
+
+grep "INSERT INTO \"Event_2_indirectIdentifier" InsertStmnts_dn.sql > simpleEvent_dn.sql
+
+
+## this one is huge so lets trim it down to just the lines that are like '%Entrez%' or like '%go%'
+
+grep "Entrez" simpleEvent_dn.sql > simpleEventENTREZ_dn.sql
+
+
+grep "GO:" simpleEvent_dn.sql > simpleEventGO_dn.sql
+
+
+
+
+
+## the next two aren't needed.
+## grep "INSERT INTO \"DatabaseObject" InsertStmnts_dn.sql > simpleData_dn.sql
+## grep "INSERT INTO \"Event_2_species" InsertStmnts_dn.sql > simpleSpecies_dn.sql
+
+
+
+
+
+
+## Then create partial DB like this:
+sqlite3 -bail reactome_dn.sqlite < CreateStmnts_dn.sql
+## sqlite3 -bail reactome_dn.sqlite < simplePath_dn.sql
+## sqlite3 -bail reactome_dn.sqlite < simpleEventENTREZ_dn.sql
+## sqlite3 -bail reactome_dn.sqlite < simpleEventGO_dn.sql ## too slow
+
+
+
+## THIS last insert STILL takes WAY too long...
+
+## so lets do some cleanup on the simpleEventGO_dn.sql (since this is
+## the overly big one that takes too long.)
+
+## play safe
+cp simpleEventGO_dn.sql GOBase.txt
+## sed out the SQL stuff
+sed -i -e "s/INSERT INTO \"Event_2_indirectIdentifier\" VALUES (//g" GOBase.txt
+sed -i -e "s/');//g" GOBase.txt
+sed -i -e "s/'//g" GOBase.txt
+sed -i -e "s/,/\t/g" GOBase.txt
+
+
+## Then combine the this with the next thing:
+## 1st Do the same thing for the Entrez gene rows
+cp simpleEventENTREZ_dn.sql EGBase.txt
+sed -i -e "s/INSERT INTO \"Event_2_indirectIdentifier\" VALUES (//g" EGBase.txt
+sed -i -e "s/');//g" EGBase.txt
+sed -i -e "s/'//g" EGBase.txt
+sed -i -e "s/,/\t/g" EGBase.txt
+
+
+## Then combine:
+cat GOBase.txt EGBase.txt > E2I.txt
+
+
+
+## And also clean up simplePath_dn.sql
+cp simplePath_dn.sql PATH.txt
+sed -i -e "s/INSERT INTO \"Pathway_2_hasEveryComponent\" VALUES (//g" PATH.txt
+sed -i -e "s/');//g" PATH.txt
+sed -i -e "s/'//g" PATH.txt
+sed -i -e "s/,/\t/g" PATH.txt
+
+
+
+
+## then import this from within sqlite directly: 
+.separator "\t"
+.import E2I.txt Event_2_indirectIdentifier
+.import PATH.txt Pathway_2_hasEveryComponent
