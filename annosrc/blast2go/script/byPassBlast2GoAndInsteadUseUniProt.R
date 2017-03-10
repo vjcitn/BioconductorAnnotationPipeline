@@ -105,7 +105,7 @@ makeGOTable <- function(taxId, name, db){
     sqlIns <- paste("INSERT INTO ",tableName,
                     " (eg_id, go_id) VALUES (?,?);", sep="")
     dbBegin(db)
-    rslt <- dbSendPreparedQuery(db, sqlIns, data)
+    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
     dbClearResult(rslt)
     dbCommit(db)
 

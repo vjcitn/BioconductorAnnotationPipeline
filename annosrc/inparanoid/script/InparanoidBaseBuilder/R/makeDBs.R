@@ -43,7 +43,7 @@ popInpTab = function(table, srcSpecies, db, five){
        " (inp_id, clust_id, species, score, seed_status) VALUES
         (?,?,?,?,?)",sep="")
     dbBeginTransaction(conn=db)  ## BOOM
-    dbGetPreparedQuery(db, sql, data)
+    dbSendQuery(db, sql, data=unclass(unname(data)))
     dbCommit(db)
     
     ##Two indices per table

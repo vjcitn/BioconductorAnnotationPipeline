@@ -85,7 +85,7 @@ popTable = function(table, db){
 
     sqlIns <- paste("INSERT INTO ",table,"(gene_id,uniprot_id) VALUES (?,?);", sep="")
     dbBegin(db)
-    rslt <- dbSendPreparedQuery(db, sqlIns, data)
+    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
     dbClearResult(rslt)
     dbCommit(db)
 

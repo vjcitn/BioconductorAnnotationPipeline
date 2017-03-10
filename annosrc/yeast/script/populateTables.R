@@ -33,7 +33,7 @@ sqlIns <- "INSERT into gene_literature
            (pubmed,citation,gene_name,orf,literature_topic,sgd)
            VALUES (?,?,?,?,?,?)"
 dbBeginTransaction(con)
-rset <- dbSendPreparedQuery(con, sqlIns, clnVals)
+rset <- dbSendQuery(con, sqlIns, params=unclass(unname(clnVals)))
 dbClearResult(rset)
 dbCommit(con)
 
@@ -50,7 +50,7 @@ sqlIns <- "INSERT into sgd_features
             coordinate_version,sequence_version,feature_description)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 dbBeginTransaction(con)
-rset <- dbSendPreparedQuery(con, sqlIns, clnVals)
+rset <- dbSendQuery(con, sqlIns, params=unclass(unname(clnVals)))
 dbClearResult(rset)
 dbCommit(con)
 
@@ -63,6 +63,6 @@ dbCommit(con)
 ##            (gene_name, alias, gene_description, gene_product, phenotype, orf_name, sgd)
 ##             VALUES (?,?,?,?,?,?,?)"
 ## dbBeginTransaction(con)
-## rset <- dbSendPreparedQuery(con, sqlIns, clnVals)
+## rset <- dbSendQuery(con, sqlIns, params=unclass(unname(clnVals)))
 ## dbClearResult(rset)
 ## dbCommit(con)

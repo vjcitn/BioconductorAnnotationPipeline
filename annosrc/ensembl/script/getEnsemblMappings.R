@@ -33,7 +33,7 @@ popEGTable = function(table, db) {
     sqlIns <- paste("INSERT INTO ",table,"(ensid,gene_id) VALUES (?,?);",
                     sep="")
     dbBegin(db)
-    rslt <- dbSendPreparedQuery(db, sqlIns, data)
+    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
     dbClearResult(rslt)
     dbCommit(db)
         
@@ -67,7 +67,7 @@ popTRANSTable = function(table, db) {
     sqlIns <- paste("INSERT INTO ",atable,"(ensid,ens_gene_id) VALUES (?,?);",
                     sep="")
     dbBegin(db)
-    rslt <- dbSendPreparedQuery(db, sqlIns, data)
+    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
     dbClearResult(rslt)
     dbCommit(db)
         
@@ -99,7 +99,7 @@ popPROTTable = function(table, db) {
     sqlIns <- paste("INSERT INTO ",atable,"(ensid,ens_gene_id) VALUES (?,?);",
                     sep="")
     dbBegin(db)
-    rslt <- dbSendPreparedQuery(db, sqlIns, data)
+    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
     dbClearResult(rslt)
     dbCommit(db)
         

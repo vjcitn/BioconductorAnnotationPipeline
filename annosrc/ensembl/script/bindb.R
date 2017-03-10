@@ -271,5 +271,8 @@ names(wormBase) <- c('gene_id','_id','ensembl','WBid')
 ## insert
 sql <- 'INSERT INTO wormbase values (:_id, :WBid)'
 dbBegin(wcon)
-dbGetPreparedQuery(wcon, sql, bind.data = wormBase)
+res <- dbSendQuery(wcon,sql)
+dbBind(res, wormBase)
+dbFetch(res)
+dbClearResult(res)
 dbCommit(wcon)

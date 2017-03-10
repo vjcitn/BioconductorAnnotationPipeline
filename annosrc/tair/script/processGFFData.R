@@ -33,7 +33,7 @@ sqlIns <- "INSERT into locusToGene
            (chromosome, gene_name, locus)
            VALUES (?,?,?)"
 dbBegin(con)
-rset <- dbSendPreparedQuery(con, sqlIns, res)
+rset <- dbSendQuery(con, sqlIns, params=unclass(unname(res)))
 dbClearResult(rset)
 dbCommit(con)
 

@@ -55,7 +55,10 @@ fixCounts = function(table){
   ## repopulate the table:
   sql <- paste("INSERT INTO", table,"VALUES ($gene_id, $chrom, $start, $end)")
   dbBegin(db)
-  dbGetPreparedQuery(db, sql, bind.data = data)           
+  res <- dbSendQuery(db,sql)
+  dbBind(res, data)
+  dbFetch(res)
+  dbClearResult(res)
   dbCommit(db)              
   
   ##ReCreate an index for each table

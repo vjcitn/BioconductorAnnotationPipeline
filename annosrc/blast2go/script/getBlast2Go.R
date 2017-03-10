@@ -153,7 +153,7 @@ popGOTable = function(id, idLong, idShort, db){
     sqlIns <- paste("INSERT INTO ",table,"(",idShort,
                     "_id,go_id) VALUES (?,?);", sep="")
     dbBeginTransaction(db)
-    rslt <- dbSendPreparedQuery(db, sqlIns, data)
+    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
     dbClearResult(rslt)
     dbCommit(db)
 

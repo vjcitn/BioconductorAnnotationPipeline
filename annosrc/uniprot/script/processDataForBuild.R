@@ -135,7 +135,7 @@ doInserts <- function(db, table, data){
              (gene_id, ipi_id, ",table,"_id)
              VALUES ($P_ENTREZGENEID,$P_IPI,$",toupper(table),")")
   dbBegin(db)
-  rset <- dbSendPreparedQuery(db, sqlIns, data)
+  rset <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
   dbClearResult(rset)
   dbCommit(db)
 
@@ -312,7 +312,7 @@ doYeastInserts <- function(db, table, data){
              (gene_id, ",table,"_id)
              VALUES ($P_ENTREZGENEID,$",toupper(table),")")
   dbBegin(db)
-  rset <- dbSendPreparedQuery(db, sqlIns, data)
+  rset <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
   dbClearResult(rset)
   dbCommit(db)
 

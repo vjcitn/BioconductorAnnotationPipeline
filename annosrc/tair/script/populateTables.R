@@ -34,7 +34,7 @@ sqlIns <- "INSERT into pmid
            (locus,tair_acc,pubmed_id)
            VALUES (?,?,?)"
 dbBegin(con)
-rset <- dbSendPreparedQuery(con, sqlIns, clnVals)
+rset <- dbSendQuery(con, sqlIns, params=unclass(unname(clnVals)))
 dbClearResult(rset)
 dbCommit(con)
 
@@ -48,7 +48,7 @@ sqlIns <- "INSERT into enzyme
            (locus,enzyme_name)
            VALUES (?,?)"
 dbBegin(con)
-rset <- dbSendPreparedQuery(con, sqlIns, clnVals)
+rset <- dbSendQuery(con, sqlIns, params=unclass(unname(clnVals)))
 dbClearResult(rset)
 dbCommit(con)
 

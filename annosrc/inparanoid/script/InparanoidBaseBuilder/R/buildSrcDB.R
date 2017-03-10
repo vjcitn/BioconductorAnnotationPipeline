@@ -89,7 +89,7 @@ popInpTable = function(con, file, species, dataDir){
        " (clust_id,clu2,species,score,ID,seed_status) VALUES
         (?,?,?,?,?,?)",sep="")
     dbBeginTransaction(con)
-    dbGetPreparedQuery(con, sql, clnVals)
+    dbSendQuery(con, sql, data=unclass(unname(clnVals)))
     dbCommit(con)
     
 }

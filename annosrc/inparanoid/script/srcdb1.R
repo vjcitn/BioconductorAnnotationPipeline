@@ -83,7 +83,7 @@ makeSrcDB(dataDir="./IPDATA/")
 ##        " (clust_id,clu2,species,score,ID,seed_status) VALUES
 ##         (?,?,?,?,?,?)",sep="")
 ##     dbBeginTransaction(con)
-##     rset <- dbSendPreparedQuery(con, sql, clnVals)
+##     rset <- dbSendQuery(con, sql, params=unclass(unname(clnVals)))
 ##     dbClearResult(rset)
 ##     dbCommit(con)
 
