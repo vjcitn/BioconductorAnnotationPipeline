@@ -5,13 +5,13 @@
 ## preprocess out .tab files OR map things based on refseq and genbank
 ## (I will already have entrez gene IDs).
 
-
-## So now this script will 1) call makeOrgPackageFromNCBI() and then
+## So now this script will 
+## 1) call makeOrgPackageFromNCBI() and then
 ## 2) use the tax IDs for the organisms of interest to just get the
 ## direct entrez gene to GO mappings extracted out and the put those
 ## tables right into the appropriate databases (with correct
-## metadata).  3) remove all references to blast2GO from metadata
-## inserts etc.
+## metadata).  
+## 3) remove all references to blast2GO from metadata inserts etc.
 
 ## Note: the code in makeOrgPackageFromNCBI already exists for
 ## flattening the GO data before inserting it into the appropriate

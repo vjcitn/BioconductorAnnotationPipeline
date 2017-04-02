@@ -1,10 +1,5 @@
-##This file will just add information to an existing DB called
-##map_counts.sqlite.
-
-##Each time it is run it will grab a date stamp from the present date and then
-##populate all the rows that it enters (one for each table) with that date
-##plus the fields which it will grab from the map_name values from the
-##map_counts/qcdata tables that it is raiding.
+## Each time this script is run a new row is added to all tables 
+## in db/map_counts.sqlite.
 
 ##1st thing is to list all the sqlite files that start with chipsrc and end
 ##with sqlite.
@@ -26,7 +21,7 @@ files = files[c(ind,ind2,ind3,ind4)]
 library(DBI)
 library("RSQLite")
 drv <- dbDriver("SQLite")
-db_map_counts <- dbConnect(drv,dbname="map_counts.sqlite")
+db_map_counts <- dbConnect(drv,dbname="../../db/map_counts.sqlite")
 
 #Lock the data/time stamp down to a single value for the entire session
 date = date()

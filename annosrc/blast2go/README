@@ -1,6 +1,6 @@
-April 2017:
-
-Scripts in the blast2go/ directory are only run in the build stage - not
-download or parse. At some point the change was made to get the data from the
-UniProt site instead of the blast2go site. Data are now downloaded from UniProt
-and processed on-the-fly in the byPassBlast2GoAndInsteadUseUniProt.R script.
+## April 2017:
+##
+## Scripts in the blast2go/ directory are only run in the build stage - not
+## download or parse. At some point the change was made to get the data from the
+## UniProt site instead of the blast2go site. Data are now downloaded from UniProt
+## and processed on-the-fly in the byPassBlast2GoAndInsteadUseUniProt.R script.
