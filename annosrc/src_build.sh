@@ -3,34 +3,35 @@ set -e
 
 SRC_BASE=`pwd`
 
-# create the following sqlite dbs and store them in folder "db"
+# The build step creates the following sqlite files in the "db/" directory:
 # chipmapsrc_<organism>.sqlite
 # chipsrc_<organism>.sqlite
 # genesrc.sqlite
 # GO.sqlite  gosrc.sqlite
+# KEGG.sqlite
+# keggsrc.sqlite
 # gpsrc.sqlite
 # ipisrc.sqlite
 # chrlength.sqlite
 
-## Propagate:
-# KEGG.sqlite keggsrc.sqlite
+## Remove old sqlite files from the db/ directory. Save metadatasrc.sqlite.
 
 ## -----------------------------------------------------------------------
 ## Create chipmapsrc_* dbs: order matters
 ## -----------------------------------------------------------------------
 
 ## Copies chrlength.sqlite to db/
-#echo "copy chrlength.sqlite to db/"
-#cd $SRC_BASE/chrlength; sh getdb.sh
+echo "copy chrlength.sqlite to db/"
+cd $SRC_BASE/chrlength; sh getdb.sh
 
-#echo "building unigene"
-#cd $SRC_BASE/unigene/script; sh getdb.sh 
-#echo "finished unigene"
+echo "building unigene"
+cd $SRC_BASE/unigene/script; sh getdb.sh 
+echo "finished unigene"
 
-## Creates genesrc.sqlite
-#echo "building gene"
-#cd $SRC_BASE/gene/script; sh getdb.sh  
-#echo "finished gene"
+## Creates organism specific chipmapsrc packages; best to use screen or tmux
+echo "building gene"
+cd $SRC_BASE/gene/script; sh getdb.sh  
+echo "finished gene"
 
 ## Marc notes that genesrc.sqlite get duplicate inserts after
 ## building 'gene'.
@@ -40,8 +41,10 @@ SRC_BASE=`pwd`
 ## Fix by hand:
 #> dbGetQuery(con, "delete from metadata where rowid > 3")
 #> dbGetQuery(con, "select * from metadata")
+#> dbGetQuery(con, "select * from metadata")
 #          name                                value
-#1 EGSOURCEDATE                           2016-Mar14
+#1 EGSOURCEDATE                           2017-Mar29
+#2 EGSOURCENAME                          Entrez Gene
 #3  EGSOURCEURL ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
 
 echo "building blast2go"
@@ -60,17 +63,18 @@ echo "building GO db2"
 cd $SRC_BASE/go/script; sh getdb2.sh
 echo "finished GO db2"
 
-# Rebuilds KEGG.sqlite and keggsrc.sqlite with current GO
+## Rebuilds KEGG.sqlite and keggsrc.sqlite with current GO
 echo "building kegg"
 cd $SRC_BASE/kegg/script; sh getdb.sh
 echo "finished kegg"
 
-# builds gpsrc.sqlite from all organisms
+## builds gpsrc.sqlite from all organisms
 echo "building ucsc"
 cd $SRC_BASE/ucsc/script; sh getdb.sh
 echo "finished ucsc"
 
-# Skeleton chipsrc_* packages using genesrc.sqlite:
+## Skeleton chipsrc_* packages using genesrc.sqlite.
+## This is where map_counts are tallied.
 echo "building organism_annotation"
 cd $SRC_BASE/organism_annotation/script; sh getdb.sh
 echo "finished organism_annotation"

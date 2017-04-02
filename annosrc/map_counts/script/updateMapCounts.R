@@ -1,5 +1,7 @@
 ## Each time this script is run a new row is added to all tables 
-## in db/map_counts.sqlite.
+## in db/map_counts.sqlite. The script visits the map_counts table
+## in each organism chipsrc_*.sqlite file and transfers those
+## numbers to the common db/map_counts.sqlite.
 
 ##1st thing is to list all the sqlite files that start with chipsrc and end
 ##with sqlite.

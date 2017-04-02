@@ -48,5 +48,6 @@ echo "building chipmapsrc_chimp.sqlite"
 sqlite3 -bail chipmapsrc_chimp.sqlite < ../gene/script/bindb_chimp.sql
 echo "building chipmapsrc_yeastNCBI.sqlite"
 sqlite3 -bail chipmapsrc_yeastNCBI.sqlite < ../gene/script/bindb_yeast.sql
+echo "finished building chipmapsrc_yeastNCBI.sqlite"
 echo "building chipmapsrc_arabidopsisNCBI.sqlite"
 sqlite3 -bail chipmapsrc_arabidopsisNCBI.sqlite < ../gene/script/bindb_arabidopis.sql

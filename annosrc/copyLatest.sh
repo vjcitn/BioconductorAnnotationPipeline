@@ -5,8 +5,8 @@
 
 BASEVERSION=2.1
 
-COPYFROM=/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/db/
-COPYTO=/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/newPipe/sanctionedSqlite
+COPYFROM=/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/
+COPYTO=/home/ubuntu/BioconductorAnnotationPipeline/newPipe/sanctionedSqlite
 
 cp ${COPYFROM}GO.sqlite ${COPYTO}
 cp ${COPYFROM}PFAM.sqlite ${COPYTO}

@@ -32,4 +32,3 @@ echo "INSERT INTO metadata VALUES('YGSOURCEURL', '$YGSOURCEURL');" >> temp_metad
 echo "INSERT INTO metadata VALUES('YGSOURCEDATE', '$YGSOURCEDATE');" >> temp_metadata.sql
 sqlite3 -bail sgdsrc.sqlite < temp_metadata.sql
 rm -f temp_metadata.sql
-

@@ -11,6 +11,8 @@ if [ -z "$LATEST_DATE" ]; then
        exit 1
 fi
 
+        echo "plasmosourcedate $PLASMOSOURCEDATE"
+        echo "latestdate $LATEST_DATE"
 if [ "$LATEST_DATE" != "$PLASMOSOURCEDATE" ]; then
         echo "update $FILE from $PLASMOSOURCEDATE to $LATEST_DATE"
         sed -i -e "s/ PLASMOSOURCEDATE=.*$/ PLASMOSOURCEDATE=$LATEST_DATE/g" env.sh

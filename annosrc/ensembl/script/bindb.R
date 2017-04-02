@@ -4,7 +4,7 @@
 library("RSQLite")
 drv <- dbDriver("SQLite")
 ## absolute path to ensembl.sqlite
-dir <- file.path("/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/db")
+dir <- file.path("/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db")
 dbe <- file.path(dir,"ensembl.sqlite")
 
 ## list of supported species... (Keeping same list as before, but names this
@@ -251,7 +251,9 @@ popEnsembl2PROTTable(c("chipsrc_yeast.sqlite" = "scerevisiae_gene_ensembl"))
 ## -----------------------------------------------------------------------
 ## Populate 'wormbase' table in chipsrc_worm.sqlite:
 library(biomaRt)
-mart2 <- useMart(dataset="celegans_gene_ensembl",biomart='ensembl')
+mart2 <- useMart(dataset="celegans_gene_ensembl",
+                 biomart="ENSEMBL_MART_ENSEMBL", 
+                 host="www.ensembl.org")
 wormBase <- getBM(attributes=c("ensembl_gene_id", "entrezgene", "wormbase_gene"), 
                   mart=mart2)
 
@@ -260,7 +262,7 @@ wormBase <- getBM(attributes=c("ensembl_gene_id", "entrezgene", "wormbase_gene")
 ## Shortest path is to extract the _ids matched to entrez gene IDs 
 ## then insert only what we need.
 wcon <- dbConnect(dbDriver("SQLite"),
-                  dbname="/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/db/chipsrc_worm.sqlite")
+                  dbname="/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/chipsrc_worm.sqlite")
 
 ## get the _ids values.
 dbIds <- dbGetQuery(wcon, 'select * from genes')

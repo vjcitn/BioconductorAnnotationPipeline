@@ -12,7 +12,7 @@ library("UniProt.ws")
 drv <- dbDriver("SQLite")
 
 ## Path to all the Db's.
-dir <- file.path("/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/db")
+dir <- file.path("/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db")
 
 ## For now just get data for the ones that we have traditionally supported
 ## I don't even know if the other species are available...
@@ -29,7 +29,7 @@ getuniProtAndIPIs <- function(genes, dbFile){
   ups <- UniProt.ws:::mapUniprot(from='P_ENTREZGENEID',to='ACC',query=genes)
 
   ## NOW hack in the old IPI data
-  baseDir <- "/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/uniprot/TEMPOLDCHIPSRC"
+  baseDir <- "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/uniprot/OLDCHIPSRC"
   con <- dbConnect(drv,dbname=file.path(baseDir, dbFile))
   pf_ipi <- dbGetQuery(con, 'select g.gene_id AS P_ENTREZGENEID, p.ipi_id AS P_IPI from pfam AS p, genes AS g WHERE p._id=g._id')
   ps_ipi <- dbGetQuery(con, 'select g.gene_id AS P_ENTREZGENEID, p.ipi_id AS P_IPI from prosite AS p, genes AS g WHERE p._id=g._id')
@@ -135,7 +135,8 @@ doInserts <- function(db, table, data){
              (gene_id, ipi_id, ",table,"_id)
              VALUES ($P_ENTREZGENEID,$P_IPI,$",toupper(table),")")
   dbBegin(db)
-  rset <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
+  values <- c("P_ENTREZGENEID", "P_IPI", toupper(table))
+  rset <- dbSendQuery(db, sqlIns, params=unclass(unname(data[values])))
   dbClearResult(rset)
   dbCommit(db)
 
@@ -221,22 +222,9 @@ for(species in speciesList){
   
 }
 
-
-
 ## 5) ALSO: Be sure to also add metadata to each DB as we loop!
 
-
 ## 6) ALSO: Be sure to add map counts for PFAM and PROSITE too.
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -250,15 +238,9 @@ for(species in speciesList){
 ################################################################################
 ################################################################################
 
-
-
-
-
-
 getuniProt <- function(genes, dbFile){
     UniProt.ws:::mapUniprot(from='P_ENTREZGENEID',to='ACC',query=genes)
 }
-
 
 getYeastData <- function(dbFile, db){
   ## look up the tax ID
@@ -312,7 +294,8 @@ doYeastInserts <- function(db, table, data){
              (gene_id, ",table,"_id)
              VALUES ($P_ENTREZGENEID,$",toupper(table),")")
   dbBegin(db)
-  rset <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
+  values <- c("P_ENTREZGENEID", toupper(table))
+  rset <- dbSendQuery(db, sqlIns, params=unclass(unname(data[values])))
   dbClearResult(rset)
   dbCommit(db)
 
@@ -362,9 +345,6 @@ sql <-  "CREATE TABLE smart (
 dbGetQuery(db, sql)
 sql <-  "CREATE INDEX sm1 ON smart(_id);"
 dbGetQuery(db, sql)
-
-
-
 
 message("Inserting data for:",species)
 ## Now I need to insert the data:
@@ -418,5 +398,4 @@ sqlPFMM <- paste0( "INSERT INTO map_metadata (map_name, source_name, ",
                   "source_url, source_date) VALUES ('SMART','",name,
                   "','",url,"','",date,"')")
 dbGetQuery(db, sqlPFMM)
-
-
+message("Done with ",species)

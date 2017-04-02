@@ -5,7 +5,7 @@
 library(DBI)
 library("RSQLite")
 drv <- dbDriver("SQLite")
-db_map_counts <- dbConnect(drv,dbname="map_counts.sqlite")
+db_map_counts <- dbConnect(drv,dbname="../../db/map_counts.sqlite")
 
 
 ##just grab the dates from the KEGG table (any table should work)
