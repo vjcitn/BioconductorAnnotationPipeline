@@ -250,12 +250,14 @@ popEnsembl2PROTTable(c("chipsrc_yeast.sqlite" = "scerevisiae_gene_ensembl"))
 ## WORM
 ## -----------------------------------------------------------------------
 ## Populate 'wormbase' table in chipsrc_worm.sqlite:
+## NOTE: As of April 2017 the ensembl marts for biomaRt were non=-functional
+##       Using the 87 archive to get the correct entrezgene ids. This
+##       Should be changed back to host="www.ensembl.org" for BioC 3.6.
 library(biomaRt)
-mart2 <- useMart(dataset="celegans_gene_ensembl",
-                 biomart="ENSEMBL_MART_ENSEMBL", 
-                 host="www.ensembl.org")
-wormBase <- getBM(attributes=c("ensembl_gene_id", "entrezgene", "wormbase_gene"), 
-                  mart=mart2)
+mart <- useMart("ENSEMBL_MART_ENSEMBL", "celegans_gene_ensembl",
+                host="dec2016.archive.ensembl.org")
+wormBase <- getBM(c("ensembl_gene_id", "entrezgene", "wormbase_gene"), 
+                  mart=mart)
 
 ## Add to the table (table already exists)
 ## Only need to put in the wormbase IDs (matched to _ids).
