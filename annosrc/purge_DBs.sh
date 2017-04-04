@@ -3,6 +3,11 @@ set -e
 
 SRC_BASE=`pwd`
 
+# NOTE: Valerie does not use this script. It is not well documented
+# exactly which dbs are build in the parse stage and moved to db/.
+# If you remove an essential db from db/ you need to re-run all
+# parse scripts.
+
 # this script is used before src_build.sh to clean
 # out the old crufty DBs inside of ./db
 # this is important so I am automating this step
