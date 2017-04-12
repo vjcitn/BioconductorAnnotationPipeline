@@ -15,19 +15,19 @@ library(AnnotationDbi)
 outDir <- "sanctionedSqlite"
 if (!file.exists(outDir)) 
     dir.create(outDir)
-dbBaseDir <- "/home/ubuntu/cpb_anno/AnnotationBuildPipeline/annosrc/BioconductorAnnotationPipeline/annosrc/db/"
+dbBaseDir <- "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/"
 metaDataSrc <- paste0(dbBaseDir, "metadatasrc.sqlite")
 source("EGPkgs.R")
 
-## 3. Edit version numbers in file
+## 3. Edit version numbers (and path if necessary) in
 ## AnnotationForge/inst/scripts/GentlemanLab/ANNDBPKG-INDEX.TXT
-## has the version and location to *.sqlite hard coded.
-## Currently this file must be edited by hand before generating
-## the final packages. The path to the *.sqlite files is .../sanctionedSqlite/
-## so files must be moved to that directory.
+## The .TXT file has the version and location to the *.sqlite files hard coded
+## and must be edited by hand before generating the final packages.
+## Currently the path points to sanctionedSqlite/ so the intermediate sqlite
+## files must be created there (done in step 2).
 
 ## Create packages in 'orgdbDir' from the *.sqlite files in 'sanctionedSqlite'
-dateDir = "./20161002"
+dateDir = "./20170404"
 orgdbDir <- paste(dateDir,"_OrgDbs",sep="")
 if (!file.exists(orgdbDir)) 
     dir.create(orgdbDir)
@@ -41,10 +41,11 @@ makeAnnDbPkg(x=packages, dest_dir=orgdbDir)
 ## Make TxDb:
 ## -----------------------------------------------------------------------
 library(GenomicFeatures)
+dateDir = "./20170404"
 txdbDir <- paste(dateDir,"_TxDbs",sep="")
 if (!file.exists(txdbDir)) 
     dir.create(txdbDir)
-version <- "3.4.0"
+version <- "3.4.1"
 source(system.file("script","makeTxDbs.R", package="GenomicFeatures"))
 TxDbPackagesForRelease(version=version, 
                        destDir=txdbDir,

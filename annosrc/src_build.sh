@@ -28,7 +28,7 @@ echo "building unigene"
 cd $SRC_BASE/unigene/script; sh getdb.sh 
 echo "finished unigene"
 
-## Creates organism specific chipmapsrc packages; best to use screen or tmux
+# Creates organism specific chipmapsrc packages; best to use screen or tmux
 echo "building gene"
 cd $SRC_BASE/gene/script; sh getdb.sh  
 echo "finished gene"
@@ -41,19 +41,18 @@ echo "finished gene"
 ## Fix by hand:
 #> dbGetQuery(con, "delete from metadata where rowid > 3")
 #> dbGetQuery(con, "select * from metadata")
-#> dbGetQuery(con, "select * from metadata")
 #          name                                value
 #1 EGSOURCEDATE                           2017-Mar29
 #2 EGSOURCENAME                          Entrez Gene
 #3  EGSOURCEURL ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
 
-echo "building blast2go"
-cd $SRC_BASE/blast2go/script; sh getdb.sh
-echo "finished blast2go"
-
 ## -----------------------------------------------------------------------
 ## Create chipsrc_* dbs: order matters
 ## -----------------------------------------------------------------------
+
+echo "building blast2go"
+cd $SRC_BASE/blast2go/script; sh getdb.sh
+echo "finished blast2go"
 
 echo "building GO db1"
 cd $SRC_BASE/go/script; sh getdb1.sh
@@ -101,8 +100,8 @@ echo "building uniprot"
 cd $SRC_BASE/uniprot/script; sh getdb.sh
 echo "finished uniprot"
 
-## Creates tairsrc.sqlite and writes to chipsrc_arabidopsis, 
-## chipmapsrc_arabidopsis 
+## Creates tairsrc.sqlite and writes to 
+## chipsrc_arabidopsis AND chipmapsrc_arabidopsis 
 echo "building tair"
 cd $SRC_BASE/tair/script; sh getdb.sh  
 echo "finished tair"

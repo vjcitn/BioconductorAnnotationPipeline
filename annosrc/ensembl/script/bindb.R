@@ -243,6 +243,7 @@ for (i in seq_len(length(speciesList))) {
 ## for structural reasons, the yeast EG data has to be inserted inside of the
 ## scripts that build the yeast stuff.  But we can add the trans and prot
 ## stuff here.
+message("starting yeast")
 popEnsembl2TRANSTable(c("chipsrc_yeast.sqlite" = "scerevisiae_gene_ensembl"))
 popEnsembl2PROTTable(c("chipsrc_yeast.sqlite" = "scerevisiae_gene_ensembl"))
 
@@ -253,6 +254,7 @@ popEnsembl2PROTTable(c("chipsrc_yeast.sqlite" = "scerevisiae_gene_ensembl"))
 ## NOTE: As of April 2017 the ensembl marts for biomaRt were non=-functional
 ##       Using the 87 archive to get the correct entrezgene ids. This
 ##       Should be changed back to host="www.ensembl.org" for BioC 3.6.
+message("starting worm")
 library(biomaRt)
 mart <- useMart("ENSEMBL_MART_ENSEMBL", "celegans_gene_ensembl",
                 host="dec2016.archive.ensembl.org")
@@ -276,7 +278,7 @@ names(wormBase) <- c('gene_id','_id','ensembl','WBid')
 sql <- 'INSERT INTO wormbase values (:_id, :WBid)'
 dbBegin(wcon)
 res <- dbSendQuery(wcon,sql)
-dbBind(res, wormBase)
+dbBind(res, wormBase[c("_id", "WBid")])
 dbFetch(res)
 dbClearResult(res)
 dbCommit(wcon)

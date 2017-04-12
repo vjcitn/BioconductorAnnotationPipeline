@@ -1,0 +1,11 @@
+## April 2017
+##
+## This script is only called during the build stage - not download or parse.
+## The code adds PFAM, Prosite and IPI data to the human, rat, chicken, 
+## zebrafish, mouse and bovine chipsrc_*.sqlite files and PFAM only to
+## chipsrc_yeast.sqlite.
+## 
+## PFAM and Prosite data are downloaded with UniProt.ws and IPI data are 
+## taken from the old chipsrc_* files from the last build; this transfer
+## of stale data has been going on for some time - the IPI database was 
+## closed in 2011.
