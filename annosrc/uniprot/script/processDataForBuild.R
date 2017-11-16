@@ -136,7 +136,7 @@ doInserts <- function(db, table, data){
              VALUES ($P_ENTREZGENEID,$P_IPI,$",toupper(table),")")
   dbBegin(db)
   values <- c("P_ENTREZGENEID", "P_IPI", toupper(table))
-  rset <- dbSendQuery(db, sqlIns, params=unclass(unname(data[values])))
+  rset <- dbSendQuery(db, sqlIns, params=unclass(data[values]))
   dbClearResult(rset)
   dbCommit(db)
 
@@ -295,7 +295,7 @@ doYeastInserts <- function(db, table, data){
              VALUES ($P_ENTREZGENEID,$",toupper(table),")")
   dbBegin(db)
   values <- c("P_ENTREZGENEID", toupper(table))
-  rset <- dbSendQuery(db, sqlIns, params=unclass(unname(data[values])))
+  rset <- dbSendQuery(db, sqlIns, params=unclass(data[values]))
   dbClearResult(rset)
   dbCommit(db)
 
@@ -322,8 +322,10 @@ db <- dbConnect(drv,dbname=file.path(dir, species))
 message("Getting data for:",species)
 res <- getYeastData(species, db) 
 
+
 ## Add pfam table
 message("Making table for pfam") 
+
 dbGetQuery(db, "DROP TABLE IF EXISTS pfam;")
 sql <-  "CREATE TABLE pfam (
      _id INTEGER NOT NULL,

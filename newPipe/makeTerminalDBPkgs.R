@@ -27,7 +27,7 @@ source("EGPkgs.R")
 ## files must be created there (done in step 2).
 
 ## Create packages in 'orgdbDir' from the *.sqlite files in 'sanctionedSqlite'
-dateDir = "./20170404"
+dateDir = "./20171108"
 orgdbDir <- paste(dateDir,"_OrgDbs",sep="")
 if (!file.exists(orgdbDir)) 
     dir.create(orgdbDir)
@@ -41,11 +41,11 @@ makeAnnDbPkg(x=packages, dest_dir=orgdbDir)
 ## Make TxDb:
 ## -----------------------------------------------------------------------
 library(GenomicFeatures)
-dateDir = "./20170404"
+dateDir = "./20171002"
 txdbDir <- paste(dateDir,"_TxDbs",sep="")
 if (!file.exists(txdbDir)) 
     dir.create(txdbDir)
-version <- "3.4.1"
+version <- "3.4.2"
 source(system.file("script","makeTxDbs.R", package="GenomicFeatures"))
 TxDbPackagesForRelease(version=version, 
                        destDir=txdbDir,
