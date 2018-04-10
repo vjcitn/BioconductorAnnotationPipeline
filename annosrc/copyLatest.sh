@@ -14,6 +14,10 @@ cp ${COPYFROM}KEGG.sqlite ${COPYTO}
 cp ${COPYFROM}YEAST.sqlite ${COPYTO}
 
 cd ${COPYTO}
+
+## Remove org.*.sqlite files to avoid UNIQUE contstraint error.
+rm org.*
+
 for file in `ls *.sqlite`
 do
  echo "INSERT INTO metadata VALUES('DBSCHEMAVERSION', '$BASEVERSION');" > temp_metadata.sql
