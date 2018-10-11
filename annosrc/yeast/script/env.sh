@@ -1,5 +1,5 @@
 #!/bin/sh
 set -e
-export YGSOURCEDATE=14-Jan-2017
+export YGSOURCEDATE=2017-01-14
 export YGSOURCENAME="Yeast Genome"
-export YGSOURCEURL="http://downloads.yeastgenome.org/"
+export YGSOURCEURL="https://downloads.yeastgenome.org/"
