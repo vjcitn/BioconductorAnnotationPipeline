@@ -14,6 +14,10 @@ splitStrUtil <- function() {
 	chrKey <- rep(allData[,2], lengths(chr))
 	synonymKey <- rep(allData[,2], lengths(synonym))
         dbXrefKey <- rep(allData[,2], lengths(dbXref))
+
+	## garbage collection step; otherwise this process may be killed early.
+        rm(allData)
+        gc()
         
 	cyto <- unlist(cyto)
 	chr <- unlist(chr)

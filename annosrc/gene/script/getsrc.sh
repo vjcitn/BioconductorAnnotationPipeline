@@ -22,14 +22,23 @@ gunzip -c gene_refseq_uniprotkb_collab.gz > gene_refseq_uniprotkb_collab
 
 ## remove comments
 echo "remove comments ..."
+echo "removing gene2go comments"
 sed -i -e "/^#.*$/ {d}" gene2go
+echo "removing gene_info comments"
 sed -i -e "/^#.*$/ {d}" gene_info
+echo "removing gene2refseq comments"
 sed -i -e "/^#.*$/ {d}" gene2refseq
+echo "removing gene2accession comments"
 sed -i -e "/^#.*$/ {d}" gene2accession
+echo "removing gene2unigene comments"
 sed -i -e "/^#.*$/ {d}" gene2unigene
+echo "removing gene2pubmed comments"
 sed -i -e "/^#.*$/ {d}" gene2pubmed
+echo "removing mim2gene_medgen comments"
 sed -i -e "/^#.*$/ {d}" mim2gene_medgen
+echo "removing gene_refseq_uniprotkb_collab comments"
 sed -i -e "/^#.*$/ {d}" gene_refseq_uniprotkb_collab
+echo "done removing comments"
 
 ## trim the gene_info file of extraneous cols
 echo "trim gene_info file ..."

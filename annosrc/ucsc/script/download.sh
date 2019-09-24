@@ -91,9 +91,9 @@ if [ "$LATEST_FLY" != "$GPSOURCEDATE_fly" ]; then
 	mkdir ../fly/$LATEST_FLY
 	cd ../fly/$LATEST_FLY
 
-	curl --disable-epsv -O $UCSCBASEURLl/$BUILD_fly/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURLl/$BUILD_fly/database/cytoBand.txt.gz
-	curl --disable-epsv -O $UCSCBASEURLl/$BUILD_fly/database/chromInfo.txt.gz
+	curl --disable-epsv -O $UCSCBASEURL/$BUILD_fly/database/refGene.txt.gz
+	curl --disable-epsv -O $UCSCBASEURL/$BUILD_fly/database/cytoBand.txt.gz
+	curl --disable-epsv -O $UCSCBASEURL/$BUILD_fly/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing
  	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 

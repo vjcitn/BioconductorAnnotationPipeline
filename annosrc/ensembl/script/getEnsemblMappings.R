@@ -6,7 +6,7 @@
 ## - two attributes:
 ##   -- "Ensembl Gene ID": ensembl_gene_id
 ##   -- "EntrezGene ID": entrezgene
-
+.libPaths("~/R-3.6.1")
 library(biomaRt)
 library(DBI)
 library(RSQLite)
@@ -133,7 +133,7 @@ speciesFrame <- data.frame(dataset=dataset, host=host, mart=mart,
 message("creating EnsEG.tab files ...")
 apply(speciesFrame, 1, 
     function(x) {
-        egdata <- getBM(attributes=c("ensembl_gene_id", "entrezgene"), 
+        egdata <- getBM(attributes=c("ensembl_gene_id", "entrezgene_id"), 
                        mart=useMart(biomart=x["mart"], dataset=x["dataset"], 
                                     host=x["host"]))
         if (nrow(egdata) == 0L)

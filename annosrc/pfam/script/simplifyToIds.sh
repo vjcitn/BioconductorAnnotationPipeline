@@ -12,10 +12,13 @@
 # #I will begin by separating things into sequence (GS) based 
 # #entries and the file based annotations
 
+echo "Pfam-A.part"
 rm -f Pfam-A.part
 grep "#=G[F,S]" Pfam-A.full  > Pfam-A.part
+echo "Pfam-A.GF"
 rm -f Pfam-A.GF
 grep "#=GF" Pfam-A.full  > Pfam-A.GF
+echo "Pfam-A.GS"
 rm -f Pfam-A.GS
 grep "#=GS" Pfam-A.full  > Pfam-A.GS
 
@@ -24,7 +27,8 @@ grep "#=GS" Pfam-A.full  > Pfam-A.GS
 #or the other information will be meaningless.
 
 #1st we can get the files for the DR (reference) IDs
-#=GF DR and #=GF AC
+#=GF DR and #=GF ACi
+echo "DR_IDs"
 rm -f DR_IDs.txt
 grep "#=GF [A,D][C,R]" Pfam-A.GF > tempIDs
 grep -v "#=GF DC" tempIDs > tempIDs2
@@ -32,6 +36,7 @@ cat tempIDs2 | awk -F " " '{print $2"\t"$3"\t"$4"\t"$5}' > DR_IDs.txt
 rm -f tempIDs
 
 #2nd we can get the files for the DE ids 
+echo "DE_IDs"
 rm -f DE_IDs.txt
 grep "#=GF [A,D][C,E]" Pfam-A.GF > tempIDs
 grep -v "#=GF DC" tempIDs > tempIDs2
@@ -40,12 +45,14 @@ rm -f tempIDs*
 
 #3rd we can get the files for the ID ids
 #note that ID happens BEFORE AC in orig file (unlike the others)
+echo "ID_IDs"
 rm -f ID_IDs.txt
 grep "#=GF [A,I][C,D]" Pfam-A.GF > tempIDs
 cat tempIDs | awk -F " " '{print $2"\t"$3}' > ID_IDs.txt
 rm -f tempIDs
 
 #4th we can get the files for the RM ids
+echo "RM_IDs"
 rm -f RM_IDs.txt
 grep "#=GF [A,R][C,M]" Pfam-A.GF > tempIDs
 grep -v "#=GF AM" tempIDs > tempIDs2
@@ -53,6 +60,7 @@ cat tempIDs2 | awk -F " " '{print $2"\t"$3}' > RM_IDs.txt
 rm -f tempIDs*
 
 #5th we can get the files for the TP ids
+echo "TP_IDs"
 rm -f TP_IDs.txt
 grep "#=GF [A,T][C,P]" Pfam-A.GF > tempIDs
 grep -v "#=GF TC" tempIDs > tempIDs2
@@ -84,6 +92,7 @@ rm -f tempIDs*
 
 #We want things that fit the pattern:
 #=GF AC and #GS ... DR PDB
+echo "PDB_IDs"
 rm -f PDB_IDs.txt
 grep -E "GF AC|DR PDB" Pfam-A.part > tempIDs
 cat tempIDs | awk -F " " '{print $2"\t"$3"\t"$4"\t"$5" "$6"\t"$7}' > tempIDs2

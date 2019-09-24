@@ -1,4 +1,5 @@
 ##R script attempting to get the latest uniprot to Entrez Gene mappings from biomaRt...
+.libPaths("~/R-3.6.1")
 library(biomaRt)
 
 ## No filters

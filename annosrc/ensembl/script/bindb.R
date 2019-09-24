@@ -1,6 +1,6 @@
 ## These functions add the 'ensembl', "ensembl2ncbi', 'ensembl_prot' and
 ## 'ensembl_trans' tables to the chipsrc_* sqlite dbs.
-
+.libPaths("~/R-3.6.1")
 library("RSQLite")
 drv <- dbDriver("SQLite")
 ## absolute path to ensembl.sqlite

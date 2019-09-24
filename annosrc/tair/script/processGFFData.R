@@ -2,6 +2,7 @@
 ## I won't actually do it HERE.  IOW at this point it has already happened.
 
 ## Now load rtracklayer so we can process this file...
+.libPaths("~/R-3.6.1")
 library(rtracklayer)
 data <- import.gff3("TAIR10_GFF3_genes.gff")
 ## so then just grab all the mRNA features.

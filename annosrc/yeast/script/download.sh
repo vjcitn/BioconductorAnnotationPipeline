@@ -4,10 +4,11 @@ set -e
 
 BASE_URL=$YGSOURCEURL
 THIS_YEAR=`date|awk '{print $6}'`
-LATEST_DATE=`curl -s -L --disable-epsv $BASE_URL/curation/literature/|grep "gene_literature.tab"|awk '{print $9}'|sed -e "s/align=\"right\">//g"`
+LATEST_DATE=`curl -s -L --disable-epsv $BASE_URL/curation/literature/|grep "gene_literature.tab"|awk '{print $10}'|sed -e "s/align=\"right\">//g"`
+LATEST_DATE=14-Jan-2017
 
 YG_URL=http://downloads.yeastgenome.org/curation/calculated_protein_info/domains/domains.tab
-REJECTORF_URL=http://archive.broadinstitute.org/ftp/pub/annotation/fungi/comp_yeasts/S6.RFC_test/a.orf_decisions.txt
+REJECTORF_URL=http://compbio.mit.edu/4yeasts/S6.RFC_test/a.orf_decisions.txt
 
 if [ -z "$LATEST_DATE" ]; then
        echo "download.sh: gene_literature.tab from $BASE_URL not found"

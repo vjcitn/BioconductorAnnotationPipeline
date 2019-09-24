@@ -6,7 +6,7 @@
 
 ## 1) Get a set of entrez gene IDs for a species (and tax ID) (
 ## (extract ALL of this information from the relevant chipsrc DB)
-
+.libPaths("~/R-3.6.1")
 library("RSQLite")
 library("UniProt.ws")
 drv <- dbDriver("SQLite")
@@ -27,7 +27,6 @@ speciesList = c("chipsrc_human.sqlite",
 getuniProtAndIPIs <- function(genes, dbFile){
 
   ups <- UniProt.ws:::mapUniprot(from='P_ENTREZGENEID',to='ACC',query=genes)
-
   ## NOW hack in the old IPI data
   baseDir <- "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/uniprot/OLDCHIPSRC"
   con <- dbConnect(drv,dbname=file.path(baseDir, dbFile))
@@ -39,6 +38,33 @@ getuniProtAndIPIs <- function(genes, dbFile){
   ## Currently, I use an inner join here b/c DB is gene centric 
   base <- merge(ups, ips, by.x ="P_ENTREZGENEID", by.y ="P_ENTREZGENEID", all.x=TRUE)
   base
+}
+
+
+getOneToMany <- function(taxId, type=c("PFAM","prosite","SMART")){ 
+  type <- match.arg(type)
+  url <- paste0("http://www.uniprot.org/uniprot/?query=organism:",taxId,"&format=tab&columns=id,database(")
+  fullUrl <- paste0(url,type,")")
+#  message("Reading in data from UniProt web services.")
+##   dat <- read.delim(fullUrl, stringsAsFactors=FALSE)
+  dat <- UniProt.ws:::.tryReadResult(fullUrl)
+  colnames(dat) <- c('ids', 'ids2')
+  ## split up the strings
+  dat[[2]] <- strsplit( as.character(dat[[2]]), split=";")
+  ## get number of things matched to each ID in col 1
+  lens <- unlist(lapply(dat[[2]],length))
+  ## make factor based on dat[[1]], repeated lens times
+  ids <- rep.int(dat[[1]],lens) ## this excludes ones where lens==0
+  ids2 <- unlist(dat[[2]])
+  if(length(ids)==length(ids2)){
+    res <- cbind(ids,ids2)
+  }else{
+    stop("getOneToMany: ids != ids2")
+  }
+  ## recover dat[[1]] where lens==0
+  rem <- dat[lens==0,]
+  rem[[2]] <- NA ## these values are all NA
+  rbind(res, rem)
 }
 
 
@@ -63,10 +89,10 @@ getData <- function(dbFile, db){
   ## NO MORE IPIs! (temporarily we will populate with values from last time)
   
   ## get the pfam Id's
-  pfam <- UniProt.ws:::getOneToMany(taxId, type="PFAM")
+  pfam <- getOneToMany(taxId, type="PFAM")
   colnames(pfam) <- c("ACC", "PFAM")
   ## and the prosite Id's.
-  prosite <- UniProt.ws:::getOneToMany(taxId, type="prosite")
+  prosite <- getOneToMany(taxId, type="prosite")
   colnames(prosite) <- c("ACC", "PROSITE")
   
   
@@ -253,11 +279,11 @@ getYeastData <- function(dbFile, db){
   base <- getuniProt(genes, dbFile)
   
   ## get the pfam Id's
-  pfam <- UniProt.ws:::getOneToMany(taxId, type="PFAM")
+  pfam <- getOneToMany(taxId, type="PFAM")
   colnames(pfam) <- c("ACC", "PFAM")
   pfam <- pfam[!is.na(pfam$PFAM),]
   ## And smart IDs
-  smart <- UniProt.ws:::getOneToMany(taxId, type="SMART")
+  smart <- getOneToMany(taxId, type="SMART")
   colnames(smart) <- c("ACC", "SMART")
   smart <- smart[!is.na(smart$SMART),]
   

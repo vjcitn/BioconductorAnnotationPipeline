@@ -4,8 +4,7 @@ set -e
 
 BASE_URL=$EGSOURCEURL
 PARENT_URL=$EGSOURCEURL/..
-THIS_YEAR=`date|awk '{print $6}'`
-LATEST_DATE=`curl -s --disable-epsv -L $PARENT_URL/|grep "DATA"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_DATE=`curl -IL $EGSOURCE_DATE_URL | grep "Last-Modified" | awk '{print $5 "-" $4 $3}'`
 
 if [ -z "$LATEST_DATE" ]; then
        echo "download.sh: latest date from $BASEURL not found"

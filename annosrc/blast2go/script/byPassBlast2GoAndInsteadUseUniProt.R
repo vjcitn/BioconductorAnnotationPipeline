@@ -16,7 +16,7 @@
 ## Note: the code in makeOrgPackageFromNCBI already exists for
 ## flattening the GO data before inserting it into the appropriate
 ## downstream place.
-
+.libPaths("~/R-3.6.1")
 library("DBI")
 library("RSQLite")
 
