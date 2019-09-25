@@ -16,7 +16,7 @@ export GPSOURCEDATE_worm=2019-Jan10
 export GPSOURCEDATE_chicken=2019-Jan16
 export GPSOURCEDATE_rhesus=2017-Aug10
 export GPSOURCEDATE_anopheles=2018-Oct2
-export GPSOURCEDATE_chimp=2019-Apr25
+export GPSOURCEDATE_chimp=2018-Oct4
 
 export GPSOURCENAME_human="UCSC Genome Bioinformatics (Homo sapiens)"
 export GPSOURCENAME_mouse="UCSC Genome Bioinformatics (Mus musculus)"
