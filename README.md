@@ -1,4 +1,4 @@
-# Bioconductor Annotation Pipeline
+# Bioconductor Annotation Pipeline <a name="top"/>
 
 The goal of the code in this package is to build the db0, OrgDb, PFAM, GO, 
 and TxDb packages. As of Bioconductor 3.5 we no longer build KEGG, ChipDb, 
@@ -44,6 +44,8 @@ either needed in a subsequent step or may be the final product.
 * Remove older data downloads from each folder, there should only be one 
 version present. It is suggested to keep the previous version for comparison/
 testing.
+
+[Back to top](#top)
 
 ## Update R <a name="updater"/>
 
@@ -97,6 +99,8 @@ Open the `.bashrc` file to edit the aliases for R. Make the R library
 directory a personal directory, eg. R-3.6.1, and leave bin to R. 
 
 **ADD MORE DETAIL WHEN INSTANCE IS TURNED BACK ON**
+
+[Back to top](#top)
 
 ## Download data <a name="downloaddata"/>
 
@@ -211,6 +215,8 @@ directories had new data downloaded to them. After running the
 `src_download.sh` script was run, 5G of information was added to the pipeline 
 (`BioconductorAnnotationPipeline/` - 146G).
 
+[Back to top](#top)
+
 ## Parse data <a name="parsedata"/>
 
 The next step in the pipeline is to run the parse scripts. This can be done by 
@@ -229,35 +235,86 @@ will either
 * produce the final database product (e.g. `PFAM.sqlite`). 
 
 Keep in mind that once this step has started no files should be removed from 
-`BioconductorAnnotationPipeline/db/` since these products may be needed in a 
-subsequent step and/or may be a final product. The parsing step is quite simple 
-but will take a long time to run. See the [Troubleshooting](#troubleshooting) 
-section of this README file for advice if things happen to go wrong.
+`db/` since these products may be needed in a subsequent step and/or may be a 
+final product. The parsing step is quite simple but will take a long time to 
+run. See the [Troubleshooting](#troubleshooting) section of this README file for 
+advice if things happen to go wrong.
+
+The parsing step adds a lot of data to `BioconductorAnnotationPipeline/`. For 
+the Bioconductor 3.10 release, the parse step increased the data by 49G 
+(`BioconductorAnnotationPipeline/` - 195G).
+
+[Back to top](#top)
 
 ## Build data <a name="builddata"/>
 
+After parsing the data it's time to build the data. To build the data the 
+following command is run:
+
+```sh
+src_build.sh
+```
+
+The `src_build.sh` script calls data-specific `getdb.sh` and `temp_metadata.sql` 
+scripts. In the two previous scripts, the order that the data-specific scripts 
+did not matter because they were all independent of each other. For this build 
+script, **the order matters** since products of certain scripts are needed for 
+other scripts to work.
+
+The products from the build step are the `chipsrc*.sqlite` and 
+`chipmapsrc*.sqlite` databases in `db/`.
+
+**TODO:** I think more comments could be added to track the progress along the 
+way.
+
+Refer to the [Troubleshooting](#troubleshooting) section of this README file for 
+advice if the build step goes awry.
+
+The build step will add about 66G of data to the pipeline. For the Bioconductor 
+3.10 release, at the end of the building step the 
+`BioconductorAnnotationPipeline/` was up to 261G.
+
+[Back to top](#top)
 
 ## Additional scripts <a name="additionalscripts"/>
 
 
+[Back to top](#top)
+
 ## Build db0 packages <a name="builddb0pkgs"/>
 
+
+[Back to top](#top)
 
 ## Build OrgDb, PFAM.db, and GO.db packages <a name="buildmanypkgs"/>
 
 
+[Back to top](#top)
+
 ## Build TxDb packages <a name="buildtxdbpkgs"/>
 
+
+[Back to top](#top)
 
 ## Where do they belong? <a name="where"/>
 
 
+[Back to top](#top)
+
 ## Clean up <a name="cleanup"/>
 
+
+[Back to top](#top)
 
 ## Troubleshooting <a name="troubleshooting"/>
 
 <!--- Section about troubleshooting data download -->
+
+<!--- Section about troubleshooting data parsing -->
+
+<!--- Section about troubleshooting data building -->
+
+[Back to top](#top)
 
 # BioconductorAnnotationPipeline
 Code to build Bioconductor annotation packages. See the [wiki](https://github.com/Bioconductor/BioconductorAnnotationPipeline/wiki) for more details.
