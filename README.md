@@ -29,7 +29,12 @@ running the pipeline in more detail.
 The first step of the pipeline is to log onto the `generateAnnotationsV2` EC2 
 instance as `ubuntu`. Downloading the data and generating the annotation 
 packages will take up over 100GB of disk space on the instance. Be sure to 
-have this amount of space otherwise the process will fail. 
+have this amount of space otherwise the process will fail. It never hurts to do 
+a pull of the repo to be sure everything is up to date before running pipeline.
+
+```sh
+git pull
+``` 
 
 **TODO:** Decide a minimum amount of required space for the scripts to run.
 
@@ -278,11 +283,122 @@ The build step will add about 66G of data to the pipeline. For the Bioconductor
 
 ## Additional scripts <a name="additionalscripts"/>
 
+There are 2 additional scripts that need to be run after the data is built. The 
+first script is run by:
+
+```sh
+sh copyLatest.sh
+```
+
+This script inserts database schema version in the GO, PFAM, KEGG and YEAST 
+databases. The next script, which is found in `map_counts/scripts/`:
+
+```sh
+sh getdb.sh
+```
+
+is used to check the quality of the intermediate sql databases. This script 
+counts tables in a subset of the `chipsrc` databases. These numbers are then 
+recorded in the existing `map_counts.sqlite` file. The data is compared to 
+numbers from the last release. There is a warning that is issued for 
+discrepancies >10%. Remember `map_counts.sqlite` is under version control so 
+there are records of data loss/gain over the releases.
+
+At this point all code changes should be commit to git. No data files should be 
+added.
 
 [Back to top](#top)
 
 ## Build db0 packages <a name="builddb0pkgs"/>
 
+Now that all the data is built, it is time to start building the annotation 
+packages that will be part of the Bioconductor release. All the code needed to 
+build these packages are located in `BioconductorAnnotationPipeline/newPipe/`.
+Within in this directory there are 3 packages that are needed for the 
+annotation packages. Since these are clones of the repos, a git pull for each of 
+the packages should be done to be sure the most up to date version is utilized.
+
+```sh
+cd AnnotationDbi
+git pull
+cd ..
+
+cd AnnotationForge
+git pull
+cd ..
+
+cd GenomicFeatures
+git pull
+cd ..
+```
+ 
+The first set of packages that should be built are the db0 packages, e.g., 
+`human.db0`, `mouse.db0`.
+
+**1. Make edits to makeDbZeros.R**
+
+There are two variables in the R script that should be updated. The `outDir` 
+should be set to a valid date for when the script is being run. This will 
+become the name of the directory that will house the db0 packages being created. 
+The `version` should be a valid version depending on what release Bioconductor 
+is on, e.g. for the October 2019 Bioconductor 3.10 release `version` was set to 
+"3.10.0". This will become the version for all the db0 packages.
+ 
+**2. Run makeDbZeros.R**
+
+```sh
+R --slave < makeDbZeros.R
+```
+
+This script creates the db0 packages by calling out to 
+`AnnotationForge::sqlForge_wrapBaseDBPkgs.R`. 
+
+**3. Build, check, and install db0 packages**
+
+Each of the db0 packages in `BioconductorAnnotationPipeline/newPipe/XXXXXXXX_DB0S/`
+need to be built and checked using `R CMD build` and `R CMD check`. 
+
+If all the packages build and check okay then the packages should be installed 
+using `R CMD INSTALL`. 
+
+**4. Build, check, and install `AnnotationForge`**
+
+The package `AnnotationForge` should be built, checked, and installed with the 
+new db0 packages installed. This can done by using `R CMD build`, `R CMD check`, 
+and `R CMD INSTALL`.
+
+**5. Spot check**
+
+The `chipmapsrc_mouse.sqlite` file should have 8 tables:
+
+```r
+> library(mouse.db0)
+> library(RSQLite)
+> dat1 <- system.file("extdata", file = "chipmapsrc_mouse.sqlite", package = "mouse.db0")
+> con1 <- dbConnect(drv=RSQLite::SQLite(), dbname = dat1)
+> dbListTables(con1)
+[1] "EGList"             "accession"          "accession_unigene"
+[4] "image_acc_from_uni" "metadata"           "refseq"
+[7] "sqlite_stat1"       "unigene"
+```
+
+The `chipsrc_mouse.sqlite` file should have 32 tables:
+```r
+> dat2 <- system.file("extdata", file = "chipsrc_mouse.sqlite", package = "mouse.db0")
+> con2 <- dbConnect(drv=RSQLite::SQLite(), dbname = dat2)
+> dbListTables(con2)
+ [1] "accessions"            "chrlengths"            "chromosome_locations"
+ [4] "chromosomes"           "cytogenetic_locations" "ec"
+ [7] "ensembl"               "ensembl2ncbi"          "ensembl_prot"
+[10] "ensembl_trans"         "gene_info"             "gene_synonyms"
+[13] "genes"                 "go_bp"                 "go_bp_all"
+[16] "go_cc"                 "go_cc_all"             "go_mf"
+[19] "go_mf_all"             "kegg"                  "map_counts"
+[22] "map_metadata"          "metadata"              "mgi"
+[25] "ncbi2ensembl"          "pfam"                  "prosite"
+[28] "pubmed"                "refseq"                "sqlite_stat1"
+[31] "unigene"               "uniprot"
+```
 
 [Back to top](#top)
 
