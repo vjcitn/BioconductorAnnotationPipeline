@@ -564,6 +564,81 @@ can be deleted.
 
 ## Where do they belong? <a name="where"/>
 
+The tarball files for all the db0, OrgDb, PFAM.db, GO.db, and TxDb packages 
+created from `R CMD build` need to get on the linux builder for the release. The 
+following example shows how to do this for the 3.10 release of Bioconductor.
+
+**1. Log onto the builder**
+
+For the 3.10 release, the builder is `malbec1` so log onto this user as 
+`biocadmin`. This is change between `malbec1` and `malbec2` from release to 
+release, edit accordingly. Then change into the `sandbox` directory.
+
+```sh
+ssh biocadmin@malbec1.bioconductor.org
+
+cd sandbox
+```
+
+**2. Copy the tarball files over**
+
+The files from the EC2 instance need to get copied over to `malbec1:sandbox/`. 
+The public IP for the EC2 instance will change each time it is stopped and 
+restarted, edit accordingly.
+
+```sh
+scp -r ubuntu@18.209.179.34:/home/ubuntu/BioconductorAnnotationPipeline/newPipe/20191011_DB0s/ .
+```
+
+This should be repeated for the OrgDb and TxDb directories that were created in 
+the previous steps.
+
+**3. Check file sizes**
+
+It is good practice to be sure files were copied over correctly. This can be 
+done by using `cksum` of a file on the instance and comparing it to the `cksum`
+of the same file on `malbec1:sandbox/`. For example,
+
+```sh
+# on EC2 instance
+cd newPipe/20191011_DB0s/
+cksum human.db0_3.10.0.tar.gz
+
+# on malbec1:sandbox/
+cksum human.db0_3.10.0.tar.gz
+```
+
+The two numbers produced from cksum should be the same. This mean that all of 
+the information was copied over from the instance to the builder.
+
+**4. Copy the files to contrib/**
+
+Once it is clear all the information has been copied over correctly then the 
+files can be copied over to their final destination.
+
+```sh
+# on malbec1:sandbox/
+cd 20191011_DB0s
+scp -r . /home/biocadmin/PACKAGES/3.10/data/annotation/src/contrib
+```
+
+**5. Check file sizes again**
+
+Repeat `cksum` on the files, comparing between the `malbec1:sandbox/` copy and 
+the `/home/biocadmin/PACKAGES/3.10/data/annotation/src/contrib/` copy.
+
+**6. Remove old versions**
+
+For the new annotation packages, there should be older versions already present 
+on the builder. These old versions should be removed. Be sure to only remove 
+versions that are getting replaced because once they are removed they can't be 
+recovered again.
+
+**7. Run crontab job**
+
+The final step is to run a crontab job on the builder, but isn't part of this 
+pipeline. For further instructions on how to accomplish this step please see the 
+**NAME OF FILE** at https://github.com/Bioconductor/BBS/tree/master/Doc.
 
 [Back to top](#top)
 
