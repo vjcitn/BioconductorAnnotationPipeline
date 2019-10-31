@@ -361,7 +361,7 @@ need to be built and checked using `R CMD build` and `R CMD check`.
 If all the packages build and check okay then the packages should be installed 
 using `R CMD INSTALL`. 
 
-**4. Build, check, and install `AnnotationForge`**
+**4. Build, check, and install AnnotationForge**
 
 Since `AnnotationForge` suggests the use of `human.db0`, it should be built, 
 checked, and installed with the new db0 packages installed. This can done by 
@@ -446,7 +446,7 @@ and GO.db packages.
 R --slave < makeTerminalDBPkgs.R
 ```
 
-**5. Build, check and install the new packages**
+**5. Build, check, and install the new packages**
 
 `R CMD build`, `R CMD check`, and `R CMD INSTALL` the new `GO.db` package before 
 building and checking the OrgDbs. Continue building, checking, and installing 
@@ -510,6 +510,55 @@ removed.
 
 ## Build TxDb packages <a name="buildtxdbpkgs"/>
 
+**1. Identify which tracks should be updated**
+
+Information should be compared between what is currently available on 
+[Bioconductor](https://www.bioconductor.org/packages/release/BiocViews.html#___TxDb) 
+and what is currently available on the 
+[UCSC Genome Browser](https://genome.ucsc.edu/cgi-bin/hgGateway). For example, 
+for the package `TxDb.Hsapiens.UCSC.hg38.knownGene` on the UCSC Genome Browser 
+human should be selected, then under 'Human Assembly' the Dec. 2013 
+(GRCh38/hg38) option should be selected, then press 'Go'. Under 'Genes and Gene 
+Predictions' select 'GENCODE v32' (this is what is selected for known gene 
+information). The 'Date last updated' should be checked. If this date is newer 
+than the last release then this package needs to be updated. This should be 
+repeated for all of the packages available on Bioconductor. 
+
+It is also important to identify tracks that may not be availabe yet on 
+Bioconductor because these may be new packages than can be added. 
+
+**2. Modify makeTxDb.R**
+
+Once the packages that should be updated and/or created are identified, then 
+a script in `GenomicFeatures` should be updated. Modify 
+`GenomicFeatures/inst/script/makeTxDb.R` as appropriate. **DO NOT** push the 
+changes to this code.
+
+**3. Edit makeTerminalDBPkgs.R**
+
+Now the code to create the TxDb should be able to run and the code that made 
+the OrgDbs should be included in the `if (FALSE) {...}` statement. The `dateDir` 
+should be set to a valid date for when the script is being run. This will become 
+the name of the directory that will house the TxDbs. The `version` should be a 
+valid version depending on what the release is for Bioconductor. 
+
+**4. Run makeTerminalDBPkgs.R**
+
+Run the portion of `makeTerminalDBPkgs.R` that generates the TxDb packages.
+
+```sh
+R --slave < makeTerminalDBPkgs.R
+```
+
+**5. Build, check, and install TxDb packages**
+
+Run `R CMD build`, `R CMD check`, and `R CMD INSTALL` for all of the newly 
+created TxDb packages. Load a few of the packages in an R session and check the 
+dates to be sure that the appropriately dated packages are being used.
+
+Like the other packages that were created the only files that need to remain in 
+the TxDb directory are the tarball files from `R CMD build`, everything else 
+can be deleted. 
 
 [Back to top](#top)
 
