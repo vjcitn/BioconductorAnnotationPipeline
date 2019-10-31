@@ -640,10 +640,41 @@ The final step is to run a crontab job on the builder, but isn't part of this
 pipeline. For further instructions on how to accomplish this step please see the 
 **NAME OF FILE** at https://github.com/Bioconductor/BBS/tree/master/Doc.
 
+Once the crontab job has completed, the landing pages have been updated on devel 
+(which will become release), and the VIEWS have been updated than announce the 
+new annotation packages are available.
+
 [Back to top](#top)
 
 ## Clean up <a name="cleanup"/>
 
+All data has been created and all packages have been built, it's time to clean 
+up! Run through each section of this pipeline and remove any unnecessary copies 
+of data. Below is a list of areas that can be cleaned before stopping the EC2 
+instance.
+
+* `BioconductorAnnotationPipeline/annosrc/`
+	+ `db/` -  everything besides the `metadatasrc.sqlite` file
+	+ `ensembl/` - any outdated data
+	+ `gene/` - any outdated data
+	+ `go/` - any outdated data
+	+ `goext/` - any outdated data
+	+ `inparanoid/` - any outdated data
+	+ `pfam/` - any outdated data
+	+ `plasmoDB/` - any outdated data
+	+ `tair/` - any outdated data
+	+ `ucsc/` - any outdated data
+	+ `unigene/` - any outdated data
+	+ `yeast/` - any outdated data
+
+* `BioconductorAnnotationPipeline/newPipe/`
+	+ any outdated `XXXXXXXX_DB0s/`
+	+ any outdated `XXXXXXXX_OrgDbs/`
+	+ any outdated `XXXXXXXX_TxDbs/`
+* `malbec1:sandbox/` (or `malbec2:sandbox/` depending on release)
+	+ any outdated `XXXXXXXX_DB0s/`
+	+ any outdated `XXXXXXXX_OrgDbs/`
+	+ any outdated `XXXXXXXX_TxDbs/`
 
 [Back to top](#top)
 
