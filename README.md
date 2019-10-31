@@ -363,13 +363,14 @@ using `R CMD INSTALL`.
 
 **4. Build, check, and install `AnnotationForge`**
 
-The package `AnnotationForge` should be built, checked, and installed with the 
-new db0 packages installed. This can done by using `R CMD build`, `R CMD check`, 
-and `R CMD INSTALL`.
+Since `AnnotationForge` suggests the use of `human.db0`, it should be built, 
+checked, and installed with the new db0 packages installed. This can done by 
+using `R CMD build`, `R CMD check`, and `R CMD INSTALL`.
 
 **5. Spot check**
 
-The `chipmapsrc_mouse.sqlite` file should have 8 tables:
+The `chipmapsrc_mouse.sqlite` file in the new `mouse.db0` package should have 
+8 tables:
 
 ```r
 > library(mouse.db0)
@@ -382,7 +383,9 @@ The `chipmapsrc_mouse.sqlite` file should have 8 tables:
 [7] "sqlite_stat1"       "unigene"
 ```
 
-The `chipsrc_mouse.sqlite` file should have 32 tables:
+The `chipsrc_mouse.sqlite` file in the new `mouse.db0` package should have 32 
+tables:
+
 ```r
 > dat2 <- system.file("extdata", file = "chipsrc_mouse.sqlite", package = "mouse.db0")
 > con2 <- dbConnect(drv=RSQLite::SQLite(), dbname = dat2)
@@ -400,10 +403,108 @@ The `chipsrc_mouse.sqlite` file should have 32 tables:
 [31] "unigene"               "uniprot"
 ```
 
+The only things that need to be kept in the db0 package directory is the tarball 
+files created by `R CMD build`. The repos and the check logs can all be deleted.
+
 [Back to top](#top)
 
 ## Build OrgDb, PFAM.db, and GO.db packages <a name="buildmanypkgs"/>
 
+In order for the OrgDb, PFAM.db, and GO.db packages to get built the db0 
+packages must be built. If this step has not happened yet, please refer to the 
+[Build db0 packages](#builddb0pkgs) section above.
+
+**1. Update version of packages**
+
+Modify `Version` and potentially the `DBfile` path to the sqlite file for the 
+21 OrgDb packages, GO.db, and PFAM.db within the 
+`AnnotationForge/inst/extdata/Gentlemanlab/ANNDBPKG-INDEX.TXT` file. The changes 
+to this file **SHOULD NOT BE PUSHED!**
+
+**2. Build, check, and install new AnnotationForge**
+
+`R CMD build`, `R CMD check`, and `R CMD INSTALL` the modified `AnnotationForge`. 
+This must be done before building the OrgDb, PFAM.db, and GO.db packages because 
+the new versions are in the template in `AnnotationForge` that was just modified.
+
+**3. Make edits to makeTerminalDBPkgs.R**
+
+In the `makeTerminalDBPkgs.R` file the `dateDir` should be set to a valid date 
+for when the script is being run. This will become the name of the directory 
+that will house the OrgDbs, PFAM.db, and GO.db packages that are being created. 
+
+There is code in this file that will create the TxDb packages but it should not 
+be run yet. There for an `if (FALSE) {...}` statement should be used where `...` 
+is the code to make the TxDb packages.
+
+**4. Run makeTerminalDBPkgs.R**
+
+Run the portion of `makeTerminalDBPkgs.R` that generates the OrgDbs, PFAM.db, 
+and GO.db packages.
+
+```r
+R --slave < makeTerminalDBPkgs.R
+```
+
+**5. Build, check and install the new packages**
+
+`R CMD build`, `R CMD check`, and `R CMD INSTALL` the new `GO.db` package before 
+building and checking the OrgDbs. Continue building, checking, and installing 
+for all of the OrgDbs and PFAM.db.
+
+**6. Spot check**
+
+Open an R session and load a newly created OrgDb object, e.g, `org.Hs.eg.db`, to 
+ensure that all resources are up-to-date. Specifically, check the GO and ENSEMBL 
+download dates in the metadata of the object. These should be more recent than 
+the last release. 
+
+```r
+> library(org.Hs.eg.db)
+> org.Hs.eg.db
+OrgDb object:
+| DBSCHEMAVERSION: 2.1
+| Db type: OrgDb
+| Supporting package: AnnotationDbi
+| DBSCHEMA: HUMAN_DB
+| ORGANISM: Homo sapiens
+| SPECIES: Human
+| EGSOURCEDATE: 2019-Jul10
+| EGSOURCENAME: Entrez Gene
+| EGSOURCEURL: ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
+| CENTRALID: EG
+| TAXID: 9606
+| GOSOURCENAME: Gene Ontology
+| GOSOURCEURL: ftp://ftp.geneontology.org/pub/go/godatabase/archive/latest-lite/
+| GOSOURCEDATE: 2019-Jul10
+| GOEGSOURCEDATE: 2019-Jul10
+| GOEGSOURCENAME: Entrez Gene
+| GOEGSOURCEURL: ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
+| KEGGSOURCENAME: KEGG GENOME
+| KEGGSOURCEURL: ftp://ftp.genome.jp/pub/kegg/genomes
+| KEGGSOURCEDATE: 2011-Mar15
+| GPSOURCENAME: UCSC Genome Bioinformatics (Homo sapiens)
+| GPSOURCEURL:
+| GPSOURCEDATE: 2019-Sep3
+| ENSOURCEDATE: 2019-Jun24
+| ENSOURCENAME: Ensembl
+| ENSOURCEURL: ftp://ftp.ensembl.org/pub/current_fasta
+| UPSOURCENAME: Uniprot
+| UPSOURCEURL: http://www.UniProt.org/
+| UPSOURCEDATE: Mon Oct 21 14:24:25 2019
+
+Please see: help('select') for usage information
+```
+
+**7. Build other packages**
+
+The final test for these new OrgDbs, PFAM.db, and GO.db packages are to build, 
+check, and install `AnnotationDbi` and `AnnotationForge` with `R CMD build`, 
+`R CMD check`, and `R CMD INSTALL`.
+
+Much like the db0 packages, the only products that need to remain in the OrgDb 
+directory are the tarball files from `R CMD build`. Everything else can be 
+removed.
 
 [Back to top](#top)
 
@@ -431,6 +532,3 @@ The `chipsrc_mouse.sqlite` file should have 32 tables:
 <!--- Section about troubleshooting data building -->
 
 [Back to top](#top)
-
-# BioconductorAnnotationPipeline
-Code to build Bioconductor annotation packages. See the [wiki](https://github.com/Bioconductor/BioconductorAnnotationPipeline/wiki) for more details.
