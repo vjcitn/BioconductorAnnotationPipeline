@@ -105,6 +105,26 @@ directory a personal directory, eg. R-3.6.1, and leave bin to R.
 
 **ADD MORE DETAIL WHEN INSTANCE IS TURNED BACK ON**
 
+**6. Install packages**
+
+Run the following command to install the packages that are needed for this 
+pipeline to work properly (`BiocManager` will have to be installed for code to 
+work).
+
+```r
+BiocManager::install(c("biomaRt", "rtracklayer", "DBI", "AnnotationForge", 
+    "Uniprot.ws", "knitr", "BiocStyle", "Homo.sapiens", "affy", "hom.Hs.inp.db", 
+    "hgu95av.db", "RUnit", "RSQLite", "AnnotationDbi", "annotate", 
+    "EnsDb.Hsapiens.v75", "RMariaDB", "BSgenome.Hsapiens.UCSC.hg19"))
+```
+
+**TODO:** Make this more automated.
+
+**FIXME:** In any of the R files that are run in the pipeline call a package to 
+be loaded, and the R installation is non-standard, there will have to be a 
+`.libPath()` declared for the created library. There seems to be an issue when 
+calling the shell command and it not calling the right lib path.
+
 [Back to top](#top)
 
 ## Download data <a name="downloaddata"/>
