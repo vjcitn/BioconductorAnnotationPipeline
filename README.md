@@ -719,10 +719,26 @@ instance.
 
 ## Troubleshooting <a name="troubleshooting"/>
 
-<!--- Section about troubleshooting data download -->
+This section will help to explain some areas of trouble while running the 
+pipeline. Some issues might have happened by chance and therefore weren't 
+documented here. Troubleshooting will continue to be updated as persistent 
+issues arise.
 
-<!--- Section about troubleshooting data parsing -->
+### Downloading data
 
-<!--- Section about troubleshooting data building -->
+**1. Connectivity issues**
+
+Since the download step accesses online resources, there are possiblities for 
+connectivity issues. The only solution for this is to try to rerun the download 
+script. For example, when running the download script for 'ucsc' there was an 
+error due to a connectivity issue. The first step in the script is to test if 
+the directory is present, if not it creates the directory and downloads the 
+data. If the directory is already present nothing is downloaded. When the 'ucsc' 
+script errored out, it was trying to access data for 'human'. The directory 
+'2019-Jun6' was created and no data was downloaded because of a connectivity 
+issue. When trying to rerun the script, it is assumed the data was already 
+downloaded since the directory is present. To avoid missed data, the created 
+directory should be removed and the `GPSOURCEDATE` in `script/env.sh` should be 
+set to back to the last release date. 
 
 [Back to top](#top)
