@@ -30,19 +30,20 @@ The first step of the pipeline is to log onto the `generateAnnotationsV2` EC2
 instance as `ubuntu`. Downloading the data and generating the annotation 
 packages will take up over 100GB of disk space on the instance. Be sure to 
 have this amount of space otherwise the process will fail. It never hurts to do 
-a pull of the repo to be sure everything is up to date before running pipeline.
+a pull of the repo to be sure everything is up to date before running the 
+pipeline.
 
 ```sh
 git pull
 ``` 
 
-**TODO:** Decide a minimum amount of required space for the scripts to run.
+**TODO:** Decide on a minimum amount of required space for the scripts to run.
 
 The clean up step should have been performed at the end of the pipeline 
 during the last release, but if it was not here are a couple ways to 
 potentially clean up the instance:
 
-* Remove old dbs from the `db/` directory and only save the `metadata.sqlite` 
+* Remove old files from the `db/` directory and only save the `metadata.sqlite` 
 file (under version control in case it gets deleted). **Do not remove any 
 files from `db/` once the parsing has started.** Products sent there are 
 either needed in a subsequent step or may be the final product. 
@@ -55,10 +56,10 @@ testing.
 ## Update R <a name="updater"/>
 
 In order for the packages to be built for the next Bioconductor release, the 
-R version on `ubuntu` will have to be updated. This will be done as `root` 
+R version on `ubuntu` may have to be updated. This should be done as `root` 
 and the packages will be installed as `ubuntu`. There is a README.md file 
 (`home/ubuntu/downloads/README.md`) with basic instructions on how to do this 
-but the following will provide a bit more detail.
+but the following will provide some additional details.
 
 **1. Download the correct version of R**
 
@@ -87,38 +88,42 @@ sudo make install
 
 **4. Clean up  the installations**
 
-Rename the old R version, e.g. `R-3.5`, to `R.old` and move it into 
+Rename the old R version, e.g., `R-3.5` to `R.old`, and move it into 
 `R-installations/`. Any older versions of R can be removed from 
 `R-installations/`, we want to make sure there is at least one working 
-version of R available if needed. Now rename the new version of R, e.g. 
-`R-3.6`, to `R` so when ever `R` is called this verson will be deployed (we 
+version of R available if needed. Now rename the new version of R to `R`, e.g., 
+`R-3.6` to `R`, so when ever `R` is called this verson will be deployed (we 
 will also be setting up aliases to help with this). Move the `tar` and 
 `tar.gz` into `downloads/`. 
 
 **QUESTION:** Could the `tar` and `tar.gz` just be removed since they can 
-always be redownload from `CRAN`?
+always be redownload from CRAN?
 
 **5. Set up proper aliases**
 
 Open the `.bashrc` file to edit the aliases for R. Make the R library 
 directory a personal directory, eg. R-3.6.1, and leave bin to R. 
 
-**ADD MORE DETAIL WHEN INSTANCE IS TURNED BACK ON**
+**FIXME:** Add more detail about how this was set up when instance is turned 
+back on.
 
 **6. Install packages**
 
-Run the following command to install the packages that are needed for this 
-pipeline to work properly (`BiocManager` will have to be installed for code to 
-work).
+Run the following commands to install the packages that are needed for this 
+pipeline to work properly.
 
 ```r
+chooseCRANmirror()
+install.packages("BiocManager")
+
 BiocManager::install(c("biomaRt", "rtracklayer", "DBI", "AnnotationForge", 
     "Uniprot.ws", "knitr", "BiocStyle", "Homo.sapiens", "affy", "hom.Hs.inp.db", 
     "hgu95av.db", "RUnit", "RSQLite", "AnnotationDbi", "annotate", 
-    "EnsDb.Hsapiens.v75", "RMariaDB", "BSgenome.Hsapiens.UCSC.hg19"))
+    "EnsDb.Hsapiens.v75", "RMariaDB", "BSgenome.Hsapiens.UCSC.hg19"),
+    version = "devel")
 ```
 
-**TODO:** Make this more automated.
+**FIXME:** Can this be more automated?
 
 **FIXME:** In any of the R files that are run in the pipeline call a package to 
 be loaded, and the R installation is non-standard, there will have to be a 
@@ -130,7 +135,7 @@ calling the shell command and it not calling the right lib path.
 ## Download data <a name="downloaddata"/>
 
 Now that the instance is cleaned up (`BioconductorAnnotationPipline/` - 141G) 
-and the `R` version is updated it is time to start downloading the data 
+and the R version is updated it is time to start downloading the data 
 needed to create the packages. This can be done by running the command:
 
 ```sh
@@ -200,7 +205,7 @@ is 31 (March 2017). We use version 28 because that is the last time the
 PlasmoDB-28_Pfalciparum3D7Gene.txt file was provided and that's what the code 
 is set up to parse. 
 	+ **TODO:** Don't see a clear replacement - the information might be 
-available in another file in the directory bt it will take some investigation.
+available in another file in the directory but it will take some investigation.
 	+ Check `PLASMOSOURCEDATE` in `plasmoDB/script/env.sh`.
 * pfam
 	+ ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release
@@ -334,9 +339,9 @@ added.
 Now that all the data is built, it is time to start building the annotation 
 packages that will be part of the Bioconductor release. All the code needed to 
 build these packages are located in `BioconductorAnnotationPipeline/newPipe/`.
-Within in this directory there are 3 packages that are needed for the 
-annotation packages. Since these are clones of the repos, a git pull for each of 
-the packages should be done to be sure the most up to date version is utilized.
+Within in this directory there are 3 packages that are needed. Since these are 
+clones of the repos, a git pull for each of the packages should be done to be 
+sure the most up to date version is utilized.
 
 ```sh
 cd AnnotationDbi
@@ -351,6 +356,12 @@ cd GenomicFeatures
 git pull
 cd ..
 ```
+
+**QUESTION:** `AnnotaionForge` and `GenomicFeatures` versions are different on 
+Daniel's annotation instance because we don't push changes to these packages. 
+Would it be the worst case to push changes if the files aren't used else where 
+in the package. Or maybe we just make a local copy of the file that keeps track 
+of the change and we can push to our repo?
  
 The first set of packages that should be built are the db0 packages, e.g., 
 `human.db0`, `mouse.db0`.
@@ -360,9 +371,9 @@ The first set of packages that should be built are the db0 packages, e.g.,
 There are two variables in the R script that should be updated. The `outDir` 
 should be set to a valid date for when the script is being run. This will 
 become the name of the directory that will house the db0 packages being created. 
-The `version` should be a valid version depending on what release Bioconductor 
-is on, e.g. for the October 2019 Bioconductor 3.10 release `version` was set to 
-"3.10.0". This will become the version for all the db0 packages.
+The `version` should be a valid version depending on what the Bioconductor 
+release will be, e.g., for the October 2019 Bioconductor 3.10 release `version` 
+was set to "3.10.0". This will become the version for all the db0 packages.
  
 **2. Run makeDbZeros.R**
 
@@ -370,21 +381,21 @@ is on, e.g. for the October 2019 Bioconductor 3.10 release `version` was set to
 R --slave < makeDbZeros.R
 ```
 
-This script creates the db0 packages by calling out to 
+This script creates the db0 packages by calling 
 `AnnotationForge::sqlForge_wrapBaseDBPkgs.R`. 
 
 **3. Build, check, and install db0 packages**
 
-Each of the db0 packages in `BioconductorAnnotationPipeline/newPipe/XXXXXXXX_DB0S/`
+Each of the db0 packages in `BioconductorAnnotationPipeline/newPipe/XXXXXXXX_DB0s/`
 need to be built and checked using `R CMD build` and `R CMD check`. 
 
-If all the packages build and check okay then the packages should be installed 
-using `R CMD INSTALL`. 
+If all the packages build and check without error then the packages should be 
+installed using `R CMD INSTALL`. 
 
 **4. Build, check, and install AnnotationForge**
 
 Since `AnnotationForge` suggests the use of `human.db0`, it should be built, 
-checked, and installed with the new db0 packages installed. This can done by 
+checked, and installed once the new db0 packages are installed. This can done by 
 using `R CMD build`, `R CMD check`, and `R CMD INSTALL`.
 
 **5. Spot check**
@@ -431,21 +442,22 @@ files created by `R CMD build`. The repos and the check logs can all be deleted.
 ## Build OrgDb, PFAM.db, and GO.db packages <a name="buildmanypkgs"/>
 
 In order for the OrgDb, PFAM.db, and GO.db packages to get built the db0 
-packages must be built. If this step has not happened yet, please refer to the 
-[Build db0 packages](#builddb0pkgs) section above.
+packages must be built first. If the db0 packages have not bee built yet, please 
+refer to the [Build db0 packages](#builddb0pkgs) section above.
 
 **1. Update version of packages**
 
 Modify `Version` and potentially the `DBfile` path to the sqlite file for the 
 21 OrgDb packages, GO.db, and PFAM.db within the 
 `AnnotationForge/inst/extdata/Gentlemanlab/ANNDBPKG-INDEX.TXT` file. The changes 
-to this file **SHOULD NOT BE PUSHED!**
+to this file **should not be pushed**.
 
 **2. Build, check, and install new AnnotationForge**
 
-`R CMD build`, `R CMD check`, and `R CMD INSTALL` the modified `AnnotationForge`. 
-This must be done before building the OrgDb, PFAM.db, and GO.db packages because 
-the new versions are in the template in `AnnotationForge` that was just modified.
+`R CMD build`, `R CMD check`, and `R CMD INSTALL` the modified `AnnotationForge`
+package. This must be done before building the OrgDb, PFAM.db, and GO.db 
+packages because the new versions are in the template in `AnnotationForge` that 
+was just modified.
 
 **3. Make edits to makeTerminalDBPkgs.R**
 
@@ -474,7 +486,7 @@ for all of the OrgDbs and PFAM.db.
 
 **6. Spot check**
 
-Open an R session and load a newly created OrgDb object, e.g, `org.Hs.eg.db`, to 
+Open an R session and load a newly created OrgDb object, e.g., `org.Hs.eg.db`, to 
 ensure that all resources are up-to-date. Specifically, check the GO and ENSEMBL 
 download dates in the metadata of the object. These should be more recent than 
 the last release. 
@@ -534,7 +546,7 @@ removed.
 
 Information should be compared between what is currently available on 
 [Bioconductor](https://www.bioconductor.org/packages/release/BiocViews.html#___TxDb) 
-and what is currently available on the 
+ devel and what is currently available on the 
 [UCSC Genome Browser](https://genome.ucsc.edu/cgi-bin/hgGateway). For example, 
 for the package `TxDb.Hsapiens.UCSC.hg38.knownGene` on the UCSC Genome Browser 
 human should be selected, then under 'Human Assembly' the Dec. 2013 
@@ -545,7 +557,11 @@ than the last release then this package needs to be updated. This should be
 repeated for all of the packages available on Bioconductor. 
 
 It is also important to identify tracks that may not be availabe yet on 
-Bioconductor because these may be new packages than can be added. 
+Bioconductor because these may be new packages that can be added. 
+
+**NOTE:** If any of the new tracks that aren't available yet on Bioconductor are 
+have NCBI Ref Seq data, then let Herve know so he can edit the code in 
+`GenomicFeatures`.
 
 **2. Modify makeTxDb.R**
 
@@ -554,10 +570,13 @@ a script in `GenomicFeatures` should be updated. Modify
 `GenomicFeatures/inst/script/makeTxDb.R` as appropriate. **DO NOT** push the 
 changes to this code.
 
+`GenomicFeatures` must be built, checked, and installed so that the updated 
+version is used when running the script in step 4. 
+
 **3. Edit makeTerminalDBPkgs.R**
 
-Now the code to create the TxDb should be able to run and the code that made 
-the OrgDbs should be included in the `if (FALSE) {...}` statement. The `dateDir` 
+Now the code to create the TxDb should be run and the code that made the 
+OrgDbs should be included in the `if (FALSE) {...}` statement. The `dateDir` 
 should be set to a valid date for when the script is being run. This will become 
 the name of the directory that will house the TxDbs. The `version` should be a 
 valid version depending on what the release is for Bioconductor. 
@@ -591,7 +610,7 @@ following example shows how to do this for the 3.10 release of Bioconductor.
 **1. Log onto the builder**
 
 For the 3.10 release, the builder is `malbec1` so log onto this user as 
-`biocadmin`. This is change between `malbec1` and `malbec2` from release to 
+`biocadmin`. This will change between `malbec1` and `malbec2` from release to 
 release, edit accordingly. Then change into the `sandbox` directory.
 
 ```sh
