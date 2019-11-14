@@ -82,8 +82,8 @@ tar zxf R-3.6.1.tar.gz
 ```sh
 cd R-3.6.1
 sudo ./configure --enable-R-shlib --prefix=/usr/local
-sudo make
-sudo make install
+make
+make install
 ```
 
 **4. Clean up  the installations**
