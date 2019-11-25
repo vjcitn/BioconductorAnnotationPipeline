@@ -7,8 +7,7 @@ parseEnsemblPepIDs = function(file, fileName ){
     IDs <- as.matrix(Data[,ids])
     IDs <- gsub(">EG:", "", IDs)
     IDs <- gsub("gene:", "", IDs)
-    if (!fileName == "celegans_gene_ensembl_prot.tab")
-        IDs <- gsub("\\.[0-9]", "", IDs)
+    IDs <- gsub("\\.[0-9]", "", IDs)
     write.table(IDs, file=fileName, sep="\t", row.names=F, col.names=F, quote=F)
 }
 
@@ -21,8 +20,7 @@ parseEnsemblTransIDs = function(file, fileName ){
     IDs <- as.matrix(Data[,ids])
     IDs <- gsub(">EG:", "", IDs)
     IDs <- gsub("gene:", "", IDs)    
-    if (!fileName == "celegans_gene_ensembl_prot.tab")
-        IDs <- gsub("\\.[0-9]", "", IDs)
+    IDs <- gsub("\\.[0-9]", "", IDs)
     write.table(IDs, file=fileName, sep="\t", row.names=F, col.names=F, quote=F)
 }
 

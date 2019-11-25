@@ -254,6 +254,7 @@ popEnsembl2PROTTable(c("chipsrc_yeast.sqlite" = "scerevisiae_gene_ensembl"))
 ## NOTE: As of April 2017 the ensembl marts for biomaRt were non=-functional
 ##       Using the 87 archive to get the correct entrezgene ids. This
 ##       Should be changed back to host="www.ensembl.org" for BioC 3.6.
+browser()
 message("starting worm")
 library(biomaRt)
 mart <- useMart("ENSEMBL_MART_ENSEMBL", "celegans_gene_ensembl",

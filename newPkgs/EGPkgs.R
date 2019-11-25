@@ -30,12 +30,11 @@ populateDB("MALARIA_DB", prefix="org.Pf.plasmo",
 
 ## ## #seed = new("AnnDbPkgSeed",Package="org.Pf.plasmo.db", Version="1.0.0", PkgTemplate="MALARIA.DB",AnnObjPrefix="org.Pf.plasmo", biocViews = "AnnotationData, Plasmodium_falciparum")
 ## ## #makeAnnDbPkg(seed, "org.Pf.plasmo.sqlite"), dest_dir=".")
-
+cat("building ZEBRAFISH_DB\n")
 populateDB("ZEBRAFISH_DB", prefix="org.Dr.eg",
                chipSrc = paste0(dbBaseDir, "chipsrc_zebrafish.sqlite"),
                metaDataSrc = metaDataSrc,
                outputDir=outDir)
-cat("building XEBRAFISH_DB\n")
 
 ## ## ## seed = new("AnnDbPkgSeed",Package="org.Dr.eg.db", Version="1.0.0", PkgTemplate="ZEBRAFISH.DB",AnnObjPrefix="org.Dr.eg", biocViews = "AnnotationData, Danio_rerio")
 ## ## ## makeAnnDbPkg(seed, "org.Dr.eg.sqlite"), dest_dir=".")

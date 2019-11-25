@@ -260,7 +260,7 @@ CREATE TABLE smart (
 INSERT INTO smart
  SELECT DISTINCT s._id, d.db_id
  FROM sgdsrc.domains as d CROSS JOIN sgd as s
- WHERE d.analysis_method='HMMSmart' AND d.systematic_name=s.systematic_name;
+ WHERE d.analysis_method='SMART' AND d.systematic_name=s.systematic_name;
 
 CREATE INDEX sm1 ON smart(_id);
 CREATE INDEX Fsmart ON smart (_id);
