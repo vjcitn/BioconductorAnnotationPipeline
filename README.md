@@ -392,13 +392,7 @@ need to be built and checked using `R CMD build` and `R CMD check`.
 If all the packages build and check without error then the packages should be 
 installed using `R CMD INSTALL`. 
 
-**4. Build, check, and install AnnotationForge**
-
-Since `AnnotationForge` suggests the use of `human.db0`, it should be built, 
-checked, and installed once the new db0 packages are installed. This can done by 
-using `R CMD build`, `R CMD check`, and `R CMD INSTALL`.
-
-**5. Spot check**
+**4. Spot check**
 
 The `chipmapsrc_mouse.sqlite` file in the new `mouse.db0` package should have 
 8 tables:
@@ -436,6 +430,73 @@ tables:
 
 The only things that need to be kept in the db0 package directory is the tarball 
 files created by `R CMD build`. The repos and the check logs can all be deleted.
+
+**5. Empty table check**
+
+Another test that can be done is to check that the tables actually got 
+populated properly. This can be done by looking for empty tables within each of 
+the db0 packages and confirming if they were previously empty or not. A function 
+has been written to ease the implementation of this test over all of the db0 
+packages. See the function and example below that demonstrates this test for the 
+`anopheles.db0` package.
+
+```r
+# The created function
+> library(RSQLite)
+> tbl_check <- function(pkg_name) {
++ if(!(pkg_name %in% rownames(installed.packages())))
++     BiocManager::install(pkg_name)
++ library(pkg_name, character.only = TRUE)
++
++ species <- gsub(".db0", "", pkg_name)
++
++ dat1 <- system.file("extdata", file = paste0("chipmapsrc_", species, ".sqlite"),
++     package = pkg_name)
++ if (nzchar(dat1)) {
++     con1 <- dbConnect(drv=RSQLite::SQLite(), dbname = dat1)
++     sql1 <- paste("SELECT COUNT(*) FROM", dbListTables(con1), ";")
++     lst1 <- sapply(sql1, function(sql) dbGetQuery(con1, sql))
++     dbDisconnect(con1)
++
++     cat("The empty tables in the chipmapsrc file", "\n")
++     names(lst1[which(lst1 == 0)])
++ } else
++     cat("There is no chipmapsrc file for this species")
++
++ dat2 <- system.file("extdata", file = paste0("chipsrc_", species, ".sqlite"),
++     package = pkg_name)
++ if (nzchar(dat2)) {
++     con2 <- dbConnect(drv=RSQLite::SQLite(), dbname = dat2)
++     sql2 <- paste0("SELECT COUNT(*) FROM ", dbListTables(con2), ";")
++     lst2 <- sapply(sql2, function(sql) dbGetQuery(con2, sql))
++     dbDisconnect(con2)
++
++     cat("\nThe empty tables in the chipsrc file", "\n")
++     names(lst2[which(lst2 == 0)])
++ } else
++     cat("\nThere is no chipsrc file for this species")
++ }
+> tbl_check("anopheles.db0")
+The empty tables in the chipmapsrc file
+
+The empty tables in the chipsrc file
+[1] "SELECT COUNT(*) FROM ncbi2ensembl;.COUNT(*)"
+```
+
+Once the empty tables are discovered, like the `ncbi2ensembl` table in the 
+chipsrc file for the `anopheles.db0` package, the tables should be compared to 
+a local version of the current release verison of the package. This will 
+indicate whether the table has been empty or if this was a bug introduced in 
+this particular run of the pipeline. If this is a bug then some debugging will 
+have to be done to figure out what went wrong during this run of the pipeline 
+before making the packages available and/or creating other packages off this 
+wrong information.
+
+**6. Build, check, and install AnnotationForge**
+
+Since `AnnotationForge` suggests the use of `human.db0`, it should be built,
+checked, and installed once the new db0 packages are installed. This can done by
+using `R CMD build`, `R CMD check`, and `R CMD INSTALL`.
 
 [Back to top](#top)
 
