@@ -63,6 +63,18 @@ term2term <- term2term[c(4, 2, 1, 3, 5)]
 
 ## term_synonym.txt
 
+alt_id <- kv[kv$key == 'alt_id',]
+
+synonym <- kv[kv$key == 'synonym',]
+synonyms <- toupper(synonyms)
+by_synonym <- lapply(synonyms, function(s) {
+    val <- synonym[grep(s, synonyms),]$value
+    
+})
+names(by_synonym) <- synonym
+
+term2synonym <- synonyms[c(1, 2, 3, 5, 4)]
+    
 
 
 ## term_definition.txt
