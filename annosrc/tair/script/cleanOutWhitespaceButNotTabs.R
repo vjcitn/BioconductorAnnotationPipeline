@@ -2,7 +2,7 @@
 ## and the 1st two are *always* present.
 
 clnWhiteSpaceFromLocusPub <- function(inputFile, outputFile){
-  allData <- read.delim(inputFile, header=FALSE, sep="\t", stringsAsFactors=FALSE, strip.white=TRUE)
+  allData <- read.delim(inputFile, header=FALSE, sep="\t", stringsAsFactors=FALSE, strip.white=TRUE)[,-4]
 
   ## allData <- allData[1:10,]
   ## notna <- !is.na(allData) ## seems I should be able to make use of this...

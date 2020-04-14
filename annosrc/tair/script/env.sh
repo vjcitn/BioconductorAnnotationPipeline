@@ -2,31 +2,31 @@
 set -e
 export TAIRSOURCEDATE=2015-Apr07
 export TAIRSOURCENAME="Tair"
-export TAIRSOURCEURL="ftp://ftp.arabidopsis.org"
+export TAIRSOURCEURL="https://www.arabidopsis.org/"
 
-export TAIRGOURL="ftp://ftp.arabidopsis.org/Ontologies/Gene_Ontology/ATH_GO_GOSLIM.txt"
+export TAIRGOURL="https://www.arabidopsis.org/download_files/GO_and_PO_Annotations/Gene_Ontology_Annotations/ATH_GO_GOSLIM.txt"
 export TAIRGOURLNAME="ATH_GO_GOSLIM.txt"
 
-export TAIRGENEURL="ftp://ftp.arabidopsis.org/home/tair/Genes/TAIR10_genome_release/TAIR10_functional_descriptions" 
+export TAIRGENEURL="https://www.arabidopsis.org/download_files/Genes/TAIR10_genome_release/TAIR10_functional_descriptons" 
 export TAIRGENEURLNAME="TAIR10_functional_descriptions"
 
-export TAIRSYMBOLURL="ftp://ftp.arabidopsis.org/home/tair/Genes/gene_aliases_20140331.txt"
-export TAIRSYMBOLURLNAME="gene_aliases_20140331.txt"
+export TAIRSYMBOLURL="https://www.arabidopsis.org/download_files/Public_Data_Releases/TAIR_Data_20190331/gene_aliases_20190402.txt.gz"
+export TAIRSYMBOLURLNAME="gene_aliases_20140331.txt.gz"
 
-export TAIRPATHURL="ftp://ftp.plantcyc.org/Pathways/Data_dumps/PMN10_June2015/aracyc_pathways.20150608"
-export TAIRPATHURLNAME="aracyc_pathways.20150608"
+export TAIRPATHURL="ftp://ftp.plantcyc.org/Pathways/Data_dumps/PMN14_January2020/pathways/Ara_pathways.20200125"
+export TAIRPATHURLNAME="Ara_pathways.20200125"
 
-export TAIRPMIDURL="ftp://ftp.arabidopsis.org/home/tair/User_Requests/Locus_Published_20130305.txt"
-export TAIRPMIDURLNAME="Locus_Published_20130305.txt"
+export TAIRPMIDURL="https://www.arabidopsis.org/download_files/Public_Data_Releases/TAIR_Data_20190331/Locus_Published_20190402.txt.gz"
+export TAIRPMIDURLNAME="Locus_Published_20130305.txt.gz"
 
-export TAIRCHRURL="ftp://ftp.arabidopsis.org/Maps/seqviewer_data/sv_gene.data" ## found
+export TAIRCHRURL="https://www.arabidopsis.org/download_files/Maps/seqviewer_data/sv_gene.data"
 export TAIRCHRURLNAME="sv_gene.data"
 
-export TAIRATHURL="ftp://ftp.arabidopsis.org/Microarrays/Affymetrix/affy_ATH1_array_elements-2010-12-20.txt"
+export TAIRATHURL="https://www.arabidopsis.org/download_files/Microarrays/Affymetrix/affy_ATH1_array_elements-2010-12-20.txt"
 export TAIRATHURLNAME="affy_ATH1_array_elements-2010-12-20.txt"
 
-export TAIRAGURL="ftp://ftp.arabidopsis.org/Microarrays/Affymetrix/affy_AG_array_elements-2010-12-20.txt"
+export TAIRAGURL="https://www.arabidopsis.org/download_files/Microarrays/Affymetrix/affy_AG_array_elements-2010-12-20.txt"
 export TAIRAGURLNAME="affy_AG_array_elements-2010-12-20.txt"
 
-export TAIRGFF="ftp://ftp.arabidopsis.org/home/tair/Genes/TAIR10_genome_release/TAIR10_gff3/TAIR10_GFF3_genes.gff"
+export TAIRGFF="https://www.arabidopsis.org/download_files/Genes/TAIR10_genome_release/TAIR10_gff3/TAIR10_GFF3_genes.gff"
 export TAIRGFFURLNAME="TAIR10_GFF3_genes.gff"
