@@ -10,11 +10,13 @@ obo <- GSEABase::getOBOCollection('go.obo')
 kv <- obo@.kv
 stanza <- obo@.stanza
 
-synonyms <- c('exact', 'alt_id', 'related', 'broad', 'narrow')
+synonym_type <- c('alt_id')
+synonym_scope <- c('exact', 'related', 'broad', 'narrow')
 
 names <- rownames(stanza)[-1]  ## Remove __Root__
 names <- c("is_a", names)      ## Add is_a relationship
-names <- c(names, synonyms)    ## Add synonyms
+names <- c(names, synonym_type)    ## Add synonym_type
+names <- c(names, synonym_scope)    ## Add synonym_scope
 
 
 ## Create term table
@@ -23,32 +25,35 @@ terms <- data.frame(id = seq_along(names),
 
 term_id_names <- terms
 
-temp_df <- kv[kv$key == 'namespace'][-2]
+temp_df <- kv[kv$key == 'namespace',][-2]
 names(temp_df) <- c('name', 'term_type')
 term <- dplyr::left_join(terms, temp_df)
 
 term['acc'] <- term['name']     ## Works if not including subsets in term table
 
-obselete <- kv[kv$key == 'is_obsolete'][[1]] ## Get tags that are absolete
+obselete <- kv[kv$key == 'is_obsolete',][[1]] ## Get tags that are absolete
 
 term['is_obsolete'] <- ifelse(names %in% obselete, 1, 0)
 
 term['is_root'] <- rep(0, nrow(term))
 
 relationships <- c('relationship', 'external')
-term['is_relationsip'] <- ifelse(term$term_type %in% relationships, 1, 0)
+term['is_relationship'] <- ifelse(term$term_type %in% relationships, 1, 0)
+term[term$name == 'is_a', 'term_type'] <- 'relationship'
+term[term$name %in% synonym_type, 'term_type'] <- 'synonym_type'
+term[term$name %in% synonym_scope, 'term_type'] <- 'synonym_scope'
 
 
 ## Create term2term table
 
 is_a <- kv[kv$key == 'is_a',]
-colnames(is_a) <- c('term1', 'relationship', 'term2')
+colnames(is_a) <- c('term1_id', 'relationship_type_id', 'term2_id')
 
 relations <- kv[kv$key == 'relationship',][-2]
 relations <- tidyr::separate(relations, value, c('V2', 'V3'), sep = " ")
 colnames(relations) <- c('term1_id', 'relationship_type_id', 'term2_id')
 
-rbind(is_a, relations)
+relations <- rbind(is_a, relations)
 
 relations[[1]] <- match(relations[[1]], names)
 relations[[2]] <- match(relations[[2]], names)
@@ -64,26 +69,40 @@ term2term <- term2term[c(4, 2, 1, 3, 5)]
 ## term_synonym.txt
 
 alt_id <- kv[kv$key == 'alt_id',]
+colnames(alt_id) <- c('term_id', 'synonym_type_id', 'term_synonym')
+alt_id['acc_synonym'] <- alt_id['term_synonym']
+alt_id['synonym_category_id'] <- "\\N"
 
 synonym <- kv[kv$key == 'synonym',]
-synonyms <- toupper(synonyms)
-by_synonym <- lapply(synonyms, function(s) {
-    val <- synonym[grep(s, synonyms),]$value
-    
+by_synonym <- lapply(synonym_scope, function(s) {
+    val <- synonym[grep(toupper(s), synonym$value),][-2]
+    val$value <- stringi::stri_extract_first_regex(val$value, '(?<=").*?(?=")')
+    val['synonym_type_id'] <- s
+    val
 })
-names(by_synonym) <- synonym
+by_synonym <- do.call(rbind, by_synonym)
 
-term2synonym <- synonyms[c(1, 2, 3, 5, 4)]
+colnames(by_synonym) <- c('term_id', 'term_synonym', 'synonym_type_id')
+by_synonym['acc_synonym'] <- "\\N"
+by_synonym['synonym_category_id'] <- "\\N"
+
+term_synonym <- dplyr::left_join(alt_id, by_synonym)
+
+term_synonym$term_id <- match(term_synonym$term_id, names)
+term_synonym$synonym_type_id <- match(term_synonym$synonym_type_id, names)
+
+term_synonym <- term_synonym[c(1, 3, 4, 2, 5)]
     
 
 
 ## term_definition.txt
 
-def <-  kv[kv$key == 'relationship',][-2]
+def <-  kv[kv$key == 'def',][-2]
 colnames(def) <- c('term_id', 'term_definition')
 def[[1]] <- match(def[[1]], names)
+def$term_definition <- unlist(stringi::stri_extract_first_regex(def$term_definition, '(?<=").*?(?=")'))
 
-comment <- kv[kv$key == 'relationship',][-2]
+comment <- kv[kv$key == 'comment',][-2]
 colnames(comment) <- c('term_id', 'term_comment')
 comment[[1]] <- match(comment[[1]], names)
 
