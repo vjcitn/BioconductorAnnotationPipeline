@@ -116,7 +116,7 @@ term_definition['reference'] <- '\\N'
 term_definition <- term_definition[c(1, 2, 4, 3, 5)]
 
 
-write.table(term_defnition, file = term_definition_f, quote=F, col.names=F, row.names=F)
+write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row.names=F)
 
 
 ## graph_path.txt
