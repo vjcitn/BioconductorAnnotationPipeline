@@ -41,7 +41,7 @@ term[term$name == 'is_a', 'term_type'] <- 'relationship'
 term[term$name %in% synonym_type, 'term_type'] <- 'synonym_type'
 term[term$name %in% synonym_scope, 'term_type'] <- 'synonym_scope'
 
-write.table(term, file = term_f, quote=F, col.names=F, row.names=F)
+write.table(term, file = term_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
 
 ## Create term2term table
@@ -60,11 +60,11 @@ relations[[2]] <- match(relations[[2]], names)
 relations[[3]] <- match(relations[[3]], names)
 
 term2term <- relations
-term2term['id'] <- seq_along(nrow(term2term))
+term2term['id'] <- seq_len(nrow(term2term))
 term2term['complete'] <- 0
 term2term <- term2term[c(4, 2, 1, 3, 5)]
 
-write.table(term2term, file = term2term_f, quote=F, col.names=F, row.names=F)
+write.table(term2term, file = term2term_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
 
 ## term_synonym.txt
@@ -94,7 +94,7 @@ term_synonym$synonym_type_id <- match(term_synonym$synonym_type_id, names)
 
 term_synonym <- term_synonym[c(1, 3, 4, 2, 5)]
     
-write.table(term_synonym, file = term_synonym_f, quote=F, col.names=F, row.names=F)
+write.table(term_synonym, file = term_synonym_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
 
 ## term_definition.txt
@@ -116,7 +116,7 @@ term_definition['reference'] <- '\\N'
 term_definition <- term_definition[c(1, 2, 4, 3, 5)]
 
 
-write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row.names=F)
+write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
 
 ## graph_path.txt
@@ -148,5 +148,5 @@ graph_path['V5'] <- ones
 graph_path['V6'] <- ones
 
 
-write.table(graph_path, file = graph_path_f, quote=F, col.names=F, row.names=F)
+write.table(graph_path, file = graph_path_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
