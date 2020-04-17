@@ -6,7 +6,7 @@ term_synonym_f <- "term_synonym.txt"
 graph_path_f <- "graph_path.txt"
 
 
-obo <- GSEABase::getOBOCollection('go.obo')
+obo <- GSEABase::getOBOCollection('../go.obo')
 kv <- obo@.kv
 stanza <- obo@.stanza
 

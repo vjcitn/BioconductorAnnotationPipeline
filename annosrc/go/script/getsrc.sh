@@ -10,10 +10,12 @@ GOTERM_TAR=$FILE
 cd ../$GOSOURCEDATE
 #rm -rf $GOTERM_DIR
 #tar xvfz $GOTERM_TAR
-#rm -f goterm
-ln -s $GOTERM_DIR goterm
+rm -rf goterm
+mkdir goterm
+cd goterm
+#ln -s $GOTERM_DIR goterm
 
-Rscript ../script/parseOBO.R
+Rscript ../../script/parseOBO.R
 
 ## create source sqlite db
 rm -f gosrcsrc.sqlite
