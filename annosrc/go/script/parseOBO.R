@@ -115,6 +115,8 @@ term_definition['reference'] <- '\\N'
 
 term_definition <- term_definition[c(1, 2, 4, 3, 5)]
 
+term_definition[is.na(term_definition)] <- "//N"   # Change any remaining NA's to mysql-friendly //N's
+
 
 write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
