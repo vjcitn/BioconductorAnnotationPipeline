@@ -29,6 +29,11 @@ term <- dplyr::left_join(terms, temp_df)
 
 term['acc'] <- term['name']     ## Works if not including subsets in term table
 
+nam <- kv[kv$key == 'name',][-2]
+colnames(nam) <- c('name', 'value')
+temp <- dplyr::left_join(term, nam)
+term['name'] <- ifelse(is.na(temp$value), term$name, temp$value)
+
 obselete <- kv[kv$key == 'is_obsolete',][[1]] ## Get tags that are absolete
 
 term['is_obsolete'] <- ifelse(names %in% obselete, 1, 0)
@@ -87,7 +92,7 @@ colnames(by_synonym) <- c('term_id', 'term_synonym', 'synonym_type_id')
 by_synonym['acc_synonym'] <- "\\N"
 by_synonym['synonym_category_id'] <- "\\N"
 
-term_synonym <- dplyr::left_join(alt_id, by_synonym)
+term_synonym <- rbind(alt_id, by_synonym)
 
 term_synonym$term_id <- match(term_synonym$term_id, names)
 term_synonym$synonym_type_id <- match(term_synonym$synonym_type_id, names)
@@ -125,7 +130,6 @@ write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row
 
 ## NOTE: This section generalizes the file to only show generate edges in the transitive closure
 ## We assume that the shortest distances are not going to be needed, so those are set to one.
-
 
 V <- as.character(seq_along(names))
 E <- with(term2term, split(term1_id, term2_id))
