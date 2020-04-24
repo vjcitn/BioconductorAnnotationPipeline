@@ -1,4 +1,6 @@
 
+.libPaths("~/R-libraries")
+
 term_f <- "term.txt"
 term2term_f <- "term2term.txt"
 term_definition_f <- "term_definition.txt"
@@ -153,6 +155,11 @@ graph_path['V4'] <- ones
 graph_path['V5'] <- ones
 graph_path['V6'] <- ones
 
+graph_path <- graph_path[, c(1, 3, 2, 4, 5, 6)]  # correct term order
+
+two_col <- graph_path[,c(2,3)]
+dup <- duplicated(t(apply(two_col, 1, sort)))
+graph_path <- graph_path[!dup,]
 
 write.table(graph_path, file = graph_path_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
