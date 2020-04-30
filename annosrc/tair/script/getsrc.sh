@@ -8,9 +8,9 @@ cd ../$TAIRSOURCEDATE
 
 ## Skip these steps - data are already parsed.
 ## split locus column by ;
-#R --slave < ../script/parseLocus.R
+R --slave < ../script/parseLocus.R
 #echo "cleaning up the PMID sources"
-#R --slave < ../script/cleanOutWhitespaceButNotTabs.R
+R --slave < ../script/cleanOutWhitespaceButNotTabs.R
 
 ## Rebuild db to incorporate new GO
 rm -f tairsrc.sqlite

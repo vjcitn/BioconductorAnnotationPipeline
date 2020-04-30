@@ -19,7 +19,7 @@ files = files[c(ind,ind2,ind3,ind4)]
 ##for the fields that you want.
 
 ## select map_name from map_counts;
-.libPaths("~/R-3.6.1")
+.libPaths("~/R-libraries")
 library(DBI)
 library("RSQLite")
 drv <- dbDriver("SQLite")

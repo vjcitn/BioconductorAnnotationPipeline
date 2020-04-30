@@ -18,6 +18,7 @@ cd goterm
 Rscript ../../script/parseOBO.R
 
 ## create source sqlite db
+cd ..
 rm -f gosrcsrc.sqlite
 sqlite3 -bail gosrcsrc.sqlite < ../script/srcdb.sql
 

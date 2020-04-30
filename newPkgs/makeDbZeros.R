@@ -1,11 +1,11 @@
 ## db0 packages must be generated and installed before creating OrgDb, ChipDb, etc.
-.libPaths("~/R-3.6.1")
+.libPaths("~/R-libraries")
 library(AnnotationForge)
-outDir = "./20191021_DB0s"
+outDir = "./20200424_DB0s"
 if (!file.exists(outDir)) 
     dir.create(outDir)
 
 ## Create db0s:
-version <- "3.10.1"
+version <- "3.11.1"
 dbPath = "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/"
 wrapBaseDBPackages(dbPath=dbPath, destDir=outDir, version=version)

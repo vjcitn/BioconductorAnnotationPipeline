@@ -6,19 +6,19 @@
 ## -----------------------------------------------------------------------
 ## Make OrgDb:
 ## -----------------------------------------------------------------------
-.libPaths("~/R-3.6.1")
-library(AnnotationForge)
-library(AnnotationDbi)
+#.libPaths("~/R-libraries")
+#library(AnnotationForge)
+#library(AnnotationDbi)
 
 ## 1. run copyLatest.sh to move KEGG, GO, PFAM, and YEAST to sanctionedSqlite
 
 ## 2. Create *.sqlite files in 'sanctionedSqlite'
-##outDir <- "sanctionedSqlite"
-##if (!file.exists(outDir)) 
-##    dir.create(outDir)
-##dbBaseDir <- "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/"
-##metaDataSrc <- paste0(dbBaseDir, "metadatasrc.sqlite")
-##source("EGPkgs.R")
+#outDir <- "sanctionedSqlite"
+#if (!file.exists(outDir))
+#    dir.create(outDir)
+#dbBaseDir <- "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/"
+#metaDataSrc <- paste0(dbBaseDir, "metadatasrc.sqlite")
+#source("EGPkgs.R")
 
 ## 3. Edit version numbers (and path if necessary) in
 ## AnnotationForge/inst/scripts/GentlemanLab/ANNDBPKG-INDEX.TXT
@@ -28,25 +28,25 @@ library(AnnotationDbi)
 ## files must be created there (done in step 2).
 
 ## Create packages in 'orgdbDir' from the *.sqlite files in 'sanctionedSqlite'
-##dateDir = "./20191021"
-##orgdbDir <- paste(dateDir,"_OrgDbs",sep="")
-##if (!file.exists(orgdbDir)) 
-##    dir.create(orgdbDir)
-##sqlitefiles <- list.files(outDir, pattern="^org")
-##packages <- paste(substr(sqlitefiles, 1, nchar(sqlitefiles)-7), ".db", sep="")
+#dateDir = "./20200424"
+#orgdbDir <- paste(dateDir,"_OrgDbs",sep="")
+#if (!file.exists(orgdbDir))
+#    dir.create(orgdbDir)
+#sqlitefiles <- list.files(outDir, pattern="^org")
+#packages <- paste(substr(sqlitefiles, 1, nchar(sqlitefiles)-7), ".db", sep="")
 ## include GO.db, PFAM.db
-##packages <- c(packages, "GO.db", "PFAM.db")
-##makeAnnDbPkg(x=packages, dest_dir=orgdbDir)
+#packages <- c(packages, "GO.db", "PFAM.db")
+#makeAnnDbPkg(x=packages, dest_dir=orgdbDir)
 
 ## -----------------------------------------------------------------------
 ## Make TxDb:
 ## -----------------------------------------------------------------------
 library(GenomicFeatures)
-dateDir = "./20191021"
+dateDir = "./20200428"
 txdbDir <- paste(dateDir,"_TxDbs",sep="")
-if (!file.exists(txdbDir)) 
+if (!file.exists(txdbDir))
     dir.create(txdbDir)
-version <- "3.10.0"
+version <- "3.11.0"
 source(system.file("script","makeTxDbs.R", package="GenomicFeatures"))
 TxDbPackagesForRelease(version=version, 
                        destDir=txdbDir,

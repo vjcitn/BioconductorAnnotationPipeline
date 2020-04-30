@@ -81,7 +81,7 @@ echo "finished organism_annotation"
 echo "building yeast"
 cd $SRC_BASE/yeast/script; sh getdb.sh 
 echo "finished yeast"
-if false;then
+
 echo "building plasmoDB"
 cd $SRC_BASE/plasmoDB/script; sh getdb.sh  
 echo "finished plasmoDB"

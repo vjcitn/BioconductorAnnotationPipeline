@@ -6,7 +6,7 @@
 
 #In script I will call this by just going to the current dir with the
 #IPDATA dir (eg above) and just running it.
-.libPaths("~/R-3.6.1")
+.libPaths("~/R-libraries")
 library("RSQLite")
 source("./script/prepareData.R")
 file.remove("inparanoid.sqlite")

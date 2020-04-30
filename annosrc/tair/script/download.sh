@@ -4,7 +4,8 @@ set -e
 
 BASE_URL=$TAIRSOURCEURL
 THIS_YEAR=`date|awk '{print $6}'`
-LATEST_DATE=`curl -s -L --disable-epsv $BASE_URL/|grep "User_Requests"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+#LATEST_DATE=`curl -s -L --disable-epsv $BASE_URL/|grep "User_Requests"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_DATE=2020-Apr01
 
 if [ -z "$LATEST_DATE" ]; then
         echo "download.sh: User_Requests directory from $BASEURL not found"
@@ -24,20 +25,20 @@ if [ "$LATEST_DATE" != "$TAIRSOURCEDATE" ]; then
       curl --disable-epsv -O $TAIRPMIDURL
       curl --disable-epsv -O $TAIRGFF
       cd ../script  
-      TAIRATHURL=`echo $TAIRATHURL|sed -e 's/\//\\\\\//g'`
-      TAIRAGURL=`echo $TAIRAGURL|sed -e 's/\//\\\\\//g'`
-      TAIRGOURL=`echo $TAIRGOURL|sed -e 's/\//\\\\\//g'`
-      TAIRSYMBOLURL=`echo $TAIRSYMBOLURL|sed -e 's/\//\\\\\//g'`
-      TAIRPATHURL=`echo $TAIRPATHURL|sed -e 's/\//\\\\\//g'`
-      TAIRPMIDURL=`echo $TAIRPMIDURL|sed -e 's/\//\\\\\//g'`
+      #TAIRATHURL=`echo $TAIRATHURL|sed -e 's/\//\\\\\//g'`
+      #TAIRAGURL=`echo $TAIRAGURL|sed -e 's/\//\\\\\//g'`
+      #TAIRGOURL=`echo $TAIRGOURL|sed -e 's/\//\\\\\//g'`
+      #TAIRSYMBOLURL=`echo $TAIRSYMBOLURL|sed -e 's/\//\\\\\//g'`
+      #TAIRPATHURL=`echo $TAIRPATHURL|sed -e 's/\//\\\\\//g'`
+      #TAIRPMIDURL=`echo $TAIRPMIDURL|sed -e 's/\//\\\\\//g'`
       echo "update $TAIRSOURCENAME data from $TAIRSOURCEDATE to $LATEST_DATE"
       sed -i -e "s/ TAIRSOURCEDATE=.*$/ TAIRSOURCEDATE=$LATEST_DATE/g" env.sh    
-      sed -i -e "s/ TAIRATHURL=.*$/ TAIRATHURL=\"$TAIRATHURL\"/g" env.sh    
-      sed -i -e "s/ TAIRAGURL=.*$/ TAIRAGURL=\"$TAIRAGURL\"/g" env.sh    
-      sed -i -e "s/ TAIRGOURL=.*$/ TAIRGOURL=\"$TAIRGOURL\"/g" env.sh    
-      sed -i -e "s/ TAIRSYMBOLURL=.*$/ TAIRSYMBOLURL=\"$TAIRSYMBOLURL\"/g" env.sh    
-      sed -i -e "s/ TAIRPATHURL=.*$/ TAIRPATHURL=\"$TAIRPATHURL\"/g" env.sh    
-      sed -i -e "s/ TAIRPMIDURL=.*$/ TAIRPMIDURL=\"$TAIRPMIDURL\"/g" env.sh    
+      #sed -i -e "s/ TAIRATHURL=.*$/ TAIRATHURL=\"$TAIRATHURL\"/g" env.sh
+      #sed -i -e "s/ TAIRAGURL=.*$/ TAIRAGURL=\"$TAIRAGURL\"/g" env.sh
+      #sed -i -e "s/ TAIRGOURL=.*$/ TAIRGOURL=\"$TAIRGOURL\"/g" env.sh
+      #sed -i -e "s/ TAIRSYMBOLURL=.*$/ TAIRSYMBOLURL=\"$TAIRSYMBOLURL\"/g" env.sh
+      #sed -i -e "s/ TAIRPATHURL=.*$/ TAIRPATHURL=\"$TAIRPATHURL\"/g" env.sh
+      #sed -i -e "s/ TAIRPMIDURL=.*$/ TAIRPMIDURL=\"$TAIRPMIDURL\"/g" env.sh
       #sh getsrc.sh
       ##Some post-processing (would be nicer if I made more variables here
     

@@ -6,7 +6,7 @@
 
 ## 1) Get a set of entrez gene IDs for a species (and tax ID) (
 ## (extract ALL of this information from the relevant chipsrc DB)
-.libPaths("~/R-3.6.1")
+.libPaths("~/R-libraries")
 library("RSQLite")
 library("UniProt.ws")
 drv <- dbDriver("SQLite")

@@ -4,7 +4,7 @@ set -e
 export UCSCBASEURL="ftp://hgdownload.cse.ucsc.edu/goldenPath/"
 export UCSCREFLINKURL="http://hgdownload.cse.ucsc.edu/goldenPath/hgFixed/database/refLink.txt.gz"
 
-export GPSOURCEDATE_human=2019-Sep3
+export GPSOURCEDATE_human=2020-Jan28
 export GPSOURCEDATE_mouse=2019-Sep3
 export GPSOURCEDATE_rat=2017-Mar16
 export GPSOURCEDATE_fly=2019-Jan15
@@ -16,7 +16,7 @@ export GPSOURCEDATE_worm=2019-Jan10
 export GPSOURCEDATE_chicken=2019-Jan16
 export GPSOURCEDATE_rhesus=2017-Aug10
 export GPSOURCEDATE_anopheles=2018-Oct2
-export GPSOURCEDATE_chimp=2018-Oct4
+export GPSOURCEDATE_chimp=2019-Apr25
 
 export GPSOURCENAME_human="UCSC Genome Bioinformatics (Homo sapiens)"
 export GPSOURCENAME_mouse="UCSC Genome Bioinformatics (Mus musculus)"

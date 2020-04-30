@@ -6,7 +6,7 @@
 ## - two attributes:
 ##   -- "Ensembl Gene ID": ensembl_gene_id
 ##   -- "EntrezGene ID": entrezgene
-.libPaths("~/R-3.6.1")
+.libPaths("~/R-libraries")
 library(biomaRt)
 library(DBI)
 library(RSQLite)
