@@ -42,6 +42,8 @@ term['is_obsolete'] <- ifelse(names %in% obselete, 1, 0)
 
 term['is_root'] <- rep(0, nrow(term))
 
+
+
 relationships <- c('relationship', 'external')
 term['is_relationship'] <- ifelse(term$term_type %in% relationships, 1, 0)
 term[term$name == 'is_a', 'term_type'] <- 'relationship'
@@ -69,7 +71,7 @@ relations[[3]] <- match(relations[[3]], names)
 term2term <- relations
 term2term['id'] <- seq_len(nrow(term2term))
 term2term['complete'] <- 0
-term2term <- term2term[c(4, 2, 1, 3, 5)]
+term2term <- term2term[c(4, 2, 3, 1, 5)]
 
 write.table(term2term, file = term2term_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
@@ -134,7 +136,7 @@ write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row
 ## We assume that the shortest distances are not going to be needed, so those are set to one.
 
 V <- as.character(seq_along(names))
-E <- with(term2term, split(term1_id, term2_id))
+E <- with(term2term, split(term2_id, term1_id))
 gg <- graph::graphNEL(V, E, "directed")
 
 tc <- RBGL::transitive.closure(gg)
