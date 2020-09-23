@@ -37,9 +37,9 @@ if [ "$LATEST_EN_DATE" != "$ENSOURCEDATE" ]; then
         gunzip Danio_rerio.*.pep.all.fa.gz
         mv Danio_rerio.*.pep.all.fa curDanio_rerio_pep.fa
 
-        wget -r -l1 -nd -A .pep.all.fa.gz $ENSOURCEURL/canis_familiaris/pep/
-        gunzip Canis_familiaris.*.pep.all.fa.gz
-        mv Canis_familiaris.*.pep.all.fa curCanis_familiaris_pep.fa
+        wget -r -l1 -nd -A .pep.all.fa.gz $ENSOURCEURL/canis_lupus_familiaris/pep/
+        gunzip Canis_lupus_familiaris.*.pep.all.fa.gz
+        mv Canis_lupus_familiaris.*.pep.all.fa curCanis_familiaris_pep.fa
 
         wget -r -l1 -nd -A .pep.all.fa.gz $ENSOURCEURL/bos_taurus/pep/
         gunzip Bos_taurus.*.pep.all.fa.gz
@@ -97,9 +97,9 @@ if [ "$LATEST_EN_DATE" != "$ENSOURCEDATE" ]; then
 	gunzip Danio_rerio.*.cdna.all.fa.gz
 	mv Danio_rerio.*.cdna.all.fa curDanio_rerio_cdna.fa
 
-	wget -r -l1 -nd -A .cdna.all.fa.gz $ENSOURCEURL/canis_familiaris/cdna/
-	gunzip Canis_familiaris.*.cdna.all.fa.gz
-	mv Canis_familiaris.*.cdna.all.fa curCanis_familiaris_cdna.fa
+	wget -r -l1 -nd -A .cdna.all.fa.gz $ENSOURCEURL/canis_lupus_familiaris/cdna/
+	gunzip Canis_lupus_familiaris.*.cdna.all.fa.gz
+	mv Canis_lupus_familiaris.*.cdna.all.fa curCanis_familiaris_cdna.fa
 
 	wget -r -l1 -nd -A .cdna.all.fa.gz $ENSOURCEURL/bos_taurus/cdna/
 	gunzip Bos_taurus.*.cdna.all.fa.gz
