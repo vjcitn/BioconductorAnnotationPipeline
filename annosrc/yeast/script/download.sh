@@ -4,8 +4,9 @@ set -e
 
 BASE_URL=$YGSOURCEURL
 THIS_YEAR=`date|awk '{print $6}'`
-LATEST_DATE=`curl -s -L --disable-epsv $BASE_URL/curation/literature/|grep "gene_literature.tab"|awk '{print $10}'|sed -e "s/align=\"right\">//g"`
-YG_URL=https://downloads.yeastgenome.org/curation/calculated_protein_info/domains/domains.tab
+LATEST_DATE=`curl -IL $BASE_URL/curation/literature/gene_literature.tab | grep "Last-Modified" | awk '{print $5 "-" $4}'`
+echo $LATEST_DATE
+YG_URL=$BASE_URL/curation/calculated_protein_info/domains/domains.tab
 REJECTORF_URL=http://compbio.mit.edu/4yeasts/S6.RFC_test/a.orf_decisions.txt
 
 if [ -z "$LATEST_DATE" ]; then
