@@ -20,7 +20,12 @@ if [ "$LATEST_DATE" != "$EGSOURCEDATE" ]; then
 	curl --disable-epsv -O $BASE_URL/gene2pubmed.gz
 	curl --disable-epsv -O $BASE_URL/gene2refseq.gz
 	curl --disable-epsv -O $BASE_URL/gene2accession.gz
-	curl --disable-epsv -O $BASE_URL/gene2unigene
+	# FIXME
+	# UniGene is dead now, so gene2unigene doesn't exist
+	# just copy from previous download for now
+	## maybe this should just go away
+	cp ../$EGSOURCEDATE/gene2unigene .
+	#curl --disable-epsv -O $BASE_URL/gene2unigene
 	curl --disable-epsv -O $BASE_URL/mim2gene_medgen
 	curl --disable-epsv -O $BASE_URL/gene_info.gz
 	curl --disable-epsv -O $BASE_URL/gene_refseq_uniprotkb_collab.gz

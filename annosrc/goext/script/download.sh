@@ -3,8 +3,8 @@ set -e
 . ./env.sh
 BASE_URL=$GOEXTSOURCEURL
 echo $BASE_URL
-LATEST_ALL=`curl -s -L $BASE_URL|grep [^a-Z]ec2go|sed -e "s/<[^>]*>//g"|awk '{print $1}'`
-LATEST_DATE=`echo $LATEST_ALL|awk -F '-' '{print $3 "-" $2$1}'`
+LATEST_DATE=`curl -IL $BASE_URL/ec2go | grep "Last-Modified" | awk '{print $5 "-" $4 $3}'`
+
 
 if [ -z "$LATEST_DATE" ]; then
        echo "download.sh: latest date from $BASEURL not found"
