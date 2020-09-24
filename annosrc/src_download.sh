@@ -36,9 +36,6 @@ echo "downloading ensembl"
 cd $SRC_BASE/ensembl/script; sh download.sh
 echo "finished downloading ensembl"
 
-## NOTE: Update variables in env.sh with new release location.
-## This download does not auto-detect LATEST_DATE so it must be
-## updated manually.
 echo "downloading plasmoDB"
 cd $SRC_BASE/plasmoDB/script; sh download.sh
 echo "finished downloading plasmoDB"
