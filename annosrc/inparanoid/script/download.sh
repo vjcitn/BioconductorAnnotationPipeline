@@ -6,7 +6,8 @@ set -e
 THIS_YEAR=`date|awk '{print $6}'`
 LATEST_INP_DATE=$IPHVMSOURCEDATE
 BASE_FB_URL=$FBSOURCEURL
-LATEST_FB_DATE=`curl -s --disable-epsv -L $BASE_FB_URL/|grep $FILE |awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*/$THIS_YEAR/g"`
+LATEST_FB_DATE=`curl -IL $BASE_FB_URL/$FILE | grep "Last-Modified" | awk '{print $5 "-" $4 $3}'`
+
 
 if [ -z "$LATEST_FB_DATE" ]; then
        echo "download.sh: latest date from $BASE_FB_URL not found"
@@ -16,7 +17,8 @@ fi
 if [ "$LATEST_FB_DATE" != "$FBSOURCEDATE" ]; then
         echo "update $FILE from $FBSOURCEDATE to $LATEST_FB_DATE"
         sed -i -e "s/ FBSOURCEDATE=.*$/ FBSOURCEDATE=$LATEST_FB_DATE/g" env.sh
-	cd ../$LATEST_INP_DATE #sticking flybase also into here for now
+	mkdir -p ../$LATEST_FB_DATE
+	cd ../$LATEST_FB_DATE 
 
 	curl --disable-epsv -O $FBSOURCEURL/$FILE
         gunzip $FILE	
