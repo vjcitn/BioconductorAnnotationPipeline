@@ -4,7 +4,12 @@ set -e
 
 BASE_URL=$PLASMOSOURCEURL
 PARENT_URL=$PLASMOSOURCEURL/
+THEFILE=$FILE
 THIS_YEAR=`date|awk '{print $6}'`
+LATEST_DATE=`curl -IL $BASE_URL/$THEFILE | grep "Last-Modified" | awk '{print $5 "-" $4 $3}'`
+echo "$BASE_URL"
+echo "$THEFILE"
+echo "$LATEST_DATE"
 
 if [ -z "$LATEST_DATE" ]; then
        echo "download.sh: latest date from $PARENT_URL not found"
