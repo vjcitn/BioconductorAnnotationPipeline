@@ -45,12 +45,13 @@ cd $SRC_BASE/pfam/script; sh download.sh
 echo "finished downloading pfam"
 
 ## NOTE: Only downloads the new flybase, not inparanoid.
-## Must update FILE in env.sh each time.
 echo "downloading flybase"
 cd $SRC_BASE/inparanoid/script; sh download.sh
 echo "finished downloading flybase"
 
-## NOTE: last download was 2015-Apr07; should be no-op
+## NOTE: this is updated by hand - compare URLS in ./tair/script/env.sh
+## with what is on the various web pages to make sure it points to the newest
+## data, and then run the download.sh script
 echo "downloading tair"
 cd $SRC_BASE/tair/script; sh download.sh
 echo "finished downloading tair"
