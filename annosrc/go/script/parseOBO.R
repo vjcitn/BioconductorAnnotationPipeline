@@ -8,7 +8,7 @@ term_synonym_f <- "term_synonym.txt"
 graph_path_f <- "graph_path.txt"
 
 
-obo <- GSEABase::getOBOCollection('../go.obo')
+obo <- GSEABase::getOBOCollection('../go-basic.obo')
 kv <- obo@.kv
 stanza <- obo@.stanza
 
@@ -64,14 +64,28 @@ colnames(relations) <- c('term1_id', 'relationship_type_id', 'term2_id')
 
 relations <- rbind(is_a, relations)
 
-relations[[1]] <- match(relations[[1]], names)      # Change GO names into the ids we assigned form the term table
-relations[[2]] <- match(relations[[2]], names)
-relations[[3]] <- match(relations[[3]], names)
+## separate ontologies for last steps
+bpids <- kv[kv$value == "biological_process",1]
+mfids <- kv[kv$value == "molecular_function",1]
+ccids <- kv[kv$value == "cellular_component",1]
+bpind <- relations[,1] %in% bpids
+mfind <- relations[,1] %in% mfids
+ccind <- relations[,1] %in% ccids
 
-term2term <- relations
-term2term['id'] <- seq_len(nrow(term2term))
-term2term['complete'] <- 0
-term2term <- term2term[c(4, 2, 3, 1, 5)]
+rel2term <- function(reldf, namvec){
+    ## function to generate term2term data.frame
+    ## reldf is a 'relations' data.frame like 'relations'
+    ## namvec is a vector of GO IDs, e.g., the 'names' vector
+    reldf <- as.data.frame(apply(reldf, 2, function(x) match(x, namvec)))
+    reldf$id <- seq_len(nrow(reldf))
+    reldf$complete <- 0
+    reldf <- reldf[,c(4, 2, 3, 1, 5)]
+    reldf
+}
+
+term2term <- rel2term(relations, names)
+term2termlst <- lapply(list(bpind, mfind, ccind),
+                       function(x) term2term[x,])
 
 write.table(term2term, file = term2term_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
@@ -135,33 +149,46 @@ write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row
 ## NOTE: This section generalizes the file to only show generate edges in the transitive closure
 ## We assume that the shortest distances are not going to be needed, so those are set to one.
 
-V <- as.character(seq_along(names))
-E <- with(term2term, split(term2_id, term1_id))
-gg <- graph::graphNEL(V, E, "directed")
+## in prior versions, the following was just done for all
+## the GO terms at once. But RBGL::transitive.closure is
+## now aborting if we do that, killing the R process
+## Not sure why that is, but it appears to work if we
+## use each ontology separately. 
 
-tc <- RBGL::transitive.closure(gg)
+tt2graph_path <- function(term2termobj, namevec){
+    V <- as.character(seq_along(namevec))
+    E <- with(term2termobj, split(term2_id, term1_id))
+    V <- V[V %in% unique(c(names(E), do.call(c, E)))]
+    gg <- graph::graphNEL(V, E, "directed")
+    tc <- RBGL::transitive.closure(gg)
+    edges <- graph::edges(tc)
+    edges <- lapply(names(edges), function(x) {
+        e1 <- edges[[x]]
+        e2 <- rep(x, length(e1))
+        data.frame(V2 = e1, V3 = e2)
+    })
+    graph_path <- do.call(rbind, edges)
+    graph_path$V1 <- seq_len(nrow(graph_path))
+    graph_path <- graph_path[, c(3,1,2)]
+    ones <- rep(1, nrow(graph_path))
+    graph_path$V4 <- ones
+    graph_path$V5 <- ones
+    graph_path$V6 <- ones
+    graph_path <- graph_path[,c(1,3,2,4,5,6)]
+    two_col <- graph_path[,c(2,3)]
+    dup <- duplicated(t(apply(two_col, 1, sort)))
+    graph_path <- graph_path[!dup,]
+    graph_path
+}
 
-edges <- graph::edges(tc)
-edges <- lapply(names(edges), function(x){   # This essentially performs an unsplit operation to get our adjacency data.frame back
-    e1 <- edges[[x]]
-    e2 <- rep(x, length(e1))
-    data.frame(V2 = e1, V3 = e2)
-})
+gplst <- lapply(term2termlst, tt2graph_path, namevec = names)
 
-graph_path <- do.call(rbind, edges)
-graph_path['V1'] <- seq_len(nrow(graph_path))
-graph_path <- graph_path[, c(3, 1, 2)]
+## the first column has to be 1:nrow the ending data.frame, so
+## do the math first
+gplst[[2]][,1] <- gplst[[2]][,1] + gplst[[1]][nrow(gplst[[1]]),1]
+gplst[[3]][,1] <- gplst[[3]][,1] + gplst[[2]][nrow(gplst[[2]]),1]
 
-ones <- rep(1, nrow(graph_path))
-graph_path['V4'] <- ones
-graph_path['V5'] <- ones
-graph_path['V6'] <- ones
-
-graph_path <- graph_path[, c(1, 3, 2, 4, 5, 6)]  # correct term order
-
-two_col <- graph_path[,c(2,3)]
-dup <- duplicated(t(apply(two_col, 1, sort)))
-graph_path <- graph_path[!dup,]
+graph_path <- do.call(rbind, gplst)
 
 write.table(graph_path, file = graph_path_f, quote=F, col.names=F, row.names=F, sep = "\t")
 

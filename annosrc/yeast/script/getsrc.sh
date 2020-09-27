@@ -6,9 +6,11 @@ fi
 
 ## unpack source data
 cd ../$YGSOURCEDATE
-gunzip -c gene_association.sgd.gz > gene_association.sgd
-sed -i -e "/^\!.*$/d" gene_association.sgd
-sed -i -e 's/[ \t]*$//' gene_association.sgd ## removes trailing whitespace.
+if [ -f gene_association.sgd.gaf.gz ]; then
+    gunzip -c gene_association.sgd.gaf.gz > gene_association.sgd
+    sed -i -e "/^\!.*$/d" gene_association.sgd
+    sed -i -e 's/[ \t]*$//' gene_association.sgd ## removes trailing whitespace.
+fi
 
 # split alias column by |
 rm -f gene2alias.tab
