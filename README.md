@@ -63,49 +63,44 @@ but the following will provide some additional details.
 
 **1. Download the correct version of R**
 
-The R version that was needed at the time this documentation was created was 
-R-3.6. The following command should be changed dependent on which R version 
-is needed.
+For the Spring release, download R-devel. For the Fall release
+download the latest patched release version.
 
 ```sh
-wget https://cran.r-project.org/src/base/R-3/R-3.6.1.tar.gz
+wget https://cran.r-project.org/src/base/R-4/<correct R-version>
 ```
 
 **2. Extract the tar file**
 
 ```sh
-tar zxf R-3.6.1.tar.gz
+tar zxf <correct R-version>
 ```
 
-**3. Change into the directory and make/install**
+**3. Change into the directory and make**
 
 ```sh
-cd R-3.6.1
-sudo ./configure --enable-R-shlib --prefix=/usr/local
+cd <correct R-version>
+sudo ./configure --enable-R-shlib 
 make
-make install
 ```
+R is run directly from this directory, so no need to do `make
+install`, or to point to a prefix dir.
 
 **4. Clean up  the installations**
 
-Rename the old R version, e.g., `R-3.5` to `R.old`, and move it into 
-`R-installations/`. Any older versions of R can be removed from 
-`R-installations/`, we want to make sure there is at least one working 
-version of R available if needed. Now rename the new version of R to `R`, e.g., 
-`R-3.6` to `R`, so when ever `R` is called this verson will be deployed (we 
-will also be setting up aliases to help with this). Move the `tar` and 
-`tar.gz` into `downloads/`. 
-
-**QUESTION:** Could the `tar` and `tar.gz` just be removed since they can 
-always be redownload from CRAN?
+Previous versions of R can be deleted, but it may be advantageous to
+keep the one from the last build.
 
 **5. Set up proper aliases**
 
-Open the `.bashrc` file to edit the aliases for R. Make the R library 
-directory a personal directory, eg. R-3.6.1, and leave bin to R. 
+Since we run R from the build dir, open `.bashrc` and adjust the alias
+to point to the current version of R, as well as the library
+dir. Mostly this means edit the last bit, which points to the R build dir.
 
-**FIXME:** Add more detail about how this was set up when instance is turned 
-back on.
+```sh
+alias R='R_LIBS_USER=~/R-libraries ~/R-4.0.2/bin/R'
+```
+
 
 **6. Install packages**
 
@@ -116,14 +111,20 @@ pipeline to work properly.
 chooseCRANmirror()
 install.packages("BiocManager")
 
-BiocManager::install(c("biomaRt", "rtracklayer", "DBI", "AnnotationForge", 
-    "Uniprot.ws", "knitr", "BiocStyle", "Homo.sapiens", "affy", "hom.Hs.inp.db", 
-    "hgu95av.db", "RUnit", "RSQLite", "AnnotationDbi", "annotate", 
-    "EnsDb.Hsapiens.v75", "RMariaDB", "BSgenome.Hsapiens.UCSC.hg19"),
-    version = "devel")
-```
+We always build using Bioc-devel. If building in Spring using R-devel,
+do
 
-**FIXME:** Can this be more automated?
+```r
+library(BiocManager)
+BiocManager::install(ask = FALSE)
+```
+for the Fall build it's slightly different
+
+```r
+library(BiocManager)
+useDevel(TRUE)
+BiocManager::install(ask = FALSE)
+```
 
 **FIXME:** In any of the R files that are run in the pipeline call a package to 
 be loaded, and the R installation is non-standard, there will have to be a 
