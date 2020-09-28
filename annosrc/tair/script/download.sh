@@ -47,20 +47,18 @@ if [ "$LATEST_DATE" != "$TAIRSOURCEDATE" ]; then
     
       # In the following files, first line is column name
       cd ../$TAIRSOURCEDATE
-      gunzip $TAIRPMIDURLNAME
-      gunzip $TAIRSYMBOLURLNAME
       cp $TAIRGOURLNAME ATH_GO_GOSLIM1.txt
       sed -e "1,4d" ATH_GO_GOSLIM1.txt > ATH_GO_GOSLIM.txt
       sed -e "1d" $TAIRAGURLNAME > affy_AG_array_elements1.txt
       sed -e "1d" $TAIRATHURLNAME > affy_ATH1_array_elements1.txt
-      sed -e "1d" $TAIRPMIDURLNAME > LocusPublished1.txt
+      zcat $TAIRPMIDURLNAME | sed -e "1d" > LocusPublished1.txt
       sed -e "1d" $TAIRGENEURLNAME > TAIR_sequenced_genes1
       
       iconv -f WINDOWS-1252 -t UTF-8 TAIR_sequenced_genes1 > TAIR_sequenced_genes2 
       ## get rid of quotes
       sed -i -e 's/"//g' TAIR_sequenced_genes2
       # gene_aliases has various number of columns (some lines 2, others 4)
-      awk '{print $1 "\t" $2}' gene_aliases_20190402.txt > gene_aliases1
+      zcat $TAIRSYMBOLURLNAME | awk '{print $1 "\t" $2}' > gene_aliases1
       
       cp $TAIRPATHURLNAME  aracyc_dump1
       tail -n +2 aracyc_dump1 > aracyc_dump2

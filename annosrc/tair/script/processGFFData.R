@@ -27,19 +27,19 @@ sqlCreate <- "CREATE TABLE locusToGene (
                 gene_name TEXT,
                 locus TEXT);"
 
-dbGetQuery(con, sqlCreate)
+dbExecute(con, sqlCreate)
 
 
 sqlIns <- "INSERT into locusToGene
            (chromosome, gene_name, locus)
            VALUES (?,?,?)"
 dbBegin(con)
-rset <- dbSendQuery(con, sqlIns, params=unclass(unname(res)))
+rset <- dbSendStatement(con, sqlIns, params=unclass(unname(res)))
 dbClearResult(rset)
 dbCommit(con)
 
 sqlIdx <- "CREATE INDEX lg1 on locusToGene(gene_name);"
-dbGetQuery(con, sqlIdx)
+dbExecute(con, sqlIdx)
 
 ## a little more sql to just massage things into the other table.
 sqlSeqGenes <- "CREATE TABLE sequenced_genes (
@@ -51,7 +51,7 @@ sqlSeqGenes <- "CREATE TABLE sequenced_genes (
  description TEXT,
  associated_func TEXT
 );"
-dbGetQuery(con, sqlSeqGenes)
+dbExecute(con, sqlSeqGenes)
 
 
 ## then insert the values into that table matching based on gene_name
@@ -63,13 +63,13 @@ sqlIns2 <- "INSERT INTO sequenced_genes (locus, gene_name, coding,
                      sg.associated_func AS associated_func
               FROM sequenced_genest AS sg LEFT OUTER JOIN 
                    locusToGene AS lg USING (gene_name)"
-dbGetQuery(con, sqlIns2)
+dbExecute(con, sqlIns2)
 
 ## Then drop old table
 sqlDrop <- "DROP TABLE sequenced_genest;"
-dbGetQuery(con, sqlDrop)
+dbExecute(con, sqlDrop)
 
 ## Then make an index for locus
 sqlIdx <- "CREATE INDEX sg2 on sequenced_genes(locus);"
-dbGetQuery(con, sqlIdx)
+dbExecute(con, sqlIdx)
 
