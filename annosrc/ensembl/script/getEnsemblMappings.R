@@ -118,7 +118,7 @@ dataset <- c("hsapiens_gene_ensembl", "rnorvegicus_gene_ensembl",
              "ggallus_gene_ensembl", "drerio_gene_ensembl",
              "celegans_gene_ensembl", "dmelanogaster_gene_ensembl",
              "mmusculus_gene_ensembl", "btaurus_gene_ensembl",
-             "cfamiliaris_gene_ensembl", "scerevisiae_gene_ensembl",
+             "clfamiliaris_gene_ensembl", "scerevisiae_gene_ensembl",
              "mmulatta_gene_ensembl", "ptroglodytes_gene_ensembl",
              "agambiae_eg_gene")
 sqlitetable <- c(head(dataset, n=-1), "agambiae_gene_ensembl") 

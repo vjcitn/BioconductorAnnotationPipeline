@@ -17,7 +17,7 @@ speciesList = c("chipsrc_human.sqlite" = "hsapiens_gene_ensembl",
   "chipsrc_fly.sqlite" = "dmelanogaster_gene_ensembl",
   "chipsrc_mouse.sqlite"  = "mmusculus_gene_ensembl",
   "chipsrc_bovine.sqlite" = "btaurus_gene_ensembl",
-  "chipsrc_canine.sqlite" = "cfamiliaris_gene_ensembl",
+  "chipsrc_canine.sqlite" = "clfamiliaris_gene_ensembl",
   "chipsrc_rhesus.sqlite" = "mmulatta_gene_ensembl",
   "chipsrc_chimp.sqlite" = "ptroglodytes_gene_ensembl",
   "chipsrc_anopheles.sqlite" = "agambiae_gene_ensembl")
