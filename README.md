@@ -43,13 +43,14 @@ The clean up step should have been performed at the end of the pipeline
 during the last release, but if it was not here are a couple ways to 
 potentially clean up the instance:
 
-* Remove old files from the `db/` directory and only save the `metadata.sqlite` 
-file (under version control in case it gets deleted). **Do not remove any 
-files from `db/` once the parsing has started.** Products sent there are 
-either needed in a subsequent step or may be the final product. 
-* Remove older data downloads from each folder, there should only be one 
-version present. It is suggested to keep the previous version for comparison/
-testing.
+* Remove old files from the `db/` directory and only save the
+`metadata.sqlite` and the map_counts.sqlite files (under version
+control in case they get deleted). **Do not remove any files from
+`db/` once the parsing has started.** Products sent there are either
+needed in a subsequent step or may be the final product.  * Remove
+older data downloads from each folder, there should only be one
+version present. It is suggested to keep the previous version for
+comparison/ testing.
 
 [Back to top](#top)
 
@@ -95,7 +96,7 @@ keep the one from the last build.
 
 Since we run R from the build dir, open `.bashrc` and adjust the alias
 to point to the current version of R, as well as the library
-dir. Mostly this means edit the last bit, which points to the R build dir.
+dir. Mostly this means edit the last part of this alias, which points to the R build dir.
 
 ```sh
 alias R='R_LIBS_USER=~/R-libraries ~/R-4.0.2/bin/R'
@@ -110,7 +111,7 @@ pipeline to work properly.
 ```r
 chooseCRANmirror()
 install.packages("BiocManager")
-
+```
 We always build using Bioc-devel. If building in Spring using R-devel,
 do
 
@@ -166,12 +167,10 @@ the variable(s) that should be checked, are listed below.
 	+ Appears to be current, now updated weekly.
 	+ Check `GOSOURCEDATE` in `go/script/env.sh`.
 * unigene
+	+ unigene is now defunct, and we just put the old data into
+the databases. Kept now simply for backwards compatibility.
 	+ ftp://ftp.ncbi.nih.gov/repository/UniGene/
-	+ Last downloads are from 2013. Website documentation indicates data 
-are updated more frequently via the web interface; not sure why the ftp 
-archives are so old.
-	+ Check `UGSOURCEDATE_*` for each of the organisms in 
-`unigene/script/env.sh`.
+	+ Last downloads are from 2013. 
 * gene
 	+ ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
 	+ Updated daily.

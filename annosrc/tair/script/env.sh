@@ -4,7 +4,21 @@ set -e
 # trying to figure out how to automatically get these URLs seems... difficult. For now
 # just update the TAIRSOURCEDATE to today's date after checking by hand to see if the links still match what's
 # on arabidopsis.org
-export TAIRSOURCEDATE=`date | awk '{print $6 "-" $2 $3}'`
+
+# We can't just use the current day if we run the scripts that rely on this script on different days
+# so we check the most recent dir in ../ that starts with a number, and if it's less than a week old,
+# we just use that.
+CURDIR=`ls -dt ../* | awk -e '$1 ~ /..\/[0-9]+/ {print $1}' | head -n 1`
+CDATE=`date -r $CURDIR +%s`
+NOW=`date +%s`
+DAYDIFF=$(((NOW - CDATE)/86400))
+
+if [ "$DAYDIFF" -gt  7 ]; then
+    export TAIRSOURCEDATE=`date +%Y-%b%d`
+else
+    export TAIRSOURCEDATE=`echo $CURDIR | sed 's/\.\.\///'`
+fi
+
 export TAIRSOURCENAME="Tair"
 export TAIRSOURCEURL="https://www.arabidopsis.org/"
 

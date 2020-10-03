@@ -84,7 +84,7 @@ makeGOTable <- function(taxId, name, db){
     ## extract and unpack the data
     sql <- paste0("SELECT EntrezGene, GO FROM altGO WHERE NCBItaxon = '",
                   taxId,"'")
-    res <- dbGetQuery(db, sql)
+    res <- dbExecute(db, sql)
     
 ## 1st fix: DROP values where there is no entrez gene ID
     res <- res[res$EntrezGene!="",]
@@ -99,23 +99,23 @@ makeGOTable <- function(taxId, name, db){
     tableName <- paste0(name, "_eg2go")
     sql <- paste0("CREATE TABLE ",tableName,
                   " (eg_id VARCHAR(20) NOT NULL, go_id VARCHAR(20) NOT NULL)")
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
    
     ## then populate table
     sqlIns <- paste("INSERT INTO ",tableName,
                     " (eg_id, go_id) VALUES (?,?);", sep="")
     dbBegin(db)
-    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
+    rslt <- dbSendStatement(db, sqlIns, params=unclass(unname(data)))
     dbClearResult(rslt)
     dbCommit(db)
 
     ## and index both columns
     sql1<- paste("CREATE INDEX ",tableName,"_eg ON ",tableName,
                 "(eg_id);",sep="")
-    dbGetQuery(db, sql1)
+    dbExecute(db, sql1)
     sql2<- paste("CREATE INDEX ",tableName,"_go ON ",tableName,
                 "(go_id);",sep="")
-    dbGetQuery(db, sql2)    
+    dbExecute(db, sql2)    
 }
 
 ## call that function using mapply()
@@ -125,13 +125,13 @@ mapply(makeGOTable, taxId=taxIDList, name=names(taxIDList),
 
 
 ## And then put some metadata in too.
-dbGetQuery(db, "CREATE TABLE metadata (name TEXT, value TEXT)")
+dbExecute(db, "CREATE TABLE metadata (name TEXT, value TEXT)")
 
-dbGetQuery(db, "INSERT INTO metadata VALUES('UNIPROTGOSOURCENAME', 'UNIPROTGO')")
+dbExecute(db, "INSERT INTO metadata VALUES('UNIPROTGOSOURCENAME', 'UNIPROTGO')")
  
-dbGetQuery(db, paste0("INSERT INTO metadata VALUES('UNIPROTGOSOURCEDATE', '",date(),"')"))
+dbExecute(db, paste0("INSERT INTO metadata VALUES('UNIPROTGOSOURCEDATE', '",date(),"')"))
 
-dbGetQuery(db, "INSERT INTO metadata VALUES('UNIPROTGOSOURCEURL', 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz')")
+dbExecute(db, "INSERT INTO metadata VALUES('UNIPROTGOSOURCEURL', 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz')")
 
 
 ## put the file into /db

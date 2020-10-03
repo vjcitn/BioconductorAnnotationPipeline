@@ -33,15 +33,15 @@ makeEnsemblTable = function(db){
   sql<- paste("CREATE TABLE IF NOT EXISTS ensembl(
                _id INTEGER REFERENCES genes(_id),
                ensid TEXT);", sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
 
   ##Two indices per table
   ind1 = paste(table,"_ense",sep="")
   sql<- paste("CREATE INDEX ",ind1," ON ensembl(ensid);",sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
   ind2 = paste(table,"_ide",sep="")
   sql<- paste("CREATE INDEX ",ind2," ON ensembl(_id);",sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
   
 }
 
@@ -52,24 +52,24 @@ popEnsembl2EGTable = function(table){
   db <- dbConnect(drv,dbname=file.path(dir, dbFile))
   message("joining to the ensembl.sqlite table named:", table)
   ##Drop the old tables if present.
-  dbGetQuery(db, "DROP TABLE IF EXISTS ensembl2ncbi;")
+  dbExecute(db, "DROP TABLE IF EXISTS ensembl2ncbi;")
 
   ##Make the table
   message("Creating table: ensembl2ncbi")
   sql<- paste("CREATE TABLE IF NOT EXISTS ensembl2ncbi (
                _id INTEGER REFERENCES genes(_id),
                ensid TEXT);", sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
 
   ## Attach the dbe (ensembl database)
   message("attach ensembl database")
-  dbGetQuery(db, paste("ATTACH DATABASE '",dbe,"' AS ens;",sep=""))
+  dbExecute(db, paste("ATTACH DATABASE '",dbe,"' AS ens;",sep=""))
 
   ## Update metadata
   message("update metadata")
-  dbGetQuery(db, paste("DELETE FROM metadata WHERE name LIKE 'ENS%';"
+  dbExecute(db, paste("DELETE FROM metadata WHERE name LIKE 'ENS%';"
                            ,sep=""))  
-  dbGetQuery(db, paste("INSERT INTO metadata
+  dbExecute(db, paste("INSERT INTO metadata
                             SELECT * FROM ens.metadata;",sep=""))
   
   ## Insert data
@@ -78,15 +78,15 @@ popEnsembl2EGTable = function(table){
                    FROM genes as g CROSS JOIN
                    ens.",table," as e
                    WHERE e.gene_id=g.gene_id", sep="")
-  dbGetQuery(db, sqlIns)
+  dbExecute(db, sqlIns)
   
   ##Two indices per table
   ind1 = paste(table,"_ens2n",sep="")
   sql<- paste("CREATE INDEX ",ind1," ON ensembl2ncbi(ensid);",sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
   ind2 = paste(table,"_id2n",sep="")
   sql<- paste("CREATE INDEX ",ind2," ON ensembl2ncbi(_id);",sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
 
   ##check to make sure there is an ensembl table
   test <- dbListTables(db)
@@ -95,7 +95,7 @@ popEnsembl2EGTable = function(table){
   ##Then fold in the changes to ensembl:
   sqlIns <- paste("INSERT INTO ensembl
                    SELECT ltrim(_id,'>'), ltrim(ensid,'>') FROM ensembl2ncbi;", sep="")
-  dbGetQuery(db, sqlIns)
+  dbExecute(db, sqlIns)
 
   ##And finally, remove duplicated rows
   sqlIns <- paste("DELETE FROM ensembl
@@ -103,23 +103,23 @@ popEnsembl2EGTable = function(table){
                     (SELECT rowid FROM ensembl
                      GROUP BY _id, ensid
                      HAVING min(rowid));", sep="")
-  dbGetQuery(db, sqlIns)
+  dbExecute(db, sqlIns)
 
   
   ## EXTRA FILTER STEP to remove strange LRG IDs that have begun appearing.
   if(table == "hsapiens_gene_ensembl"){
-    dbGetQuery(db, "DELETE FROM ensembl
+    dbExecute(db, "DELETE FROM ensembl
                         WHERE ensid like 'LRG%'")
   }			
   
   ##Add MAPCOUNTS for this
-  dbGetQuery(db, paste("DELETE FROM map_counts
+  dbExecute(db, paste("DELETE FROM map_counts
                             WHERE map_name LIKE 'ENSEMBL%';"
                            ,sep=""))  
-  dbGetQuery(db, "INSERT INTO map_counts
+  dbExecute(db, "INSERT INTO map_counts
                         SELECT 'ENSEMBL', count(DISTINCT _id)
                         FROM ensembl;")    
-  dbGetQuery(db, "INSERT INTO map_counts
+  dbExecute(db, "INSERT INTO map_counts
                         SELECT 'ENSEMBL2GENE', count(DISTINCT ensid)
                         FROM ensembl;")
 
@@ -135,17 +135,17 @@ popEnsembl2TRANSTable = function(table){
   table <- sub("_gene_","_trans_", table)
   message("joining to the ensembl.sqlite table named:", table)
   ##Drop the old tables if present.
-  dbGetQuery(db, "DROP TABLE IF EXISTS ensembl_trans;")
+  dbExecute(db, "DROP TABLE IF EXISTS ensembl_trans;")
 
   ##Make the table
   message("Creating table: ensembl_trans")
   sql<- paste("CREATE TABLE IF NOT EXISTS ensembl_trans (
                _id VARCHAR(20) NOT NULL,
                trans_id VARCHAR(20) NOT NULL );", sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
 
   ## Attach the dbe (ensembl database)
-  dbGetQuery(db, paste("ATTACH DATABASE '",dbe,"' AS ens;",sep=""))
+  dbExecute(db, paste("ATTACH DATABASE '",dbe,"' AS ens;",sep=""))
   
   ## Insert data
   sqlIns <- paste("INSERT INTO ensembl_trans
@@ -153,23 +153,23 @@ popEnsembl2TRANSTable = function(table){
                    FROM ensembl as g INNER JOIN
                    ens.",table," as e
                    WHERE g.ensid=e.ens_gene_id", sep="")
-  dbGetQuery(db, sqlIns)
+  dbExecute(db, sqlIns)
   
   ##Two indices per table
   ind1 = paste(table,"_enst",sep="")
   sql<- paste("CREATE INDEX ",ind1," ON ensembl_trans(trans_id);",sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
   ind2 = paste(table,"_egt",sep="")
   sql<- paste("CREATE INDEX ",ind2," ON ensembl_trans(_id);",sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
   
   ##Add MAPCOUNTS for this
-  dbGetQuery(db,"DELETE FROM map_counts WHERE map_name='ENSEMBLTRANS'")
-  dbGetQuery(db, "INSERT INTO map_counts
+  dbExecute(db,"DELETE FROM map_counts WHERE map_name='ENSEMBLTRANS'")
+  dbExecute(db, "INSERT INTO map_counts
                         SELECT 'ENSEMBLTRANS', count(DISTINCT _id)
                         FROM ensembl_trans;")    
-  dbGetQuery(db,"DELETE FROM map_counts WHERE map_name='ENSEMBLTRANS2GENE'")
-  dbGetQuery(db, "INSERT INTO map_counts
+  dbExecute(db,"DELETE FROM map_counts WHERE map_name='ENSEMBLTRANS2GENE'")
+  dbExecute(db, "INSERT INTO map_counts
                         SELECT 'ENSEMBLTRANS2GENE', count(DISTINCT trans_id)
                         FROM ensembl_trans;")
   
@@ -185,17 +185,17 @@ popEnsembl2PROTTable = function(table){
   table <- sub("_gene_","_prot_", table)
   message("joining to the ensembl.sqlite table named:", table)
   ##Drop the old tables if present.
-  dbGetQuery(db, "DROP TABLE IF EXISTS ensembl_prot;")
+  dbExecute(db, "DROP TABLE IF EXISTS ensembl_prot;")
 
   ##Make the table
   message("Creating table: ensembl_prot")
   sql<- paste("CREATE TABLE IF NOT EXISTS ensembl_prot (
                _id VARCHAR(20) NOT NULL,
                prot_id VARCHAR(20) NOT NULL );", sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
 
   ## Attach the dbe
-  dbGetQuery(db, paste("ATTACH DATABASE '",dbe,"' AS ens;",sep=""))
+  dbExecute(db, paste("ATTACH DATABASE '",dbe,"' AS ens;",sep=""))
  
   ## Insert data
   sqlIns <- paste("INSERT INTO ensembl_prot
@@ -203,23 +203,23 @@ popEnsembl2PROTTable = function(table){
                    FROM ensembl as g INNER JOIN
                    ens.",table," as e
                    WHERE g.ensid=e.ens_gene_id", sep="")
-  dbGetQuery(db, sqlIns)
+  dbExecute(db, sqlIns)
         
   ##Two indices per table
   ind1 = paste(table,"_enst",sep="")
   sql<- paste("CREATE INDEX ",ind1," ON ensembl_prot(prot_id);",sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
   ind2 = paste(table,"_egt",sep="")
   sql<- paste("CREATE INDEX ",ind2," ON ensembl_prot(_id);",sep="")
-  dbGetQuery(db, sql)
+  dbExecute(db, sql)
   
   ##Add MAPCOUNTS for this
-  dbGetQuery(db,"DELETE FROM map_counts WHERE map_name='ENSEMBLPROT'")
-  dbGetQuery(db, "INSERT INTO map_counts
+  dbExecute(db,"DELETE FROM map_counts WHERE map_name='ENSEMBLPROT'")
+  dbExecute(db, "INSERT INTO map_counts
                         SELECT 'ENSEMBLPROT', count(DISTINCT _id)
                         FROM ensembl_prot;")    
-  dbGetQuery(db,"DELETE FROM map_counts WHERE map_name='ENSEMBLPROT2GENE'")
-  dbGetQuery(db, "INSERT INTO map_counts
+  dbExecute(db,"DELETE FROM map_counts WHERE map_name='ENSEMBLPROT2GENE'")
+  dbExecute(db, "INSERT INTO map_counts
                         SELECT 'ENSEMBLPROT2GENE', count(DISTINCT prot_id)
                         FROM ensembl_prot;")
   
@@ -270,7 +270,7 @@ wcon <- dbConnect(dbDriver("SQLite"),
                   dbname="/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/chipsrc_worm.sqlite")
 
 ## get the _ids values.
-dbIds <- dbGetQuery(wcon, 'select * from genes')
+dbIds <- dbExecute(wcon, 'select * from genes')
 ## merge (inner join)
 wormBase <- merge(dbIds, wormBase, by.x='gene_id', by.y='entrezgene')
 ## rename
@@ -278,7 +278,7 @@ names(wormBase) <- c('gene_id','_id','ensembl','WBid')
 ## insert
 sql <- 'INSERT INTO wormbase values (:_id, :WBid)'
 dbBegin(wcon)
-res <- dbSendQuery(wcon,sql)
+res <- dbSendStatement(wcon,sql)
 dbBind(res, wormBase[c("_id", "WBid")])
 dbFetch(res)
 dbClearResult(res)

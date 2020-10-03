@@ -50,7 +50,7 @@ makeTable = function(fields,tableName){
 ",fieldStr,
                     ");", sep="")
         ##And then the easiest thing to do is to probably just try to MAKE the table in a LOCAL DB right on the fly...
-        dbGetQuery(db_map_counts, sql)
+        dbExecute(db_map_counts, sql)
 
 }
 
@@ -72,7 +72,7 @@ updateTable  = function(fields, tableName, date, mapCountVals, numRows){
         ##print(fieldStr)
         sql <- paste("INSERT INTO ",tableName, "(date,",fieldStr,") VALUES ('",date,"', ",valStr," );", sep="")
         ##print(sql)
-        dbGetQuery(db_map_counts, sql)
+        dbExecute(db_map_counts, sql)
 }
 
 
@@ -87,7 +87,7 @@ expandTable = function(tableName, oldFields, newFields){
         fieldStr = makeFieldStrs(cols[m])
         ##Use ALTER TABLE to add new cols
         sql <- paste("ALTER TABLE ",tableName," ADD COLUMN ",fieldStr,";",sep="")
-        dbGetQuery(db_map_counts, sql)
+        dbExecute(db_map_counts, sql)
     }
 }
 

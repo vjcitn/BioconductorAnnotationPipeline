@@ -20,6 +20,6 @@ CREATE TABLE metadata (
 -- It is necessary all because our current GO uses "isa" instead of "is_a"
 UPDATE term
   SET name="isa"
-  WHERE id=2;
+  WHERE id=1;
 ANALYZE;
 

@@ -65,12 +65,10 @@ colnames(relations) <- c('term1_id', 'relationship_type_id', 'term2_id')
 relations <- rbind(is_a, relations)
 
 ## separate ontologies for last steps
-bpids <- kv[kv$value == "biological_process",1]
-mfids <- kv[kv$value == "molecular_function",1]
-ccids <- kv[kv$value == "cellular_component",1]
-bpind <- relations[,1] %in% bpids
-mfind <- relations[,1] %in% mfids
-ccind <- relations[,1] %in% ccids
+bpids <- match(kv[kv$value == "biological_process",1], names)
+mfids <- match(kv[kv$value == "molecular_function",1], names)
+ccids <- match(kv[kv$value == "cellular_component",1], names)
+
 
 rel2term <- function(reldf, namvec){
     ## function to generate term2term data.frame
@@ -79,13 +77,18 @@ rel2term <- function(reldf, namvec){
     reldf <- as.data.frame(apply(reldf, 2, function(x) match(x, namvec)))
     reldf$id <- seq_len(nrow(reldf))
     reldf$complete <- 0
-    reldf <- reldf[,c(4, 2, 3, 1, 5)]
+    reldf <- reldf[,c(4, 2, 1, 3, 5)]
     reldf
 }
 
 term2term <- rel2term(relations, names)
-term2termlst <- lapply(list(bpind, mfind, ccind),
-                       function(x) term2term[x,])
+## check to see that there aren't any cross-ontology term matches
+crossmatchTest <- function(ids, termdf)
+    all(rowSums(cbind(termdf$term1_id %in% ids, termdf$term2_id %in% ids)) %in% c(0,2))
+stopifnot(all(sapply(list(bpids, mfids, ccids), crossmatchTest, termdf = term2term)))
+
+term2termlst <- lapply(list(bpids, mfids, ccids),
+                       function(x) term2term[term2term$term1_id %in% x,])
 
 write.table(term2term, file = term2term_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
