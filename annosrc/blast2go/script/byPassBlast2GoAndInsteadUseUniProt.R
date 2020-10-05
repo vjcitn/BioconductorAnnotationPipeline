@@ -84,7 +84,7 @@ makeGOTable <- function(taxId, name, db){
     ## extract and unpack the data
     sql <- paste0("SELECT EntrezGene, GO FROM altGO WHERE NCBItaxon = '",
                   taxId,"'")
-    res <- dbExecute(db, sql)
+    res <- dbGetQuery(db, sql)
     
 ## 1st fix: DROP values where there is no entrez gene ID
     res <- res[res$EntrezGene!="",]

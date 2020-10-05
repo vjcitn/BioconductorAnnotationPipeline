@@ -254,12 +254,11 @@ popEnsembl2PROTTable(c("chipsrc_yeast.sqlite" = "scerevisiae_gene_ensembl"))
 ## NOTE: As of April 2017 the ensembl marts for biomaRt were non=-functional
 ##       Using the 87 archive to get the correct entrezgene ids. This
 ##       Should be changed back to host="www.ensembl.org" for BioC 3.6.
-browser()
+
 message("starting worm")
 library(biomaRt)
-mart <- useMart("ENSEMBL_MART_ENSEMBL", "celegans_gene_ensembl",
-                host="dec2016.archive.ensembl.org")
-wormBase <- getBM(c("ensembl_gene_id", "entrezgene", "wormbase_gene"), 
+mart <- useEnsembl("ensembl", "celegans_gene_ensembl")
+wormBase <- getBM(c("ensembl_gene_id", "entrezgene_id", "wormbase_gene"), 
                   mart=mart)
 
 ## Add to the table (table already exists)
@@ -270,9 +269,9 @@ wcon <- dbConnect(dbDriver("SQLite"),
                   dbname="/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/chipsrc_worm.sqlite")
 
 ## get the _ids values.
-dbIds <- dbExecute(wcon, 'select * from genes')
+dbIds <- dbGetQuery(wcon, 'select * from genes')
 ## merge (inner join)
-wormBase <- merge(dbIds, wormBase, by.x='gene_id', by.y='entrezgene')
+wormBase <- merge(dbIds, wormBase, by.x='gene_id', by.y='entrezgene_id')
 ## rename
 names(wormBase) <- c('gene_id','_id','ensembl','WBid')
 ## insert
@@ -283,3 +282,11 @@ dbBind(res, wormBase[c("_id", "WBid")])
 dbFetch(res)
 dbClearResult(res)
 dbCommit(wcon)
+
+##And finally, remove duplicated rows
+sqlIns <- paste("DELETE FROM wormbase
+                   WHERE rowid NOT IN
+                    (SELECT rowid FROM wormbase
+                     GROUP BY _id, WBid
+                     HAVING min(rowid));", sep="")
+dbExecute(wcon, sqlIns)

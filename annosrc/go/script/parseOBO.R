@@ -160,7 +160,15 @@ write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row
 
 tt2graph_path <- function(term2termobj, namevec){
     V <- as.character(seq_along(namevec))
-    E <- with(term2termobj, split(term2_id, term1_id))
+    ## Convenionally the GO graph is thought of as being a directed
+    ## graph, where the edge directions are from more specific to
+    ## lesss specific terms (child -> parent). But we are interested
+    ## in the opposite direction (parent -> child), because we want
+    ## to populate for example the go_bp_offspring table
+    ## so we need the transitive graph going the other direction
+    ## Therefore we split the term2 IDs using the term1 IDs to
+    ## get the reversed direction
+    E <- with(term2termobj, split(term1_id, term2_id))
     V <- V[V %in% unique(c(names(E), do.call(c, E)))]
     gg <- graph::graphNEL(V, E, "directed")
     tc <- RBGL::transitive.closure(gg)

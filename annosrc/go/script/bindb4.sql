@@ -210,10 +210,10 @@ CREATE INDEX F2go_cc_offspring ON go_cc_offspring (_offspring_id);
 
 --the following should be a TEMP
 CREATE TEMP TABLE go_parents AS 
- SELECT DISTINCT g.term2_id AS id, g.term1_id AS _parent_id, 
+ SELECT DISTINCT g.term1_id AS id, g.term2_id AS _parent_id, 
 	e.name AS relationship_type, t.ontology AS ontology
  FROM gosrc.term2term AS g CROSS JOIN go_term AS t CROSS JOIN gosrc.term AS e  
- WHERE g.term2_id=t._id and g.relationship_type_id=e.id; 
+ WHERE g.term1_id=t._id and g.relationship_type_id=e.id; 
 
 -- child-parent relationship.
 CREATE TABLE go_bp_parents ( 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 if [ "$EGSOURCEDATE" = "" ]; then
   . ./env.sh
@@ -51,3 +51,9 @@ sqlite3 -bail chipmapsrc_yeastNCBI.sqlite < ../gene/script/bindb_yeast.sql
 echo "finished building chipmapsrc_yeastNCBI.sqlite"
 echo "building chipmapsrc_arabidopsisNCBI.sqlite"
 sqlite3 -bail chipmapsrc_arabidopsisNCBI.sqlite < ../gene/script/bindb_arabidopis.sql
+
+## test for any duplicate rows in any of these dbs
+
+test=`R --slave < ../gene/script/testDups.R`
+
+[[ ! "$test" -eq "" ]] && (echo -e "Error: duplicate values found in \n${test}"; exit 1)
