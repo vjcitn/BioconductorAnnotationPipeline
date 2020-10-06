@@ -3,6 +3,11 @@
 ## in each organism chipsrc_*.sqlite file and transfers those
 ## numbers to the common db/map_counts.sqlite.
 
+## if ../../db/map_counts.sqlite doesn't exist, regenerate it with the data from
+## the last build, from installed db0 packages etc
+
+if(!file.exists("../../db/map_counts.sqlite")) source("./regenMapCounts.R")
+
 ##1st thing is to list all the sqlite files that start with chipsrc and end
 ##with sqlite.
 
@@ -13,6 +18,9 @@ ind3 = grep("^KEGG.sqlite$", files, perl=TRUE)
 ind4 = grep("^PFAM.sqlite$", files, perl=TRUE)
 files = files[c(ind,ind2,ind3,ind4)]
 
+## exclude chipsrc_xxxNCBI.sqlite files - not clear they are used for anything.
+
+files <- files[-grep("NCBI.sqlite", files)]
 
 ##then I need to open each one of these (close them afterwards) while I have
 ##it open I will grab out the map_counts data each so that you have the names
