@@ -12,7 +12,7 @@ INSERT INTO flybase_prot
  SELECT f._id as _id, i.prot_id as prot_id 
  FROM flybase as f INNER JOIN 
  inp.dm_gene_prot_map as i 
- WHERE f.Fbid=i.gene_id;
+ WHERE f.Fbid=i.gene_id AND i.prot_id <> '';
 
 CREATE INDEX IF NOT EXISTS fbgp1 ON flybase_prot(_id);
 

@@ -51,40 +51,7 @@ insertTable <- function(dbconn, fields, tableName, vals, dateval) {
 }
 
 ## we can now just get the map_counts data from the installed db0 packages, and insert
-## those values in the newly created map_counts.sqlite db. Except for yeast and arabidopsis
-## which need to be manipulated a bit first.
-
-fixSc <- function(newchip){
-    require("org.Sc.sgd.db", quietly = TRUE, character.only = TRUE)
-    sc <- dbGetQuery(org.Sc.sgd_dbconn(), "select * from map_counts;")
-    sc[,1] <-  gsub("ORF","GENE", sc[,1])
-    sc[,1] <-  sub("COMMON2GENE","COMMON2SYSTEMATIC", sc[,1])
-    sc[,1] <-  sub("REJECTGENE","REJECTORF", sc[,1])
-    con <- dbConnect(SQLite(), newchip)
-    newsc <- dbGetQuery(con, "select * from map_counts;")
-    sc <- sc[match(newsc[,1], sc[,1]),]
-    dbDisconnect(con)
-    sc
-}
-
-## This function was intended for the chipsrc_athalianaNCBI.sqlite db,
-## but it's not apparent that db is actually used for anything? Skip for now.
-    
-fixAt <- function(newchip){
-    require("org.At.tair.db", quietly = TRUE, character.only = TRUE)
-    at <- dbGetQuery(org.At.tair_dbconn(), "select * from map_counts;")
-    at[,1] <- gsub("TAIR","GENE", at[,1])
-    at[,1] <- gsub("REFSEQ", "ACCNUM", at[,1])
-    at[,1] <- sub("ARACYCENZYME","ENZYME", at[,1])
-    ## dunno where the ENTREZID comes from, so cheat
-    at <- rbind(at, data.frame(map_name = "ENTREZID",
-                               count = at[at[,1] == "TOTAL",2]))
-    con <- dbConnect(SQLite(), newchip)
-    newat <- dbGetQuery(con, "select * from map_counts;")
-    at <- at[match(newat[,1], at[,1]),]
-    dbDisconnect(con)
-    at
-}
+## those values in the newly created map_counts.sqlite db.
 
 getIt <- function(existingdb){
     require(existingdb, quietly = TRUE, character.only = TRUE)
@@ -98,13 +65,14 @@ getIt <- function(existingdb){
 mapcon <- dbConnect(SQLite(), "../../db/map_counts.sqlite")
 
 for(i in seq(along = pkgnames)){
-    mapdf <- switch(pkgnames[i],
-                    org.Sc.sgd.db = fixSc(paste0("../../db/", tablenames[i], ".sqlite")),
-                    org.At.tair.db = fixAt(paste0("../../db/", tablenames[i], ".sqlite")),
-                    getIt(pkgnames[i]))
+    mapdf <-  getIt(pkgnames[i])
     makeTable(mapcon, mapdf[,1], tablenames[i])
     insertTable(mapcon, mapdf[,1], tablenames[i], mapdf[,2], fakedate)
 }
 
 dbDisconnect(mapcon)
+
+        
+        
+        
     
