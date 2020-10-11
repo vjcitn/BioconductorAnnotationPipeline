@@ -13,7 +13,9 @@ checkMissDat <- function(db){
     tables <- tables[-grep("metadata|sqlite", tables)]
     misrow <- sapply(tables, function(x) {
         cols <- dbListFields(con, x)
-        nrow(dbGetQuery(con, paste0("select * from ", x, " where ", cols[2], "='';")))
+        cols <- paste0(cols[-1], "=''")
+        if(length(cols) > 1L) cols <- paste(cols, collapse = " AND ") 
+        nrow(dbGetQuery(con, paste0("select * from ", x, " where ", cols)))
     })
     dbDisconnect(con)
     tables[misrow > 0]

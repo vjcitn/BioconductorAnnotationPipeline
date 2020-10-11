@@ -74,17 +74,42 @@ txdb = {
     ## Make TxDb:
     ## -----------------------------------------------------------------------
     library(GenomicFeatures)
+    library(GenomeInfoDb)
+    maintainer <- "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+    author <- "Bioconductor Core Team"
     dateDir = wheretoput
     txdbDir <- paste(dateDir,"_TxDbs",sep="")
     if (!file.exists(txdbDir))
         dir.create(txdbDir)
     version <- theversion
-    source(system.file("script","makeTxDbs.R", package="GenomicFeatures"))
-    TxDbPackagesForRelease(version=version, 
-                           destDir=txdbDir,
-                           maintainer= paste0("Bioconductor Package Maintainer ",
-                                              "<maintainer@bioconductor.org>"),
-                           author="Bioconductor Core Team")
+    ##source(system.file("script","makeTxDbs.R", package="GenomicFeatures"))
+    ## Do this here rather than some file in GenomicFeatures
+    speciesList <- c("mm39","dm6","rn6","rn5","ce11","bosTau8","galGal5",
+                     "galGal4","susScr11","susScr3","rheMac8","rheMac3",
+                     "panTro5","panTro4")
+    tableList <- c("refGene","ensGene","ncbiRefSeq","refGene","ensGene",
+                   rep("refGene", 9))
+    circ_seqs <- sapply(speciesList, function(x) {
+        tmp <- getChromInfoFromUCSC(x)
+        tmp[is.na(tmp[,4]),4] <- FALSE
+        return(tmp[tmp[,4],1])})
+    for(i in seq(along = speciesList)){
+        cat(paste("Building", speciesList[i], "\n"))
+        makeTxDbPackageFromUCSC(version =  version,
+                                maintainer = maintainer,
+                                author = author,
+                                destDir = txdbDir,
+                                genome = speciesList[i],
+                                tablename = tableList[i],
+                                circ_seqs = circ_seqs[i])
+    }
+    
+    ## TxDbPackagesForRelease(version=version, 
+    ##                        destDir=txdbDir,
+    ##                        maintainer= paste0("Bioconductor Package Maintainer ",
+    ##                                           "<maintainer@bioconductor.org>"),
+    ##                        author="Bioconductor Core Team",
+    ##                        circ_seqs = circ_seqs)
 
 },
 stop("The first argument should be either OrgDb or TxDb~", call. = FALSE))
