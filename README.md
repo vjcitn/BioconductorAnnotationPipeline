@@ -44,7 +44,7 @@ during the last release, but if it was not here are a couple ways to
 potentially clean up the instance:
 
 * Remove old files from the `db/` directory and only save the
-`metadata.sqlite` and the map_counts.sqlite files (under version
+`metadata.sqlite` and the `map_counts.sqlite` files (under version
 control in case they get deleted). **Do not remove any files from
 `db/` once the parsing has started.** Products sent there are either
 needed in a subsequent step or may be the final product.  * Remove
@@ -327,7 +327,16 @@ counts tables in a subset of the `chipsrc` databases. These numbers are then
 recorded in the existing `map_counts.sqlite` file. The data is compared to 
 numbers from the last release. There is a warning that is issued for 
 discrepancies >10%. Remember `map_counts.sqlite` is under version control so 
-there are records of data loss/gain over the releases.
+there are records of data loss/gain over the releases. If
+`map_counts.sqlite` is inadvertently deleted, it will be re-generated
+using the map_counts data from the existing installed db0, GO.db, and
+KEGG.db packages.
+
+Another test is made, which is to go through each of the tables in
+each of the sqlite files in the db/ subdirectory, looking for any rows
+that have empty ('') values for all columns except for the primary key
+column. If any are found, it will print out the sqlite file name and
+the table name.
 
 At this point all code changes should be commit to git. No data files should be 
 added.
@@ -338,30 +347,28 @@ added.
 
 Now that all the data is built, it is time to start building the annotation 
 packages that will be part of the Bioconductor release. All the code needed to 
-build these packages are located in `BioconductorAnnotationPipeline/newPipe/`.
-Within in this directory there are 3 packages that are needed. Since these are 
-clones of the repos, a git pull for each of the packages should be done to be 
-sure the most up to date version is utilized.
+build these packages are located in the installed AnnotationForge
+package, in
+~/R-libraries/AnnotationForge/extdata/GentlemanLab/ANNDBPKG-INDEX.TXT. This
+file has old incorrect version numbers, as well as incorrect
+directories. It can be adjusted using `sed`, doing something like
 
 ```sh
-cd AnnotationDbi
-git pull
-cd ..
+## Fix the version number
+sed -i 's/3.10.0/3.12.0/g' \
+~/R-libraries/AnnotationForge/extdata/GentlemanLab/ANNDBPKG-INDEX.TXT
+## fix the directory structure
+sed  's/newPipe/newPkgs/g' \
+~/R-libraries/AnnotationForge/extdata/GentlemanLab/ANNDBPKG-INDEX.TXT \
+| sed 
+'s|cpb_anno/AnnotationBuildPipeline/newPkgs/old_code/2015.10.07|BioconductorAnnotationPipeline/newPkgs/sanctionedSqlite|g'
+> ANNDBPKG-INDEX.TXT
 
-cd AnnotationForge
-git pull
-cd ..
+mv ANNDBPKG-INDEX.TXT
+~/R-libraries/AnnotationForge/extdata/GentlemanLab/
 
-cd GenomicFeatures
-git pull
-cd ..
 ```
 
-**QUESTION:** `AnnotaionForge` and `GenomicFeatures` versions are different on 
-Daniel's annotation instance because we don't push changes to these packages. 
-Would it be the worst case to push changes if the files aren't used else where 
-in the package. Or maybe we just make a local copy of the file that keeps track 
-of the change and we can push to our repo?
  
 The first set of packages that should be built are the db0 packages, e.g., 
 `human.db0`, `mouse.db0`.
