@@ -101,7 +101,8 @@ dir. Mostly this means edit the last part of this alias, which points to the R b
 ```sh
 alias R='R_LIBS_USER=~/R-libraries ~/R-4.0.2/bin/R'
 ```
-
+The `.bashrc` now points to `R_LIBS_USER` as well, so it might no
+longer be necessary to have that included in the alias for `R`.
 
 **6. Install packages**
 
@@ -332,7 +333,7 @@ there are records of data loss/gain over the releases. If
 using the map_counts data from the existing installed db0, GO.db, and
 KEGG.db packages.
 
-Another test is made, which is to go through each of the tables in
+There is an additional test, which is to go through each of the tables in
 each of the sqlite files in the db/ subdirectory, looking for any rows
 that have empty ('') values for all columns except for the primary key
 column. If any are found, it will print out the sqlite file name and
@@ -345,33 +346,10 @@ added.
 
 ## Build db0 packages <a name="builddb0pkgs"/>
 
-Now that all the data is built, it is time to start building the annotation 
-packages that will be part of the Bioconductor release. All the code needed to 
-build these packages are located in the installed AnnotationForge
-package, in
-~/R-libraries/AnnotationForge/extdata/GentlemanLab/ANNDBPKG-INDEX.TXT. This
-file has old incorrect version numbers, as well as incorrect
-directories. It can be adjusted using `sed`, doing something like
-
-```sh
-## Fix the version number
-sed -i 's/3.10.0/3.12.0/g' \
-~/R-libraries/AnnotationForge/extdata/GentlemanLab/ANNDBPKG-INDEX.TXT
-## fix the directory structure
-sed  's/newPipe/newPkgs/g' \
-~/R-libraries/AnnotationForge/extdata/GentlemanLab/ANNDBPKG-INDEX.TXT \
-| sed 
-'s|cpb_anno/AnnotationBuildPipeline/newPkgs/old_code/2015.10.07|BioconductorAnnotationPipeline/newPkgs/sanctionedSqlite|g'
-> ANNDBPKG-INDEX.TXT
-
-mv ANNDBPKG-INDEX.TXT
-~/R-libraries/AnnotationForge/extdata/GentlemanLab/
-
-```
-
- 
-The first set of packages that should be built are the db0 packages, e.g., 
-`human.db0`, `mouse.db0`.
+Now that all the data is built, it is time to start building the
+annotation packages that will be part of the Bioconductor release.
+The first set of packages that should be built are the db0 packages,
+e.g., `human.db0`, `mouse.db0`.
 
 **1. Make edits to makeDbZeros.R**
 
@@ -399,160 +377,58 @@ need to be built and checked using `R CMD build` and `R CMD check`.
 If all the packages build and check without error then the packages should be 
 installed using `R CMD INSTALL`. 
 
-**4. Spot check**
-
-The `chipmapsrc_mouse.sqlite` file in the new `mouse.db0` package should have 
-8 tables:
-
-```r
-> library(mouse.db0)
-> library(RSQLite)
-> dat1 <- system.file("extdata", file = "chipmapsrc_mouse.sqlite", package = "mouse.db0")
-> con1 <- dbConnect(drv=RSQLite::SQLite(), dbname = dat1)
-> dbListTables(con1)
-[1] "EGList"             "accession"          "accession_unigene"
-[4] "image_acc_from_uni" "metadata"           "refseq"
-[7] "sqlite_stat1"       "unigene"
-```
-
-The `chipsrc_mouse.sqlite` file in the new `mouse.db0` package should have 32 
-tables:
-
-```r
-> dat2 <- system.file("extdata", file = "chipsrc_mouse.sqlite", package = "mouse.db0")
-> con2 <- dbConnect(drv=RSQLite::SQLite(), dbname = dat2)
-> dbListTables(con2)
- [1] "accessions"            "chrlengths"            "chromosome_locations"
- [4] "chromosomes"           "cytogenetic_locations" "ec"
- [7] "ensembl"               "ensembl2ncbi"          "ensembl_prot"
-[10] "ensembl_trans"         "gene_info"             "gene_synonyms"
-[13] "genes"                 "go_bp"                 "go_bp_all"
-[16] "go_cc"                 "go_cc_all"             "go_mf"
-[19] "go_mf_all"             "kegg"                  "map_counts"
-[22] "map_metadata"          "metadata"              "mgi"
-[25] "ncbi2ensembl"          "pfam"                  "prosite"
-[28] "pubmed"                "refseq"                "sqlite_stat1"
-[31] "unigene"               "uniprot"
-```
-
 The only things that need to be kept in the db0 package directory is the tarball 
 files created by `R CMD build`. The repos and the check logs can all be deleted.
 
-**5. Empty table check**
-
-Another test that can be done is to check that the tables actually got 
-populated properly. This can be done by looking for empty tables within each of 
-the db0 packages and confirming if they were previously empty or not. A function 
-has been written to ease the implementation of this test over all of the db0 
-packages. See the function and example below that demonstrates this test for the 
-`anopheles.db0` package.
-
-```r
-# The created function
-> library(RSQLite)
-> tbl_check <- function(pkg_name) {
-+ if(!(pkg_name %in% rownames(installed.packages())))
-+     BiocManager::install(pkg_name)
-+ library(pkg_name, character.only = TRUE)
-+
-+ species <- gsub(".db0", "", pkg_name)
-+
-+ dat1 <- system.file("extdata", file = paste0("chipmapsrc_", species, ".sqlite"),
-+     package = pkg_name)
-+ if (nzchar(dat1)) {
-+     con1 <- dbConnect(drv=RSQLite::SQLite(), dbname = dat1)
-+     sql1 <- paste("SELECT COUNT(*) FROM", dbListTables(con1), ";")
-+     lst1 <- sapply(sql1, function(sql) dbGetQuery(con1, sql))
-+     dbDisconnect(con1)
-+
-+     cat("The empty tables in the chipmapsrc file", "\n")
-+     names(lst1[which(lst1 == 0)])
-+ } else
-+     cat("There is no chipmapsrc file for this species")
-+
-+ dat2 <- system.file("extdata", file = paste0("chipsrc_", species, ".sqlite"),
-+     package = pkg_name)
-+ if (nzchar(dat2)) {
-+     con2 <- dbConnect(drv=RSQLite::SQLite(), dbname = dat2)
-+     sql2 <- paste0("SELECT COUNT(*) FROM ", dbListTables(con2), ";")
-+     lst2 <- sapply(sql2, function(sql) dbGetQuery(con2, sql))
-+     dbDisconnect(con2)
-+
-+     cat("\nThe empty tables in the chipsrc file", "\n")
-+     names(lst2[which(lst2 == 0)])
-+ } else
-+     cat("\nThere is no chipsrc file for this species")
-+ }
-> tbl_check("anopheles.db0")
-The empty tables in the chipmapsrc file
-
-The empty tables in the chipsrc file
-[1] "SELECT COUNT(*) FROM ncbi2ensembl;.COUNT(*)"
-```
-
-Once the empty tables are discovered, like the `ncbi2ensembl` table in the 
-chipsrc file for the `anopheles.db0` package, the tables should be compared to 
-a local version of the current release verison of the package. This will 
-indicate whether the table has been empty or if this was a bug introduced in 
-this particular run of the pipeline. If this is a bug then some debugging will 
-have to be done to figure out what went wrong during this run of the pipeline 
-before making the packages available and/or creating other packages off this 
-wrong information.
-
-**6. Build, check, and install AnnotationForge**
-
-Since `AnnotationForge` suggests the use of `human.db0`, it should be built,
-checked, and installed once the new db0 packages are installed. This can done by
-using `R CMD build`, `R CMD check`, and `R CMD INSTALL`.
 
 [Back to top](#top)
 
 ## Build OrgDb, PFAM.db, and GO.db packages <a name="buildmanypkgs"/>
 
 In order for the OrgDb, PFAM.db, and GO.db packages to get built the db0 
-packages must be built first. If the db0 packages have not bee built yet, please 
+packages must be built first. If the db0 packages have not been built yet, please 
 refer to the [Build db0 packages](#builddb0pkgs) section above.
 
 **1. Update version of packages**
 
-Modify `Version` and potentially the `DBfile` path to the sqlite file for the 
-21 OrgDb packages, GO.db, and PFAM.db within the 
-`AnnotationForge/inst/extdata/Gentlemanlab/ANNDBPKG-INDEX.TXT` file. The changes 
-to this file **should not be pushed**.
+All the code needed to build these packages is located in the
+installed AnnotationForge package, in
+~/R-libraries/AnnotationForge/extdata/GentlemanLab/ANNDBPKG-INDEX.TXT. This
+file has old incorrect version numbers, as well as incorrect
+directories. It's a pain to fix this by hand, so there is a bash
+script in the `newPkgs` subdirectory called `fixAnnoFile.sh` that will
+do this for you. Just call that script, with a new version. Something
+like
 
-**2. Build, check, and install new AnnotationForge**
+```sh
 
-`R CMD build`, `R CMD check`, and `R CMD INSTALL` the modified `AnnotationForge`
-package. This must be done before building the OrgDb, PFAM.db, and GO.db 
-packages because the new versions are in the template in `AnnotationForge` that 
-was just modified.
+fixAnnoFile.sh 3.12.0
 
-**3. Make edits to makeTerminalDBPkgs.R**
+```
+which was correct for Bioc 3.12. This will fix the portion of that
+file that we still use (the majority is intended for ChipDb packages).
 
-In the `makeTerminalDBPkgs.R` file the `dateDir` should be set to a valid date 
-for when the script is being run. This will become the name of the directory 
-that will house the OrgDbs, PFAM.db, and GO.db packages that are being created. 
+**1. Run makeTerminalDBPkgs.R**
 
-There is code in this file that will create the TxDb packages but it should not 
-be run yet. There for an `if (FALSE) {...}` statement should be used where `...` 
-is the code to make the TxDb packages.
-
-**4. Run makeTerminalDBPkgs.R**
-
-Run the portion of `makeTerminalDBPkgs.R` that generates the OrgDbs, PFAM.db, 
-and GO.db packages.
+This is an Rscript, that is intended to get the correct values passed
+in as arguments. There are three arguments; what type of package to
+generate (OrgDb or TxDb), the directory to put the data (just the
+date, in yyyymmdd format, like 20200920), and the version (like 3.12.0)
 
 ```r
-R --slave < makeTerminalDBPkgs.R
+Rscript makeTerminalDBPkgs.R OrgDb 20200920 3.12.0
 ```
 
-**5. Build, check, and install the new packages**
+Which will build all the `OrgDb` packages in the 20200920_OrgDbs
+directory, with 3.12.0 as the version.
+
+**2. Build, check, and install the new packages**
 
 `R CMD build`, `R CMD check`, and `R CMD INSTALL` the new `GO.db` package before 
 building and checking the OrgDbs. Continue building, checking, and installing 
 for all of the OrgDbs and PFAM.db.
 
-**6. Spot check**
+**3. Spot check**
 
 Open an R session and load a newly created OrgDb object, e.g., `org.Hs.eg.db`, to 
 ensure that all resources are up-to-date. Specifically, check the GO and ENSEMBL 
@@ -595,13 +471,6 @@ OrgDb object:
 
 Please see: help('select') for usage information
 ```
-
-**7. Build other packages**
-
-The final test for these new OrgDbs, PFAM.db, and GO.db packages are to build, 
-check, and install `AnnotationDbi` and `AnnotationForge` with `R CMD build`, 
-`R CMD check`, and `R CMD INSTALL`.
-
 Much like the db0 packages, the only products that need to remain in the OrgDb 
 directory are the tarball files from `R CMD build`. Everything else can be 
 removed.
@@ -631,33 +500,25 @@ Bioconductor because these may be new packages that can be added.
 have NCBI Ref Seq data, then let Herve know so he can edit the code in 
 `GenomicFeatures`.
 
-**2. Modify makeTxDb.R**
+**2. Edit makeTerminalDBPkgs.R**
 
-Once the packages that should be updated and/or created are identified, then 
-a script in `GenomicFeatures` should be updated. Modify 
-`GenomicFeatures/inst/script/makeTxDb.R` as appropriate. **DO NOT** push the 
-changes to this code.
-
-`GenomicFeatures` must be built, checked, and installed so that the updated 
-version is used when running the script in step 4. 
-
-**3. Edit makeTerminalDBPkgs.R**
-
-Now the code to create the TxDb should be run and the code that made the 
-OrgDbs should be included in the `if (FALSE) {...}` statement. The `dateDir` 
-should be set to a valid date for when the script is being run. This will become 
-the name of the directory that will house the TxDbs. The `version` should be a 
-valid version depending on what the release is for Bioconductor. 
+After figuring out which `TxDb` packages need to be updated, edit
+makeTerminalDBPkgs.R under the `TxDb` section, updating the
+`speciesList` vector and the corresponding `tableList` vector to
+include all the species that need to be updated, and the tables from
+which to get the data.
 
 **4. Run makeTerminalDBPkgs.R**
 
 Run the portion of `makeTerminalDBPkgs.R` that generates the TxDb packages.
 
 ```sh
-R --slave < makeTerminalDBPkgs.R
+Rscript makeTerminalDBPkgs.R TxDb 20200920 3.12.0
 ```
 
-**5. Build, check, and install TxDb packages**
+Which will generate the `TxDb` packages and put them in 20200920_TxDbs.
+
+**3. Build, check, and install TxDb packages**
 
 Run `R CMD build`, `R CMD check`, and `R CMD INSTALL` for all of the newly 
 created TxDb packages. Load a few of the packages in an R session and check the 
