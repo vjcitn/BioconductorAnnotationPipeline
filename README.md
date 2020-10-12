@@ -128,11 +128,6 @@ useDevel(TRUE)
 BiocManager::install(ask = FALSE)
 ```
 
-**FIXME:** In any of the R files that are run in the pipeline call a package to 
-be loaded, and the R installation is non-standard, there will have to be a 
-`.libPath()` declared for the created library. There seems to be an issue when 
-calling the shell command and it not calling the right lib path.
-
 [Back to top](#top)
 
 ## Download data <a name="downloaddata"/>
@@ -410,7 +405,7 @@ file that we still use (the majority is intended for ChipDb packages).
 
 **1. Run makeTerminalDBPkgs.R**
 
-This is an Rscript, that is intended to get the correct values passed
+This is an Rscript that expects to get the correct values passed
 in as arguments. There are three arguments; what type of package to
 generate (OrgDb or TxDb), the directory to put the data (just the
 date, in yyyymmdd format, like 20200920), and the version (like 3.12.0)
@@ -493,7 +488,7 @@ information). The 'Date last updated' should be checked. If this date is newer
 than the last release then this package needs to be updated. This should be 
 repeated for all of the packages available on Bioconductor. 
 
-It is also important to identify tracks that may not be availabe yet on 
+It is also important to identify tracks that may not be available yet on 
 Bioconductor because these may be new packages that can be added. 
 
 **NOTE:** If any of the new tracks that aren't available yet on Bioconductor are 
@@ -508,7 +503,7 @@ makeTerminalDBPkgs.R under the `TxDb` section, updating the
 include all the species that need to be updated, and the tables from
 which to get the data.
 
-**4. Run makeTerminalDBPkgs.R**
+**3. Run makeTerminalDBPkgs.R**
 
 Run the portion of `makeTerminalDBPkgs.R` that generates the TxDb packages.
 
@@ -518,7 +513,7 @@ Rscript makeTerminalDBPkgs.R TxDb 20200920 3.12.0
 
 Which will generate the `TxDb` packages and put them in 20200920_TxDbs.
 
-**3. Build, check, and install TxDb packages**
+**4. Build, check, and install TxDb packages**
 
 Run `R CMD build`, `R CMD check`, and `R CMD INSTALL` for all of the newly 
 created TxDb packages. Load a few of the packages in an R session and check the 
