@@ -14,12 +14,13 @@ stanza <- obo@.stanza
 
 synonym_type <- c('alt_id')
 synonym_scope <- c('exact', 'related', 'broad', 'narrow')
+universal <- c('all')
 
 names <- rownames(stanza)[-1]  ## Remove __Root__
 names <- c("is_a", names)      ## Add is_a relationship
 names <- c(names, synonym_type)    ## Add synonym_type
 names <- c(names, synonym_scope)    ## Add synonym_scope
-
+names <- c(names, universal)     ## Add universal 
 
 ## Create term table
 terms <- data.frame(id = seq_along(names),
@@ -49,6 +50,8 @@ term['is_relationship'] <- ifelse(term$term_type %in% relationships, 1, 0)
 term[term$name == 'is_a', 'term_type'] <- 'relationship'
 term[term$name %in% synonym_type, 'term_type'] <- 'synonym_type'
 term[term$name %in% synonym_scope, 'term_type'] <- 'synonym_scope'
+## universal is a root 
+term[term$name %in% universal, c('term_type','is_root')] <- c('universal',1)
 
 write.table(term, file = term_f, quote=F, col.names=F, row.names=F, sep = "\t")
 
@@ -74,18 +77,34 @@ rel2term <- function(reldf, namvec){
     ## function to generate term2term data.frame
     ## reldf is a 'relations' data.frame like 'relations'
     ## namvec is a vector of GO IDs, e.g., the 'names' vector
+    ## note that term2 is the parent of term1, and the term2term
+    ## file we output has the parent in column 3 and the child in column 4
     reldf <- as.data.frame(apply(reldf, 2, function(x) match(x, namvec)))
     reldf$id <- seq_len(nrow(reldf))
     reldf$complete <- 0
-    reldf <- reldf[,c(4, 2, 1, 3, 5)]
+    reldf <- reldf[,c(4, 2, 3, 1, 5)]
     reldf
 }
 
 term2term <- rel2term(relations, names)
+
 ## check to see that there aren't any cross-ontology term matches
 crossmatchTest <- function(ids, termdf)
     all(rowSums(cbind(termdf$term1_id %in% ids, termdf$term2_id %in% ids)) %in% c(0,2))
 stopifnot(all(sapply(list(bpids, mfids, ccids), crossmatchTest, termdf = term2term)))
+
+## add in the relationship between the 'universal' term and
+## all the root terms (biological_process, molecular_function, cellular_component)
+## this used to come as part of the term2term.txt file we got from geneontology.org
+## but now we have to add by hand
+
+root_terms <- c("biological_process","cellular_component","molecular_function")
+univterms <- data.frame(id = term2term[nrow(term2term), 'id'] + c(1:3),
+                        relationship_type_id = rep(1, 3),
+                        term2_id = rep(term[nrow(term), 'id'], 3),
+                        term1_id = term[term$name %in% root_terms, 'id'],
+                        complete = rep(0,3))
+term2term <- rbind(term2term, univterms)
 
 term2termlst <- lapply(list(bpids, mfids, ccids),
                        function(x) term2term[term2term$term1_id %in% x,])
