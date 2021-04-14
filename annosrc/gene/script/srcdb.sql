@@ -73,13 +73,15 @@ CREATE TABLE gene2refseq (
 CREATE INDEX gr1 on gene2refseq(gene_id);
 CREATE INDEX gr2 on gene2refseq(tax_id);
 
-CREATE TABLE gene2unigene (
-        gene_id INTEGER NOT NULL,
-        unigene_id TEXT
-);
-.import gene2unigene gene2unigene
-CREATE INDEX gu1 on gene2unigene(gene_id);
-CREATE INDEX gu2 on gene2unigene(unigene_id);
+-- As of Bioc 3.13 we no longer provide UniGene
+
+-- CREATE TABLE gene2unigene (
+--         gene_id INTEGER NOT NULL,
+--         unigene_id TEXT
+-- );
+-- .import gene2unigene gene2unigene
+-- CREATE INDEX gu1 on gene2unigene(gene_id);
+-- CREATE INDEX gu2 on gene2unigene(unigene_id);
 
 CREATE TABLE gene_info (
         tax_id INTEGER NOT NULL,

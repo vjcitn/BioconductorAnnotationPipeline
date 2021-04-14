@@ -41,18 +41,19 @@ UNION
 
 CREATE INDEX r1 ON refseq(accession);
 
-CREATE TABLE unigene (
- gene_id INTEGER,
- unigene_id TEXT
-);
+-- Removed as of BioC 3.13
+-- CREATE TABLE unigene (
+--  gene_id INTEGER,
+--  unigene_id TEXT
+-- );
 
-INSERT INTO unigene 
- SELECT min(gene_id), unigene_id 
- FROM genesrc.gene2unigene
- WHERE unigene_id LIKE 'Mmu.%'
- GROUP BY unigene_id;
+-- INSERT INTO unigene 
+--  SELECT min(gene_id), unigene_id 
+--  FROM genesrc.gene2unigene
+--  WHERE unigene_id LIKE 'Mmu.%'
+--  GROUP BY unigene_id;
 
-CREATE INDEX u1 ON unigene(unigene_id);
+-- CREATE INDEX u1 ON unigene(unigene_id);
 
 
 CREATE TABLE EGList (gene_id TEXT NOT NULL, UNIQUE(gene_id));

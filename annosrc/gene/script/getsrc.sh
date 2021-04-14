@@ -19,6 +19,10 @@ echo "unpacking gene_info ..."
 gunzip -c gene_info.gz > gene_info
 echo "unpacking gene_refseq_uniprotkb_collab ..."
 gunzip -c gene_refseq_uniprotkb_collab.gz > gene_refseq_uniprotkb_collab
+echo "unpacking gene_orthologs ..."
+gunzip -c gene_orthologs.gz > gene_orthologs
+echo "extracting taxonomic names ..."
+tar xvfz new_taxdump.tar.gz names.dmp
 
 ## remove comments
 echo "remove comments ..."
@@ -30,15 +34,22 @@ echo "removing gene2refseq comments"
 sed -i -e "/^#.*$/ {d}" gene2refseq
 echo "removing gene2accession comments"
 sed -i -e "/^#.*$/ {d}" gene2accession
-echo "removing gene2unigene comments"
-sed -i -e "/^#.*$/ {d}" gene2unigene
+## As of bioc 3.13 no more Unigene
+# echo "removing gene2unigene comments"
+# sed -i -e "/^#.*$/ {d}" gene2unigene
 echo "removing gene2pubmed comments"
 sed -i -e "/^#.*$/ {d}" gene2pubmed
 echo "removing mim2gene_medgen comments"
 sed -i -e "/^#.*$/ {d}" mim2gene_medgen
 echo "removing gene_refseq_uniprotkb_collab comments"
 sed -i -e "/^#.*$/ {d}" gene_refseq_uniprotkb_collab
+echo "removing gene_orthologs comments"
+cut -f 1,2,4,5 gene_orthologs > tmp
+sed  -e "/^#.*$/ {d}" tmp > gene_orthologs 
 echo "done removing comments"
+echo "fixing txid mappings ..."
+awk -F'|' '{if($4 ~ /scientific name/) print toupper($1$2)}' names.dmp |
+    tr -s '\t' | sed 's/ /_/g' |  cut -f 1-2 > names.txt
 
 ## trim the gene_info file of extraneous cols
 echo "trim gene_info file ..."
@@ -65,12 +76,18 @@ echo "creating source sqlite db ..."
 rm -f genesrc.sqlite
 sqlite3 -bail genesrc.sqlite < ../script/srcdb.sql
 
+## create orthology sqlite db
+echo "creating orthology sqlite db ..."
+rm -f orthology.sqlite
+sqlite3 -bail orthology.sqlite < ../script/src_orthology.sql
+
 ## record data download date
 echo "inserting data download date ..."
 echo "INSERT INTO metadata VALUES('EGSOURCEDATE', '$EGSOURCEDATE');" > temp_metadata.sql
 echo "INSERT INTO metadata VALUES('EGSOURCENAME', '$EGSOURCENAME');" >> temp_metadata.sql
 echo "INSERT INTO metadata VALUES('EGSOURCEURL', '$EGSOURCEURL');" >> temp_metadata.sql
 sqlite3 -bail genesrc.sqlite < temp_metadata.sql
+sqlite3 -bail orthology.sqlite < temp_metadata.sql
 rm -f temp_metadata.sql
 echo "done!"
 

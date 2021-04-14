@@ -24,11 +24,15 @@ if [ "$LATEST_DATE" != "$EGSOURCEDATE" ]; then
 	# UniGene is dead now, so gene2unigene doesn't exist
 	# just copy from previous download for now
 	## maybe this should just go away
-	cp ../$EGSOURCEDATE/gene2unigene .
+	## It's gone now
+	## cp ../$EGSOURCEDATE/gene2unigene .
 	#curl --disable-epsv -O $BASE_URL/gene2unigene
 	curl --disable-epsv -O $BASE_URL/mim2gene_medgen
 	curl --disable-epsv -O $BASE_URL/gene_info.gz
 	curl --disable-epsv -O $BASE_URL/gene_refseq_uniprotkb_collab.gz
+	# get orthologs for orthology mapping package
+	curl --disable-epsv -O $BASE_URL/gene_orthologs.gz
+	curl --disable-epsv -0 $BASE_URL/../../pub/taxonomy/new_taxdump/new_taxdump.tar.gz
 	cd ../script
 	#sh getsrc.sh
 else
