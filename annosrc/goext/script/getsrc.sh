@@ -6,8 +6,10 @@ fi
 
 ## unpack source data
 cd ../$GOEXTSOURCEDATE
-sed -i -e "/^!/ {d}" ec2go
-sed -i -e "s/ > [^;]* ; / /g" ec2go
+sed -i -e '/^\!/{d}' ec2go
+#sed -i -e "/^!/ {d}" ec2go
+sed -i -e 's/[.-]* > [^;]* ; / /g' ec2go
+#sed -i -e "s/ > [^;]* ; / /g" ec2go
 
 ## create source sqlite db
 rm -f ec2gosrc.sqlite
