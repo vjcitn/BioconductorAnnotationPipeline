@@ -32,7 +32,7 @@ if [ "$LATEST_DATE" != "$EGSOURCEDATE" ]; then
 	curl --disable-epsv -O $BASE_URL/gene_refseq_uniprotkb_collab.gz
 	# get orthologs for orthology mapping package
 	curl --disable-epsv -O $BASE_URL/gene_orthologs.gz
-	curl --disable-epsv -0 $BASE_URL/../../pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+	curl --disable-epsv -O $BASE_URL/../../pub/taxonomy/new_taxdump/new_taxdump.tar.gz
 	cd ../script
 	#sh getsrc.sh
 else

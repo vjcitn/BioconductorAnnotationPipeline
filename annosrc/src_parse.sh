@@ -13,22 +13,23 @@ cd $SRC_BASE/go/script; sh getsrc.sh
 echo "finished parsing go"
 
 ## unigene
-echo "parsing unigene"
-cd $SRC_BASE/unigene/script; sh getsrc.sh human 
-cd $SRC_BASE/unigene/script; sh getsrc.sh mouse
-cd $SRC_BASE/unigene/script; sh getsrc.sh rat
-cd $SRC_BASE/unigene/script; sh getsrc.sh fly
-cd $SRC_BASE/unigene/script; sh getsrc.sh fish
-cd $SRC_BASE/unigene/script; sh getsrc.sh canine
-cd $SRC_BASE/unigene/script; sh getsrc.sh bovine
-cd $SRC_BASE/unigene/script; sh getsrc.sh worm
-cd $SRC_BASE/unigene/script; sh getsrc.sh pig
-cd $SRC_BASE/unigene/script; sh getsrc.sh chicken
-cd $SRC_BASE/unigene/script; sh getsrc.sh rhesus
-cd $SRC_BASE/unigene/script; sh getsrc.sh xenopus
-cd $SRC_BASE/unigene/script; sh getsrc.sh arabidopsis
-cd $SRC_BASE/unigene/script; sh getsrc.sh anopheles
-echo "finished parsing unigene"
+## no longer building UniGene since Bioc 3.13
+# echo "parsing unigene"
+# cd $SRC_BASE/unigene/script; sh getsrc.sh human 
+# cd $SRC_BASE/unigene/script; sh getsrc.sh mouse
+# cd $SRC_BASE/unigene/script; sh getsrc.sh rat
+# cd $SRC_BASE/unigene/script; sh getsrc.sh fly
+# cd $SRC_BASE/unigene/script; sh getsrc.sh fish
+# cd $SRC_BASE/unigene/script; sh getsrc.sh canine
+# cd $SRC_BASE/unigene/script; sh getsrc.sh bovine
+# cd $SRC_BASE/unigene/script; sh getsrc.sh worm
+# cd $SRC_BASE/unigene/script; sh getsrc.sh pig
+# cd $SRC_BASE/unigene/script; sh getsrc.sh chicken
+# cd $SRC_BASE/unigene/script; sh getsrc.sh rhesus
+# cd $SRC_BASE/unigene/script; sh getsrc.sh xenopus
+# cd $SRC_BASE/unigene/script; sh getsrc.sh arabidopsis
+# cd $SRC_BASE/unigene/script; sh getsrc.sh anopheles
+# echo "finished parsing unigene"
 
 ## gene 
 echo "parsing gene"
