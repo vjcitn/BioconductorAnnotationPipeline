@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-export GOEXTSOURCEDATE=2020-Mar26
+export GOEXTSOURCEDATE=2021-Apr14
 export GOEXTSOURCENAME="Gene Ontology External Link"
 export GOEXTSOURCEURL="ftp://ftp.geneontology.org/pub/go/external2go"
 ## The above URL times out and may be busted now?
