@@ -217,15 +217,23 @@ replacement.
 	+ Check `FBSOURCEDATE` in `inparanoid/script/env.sh`.
 	+ Manually update `FILE` in `inparanoid/script/env.sh`.
 * tair
-	+ ftp://ftp.arabidopsis.org
-	+ Last download was April 2015 (TAIR10).
-	+ Download script is not run but the parse and build are to run so 
-the most current GO gets inserted. Last release was April 2015. Used to build 
-`db0` and `OrgDb` packages. Data are static but for Bioconductor 3.3 packages 
-were rebuilt and reversioned.
-	+ **TODO:** If another release doesn't come out before Fall 2016 ask 
-on bioc-devel if we want to keep this.
-	+ Check `TAIRSOURCEDATE` in `tair/script/env.sh`.
+	+ The FTP site contains old data; we now rely on their HTTPS site
+	for data. Unfortunately it's not easily queryable to get the
+	relevant files, so this part is by hand.
+	+ In the env.sh script there are a bunch of URLs to
+	arabidopsis.org. To check these and find updated files, go to
+	https://www.arabidopsis.org/, then click on the 'Download' link at
+	the top.
+	+ Using the URLs in the env.sh file (e.g.,
+	www.arabidopsis.org/download_files/Genes/TAIR10_genome_release),
+	click on the relevant links in the Download drop-down until you
+	get to the correct folder and see if there are new data available.
+	+ So for the previous example, it would be Downloads, then Genes,
+	which opens up an ftp-like page. Choose the most recent TAIR
+	release (currently TAIR10_genome_release) and look for the
+	TAIR10_functional_descriptions file. If it's changed, update in
+	the env.sh. Rinse and repeat for all the URLs in the env.sh file.
+	+ Check `TAIRSOURCEDATE` in `tair/script/env.sh` to ensure it's current
 * KEGG
 	+ KEGG data are no longer available for download.
 	+ **TODO:** Look into replacing it with `KEGGREST` package.
