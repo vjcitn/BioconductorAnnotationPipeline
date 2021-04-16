@@ -4,7 +4,7 @@ if [ "$PFAMSOURCEDATE" = "" ]; then
   . ./env.sh
 fi
 
-cd ../$PFAMSOURCEDATE/
+cd ../$PFAMSOURCEDATE
 
 ## Reduce the HUGE 4 GB file down to just its ID components.
 # gunzip Pfam-A.full.gz

@@ -61,9 +61,9 @@ INSERT INTO EGList SELECT DISTINCT gene_id FROM accession;
 INSERT INTO EGList SELECT DISTINCT new FROM (
   SELECT r.gene_id new, e.gene_id old FROM refseq r 
   LEFT JOIN EGList e ON r.gene_id=e.gene_id) where old!=new;
-INSERT INTO EGList SELECT DISTINCT new FROM (
-  SELECT u.gene_id new, e.gene_id old FROM unigene u 
-  LEFT JOIN EGList e ON u.gene_id=e.gene_id) where old!=new;
+-- INSERT INTO EGList SELECT DISTINCT new FROM (
+--   SELECT u.gene_id new, e.gene_id old FROM unigene u 
+--   LEFT JOIN EGList e ON u.gene_id=e.gene_id) where old!=new;
 
 
 DETACH DATABASE genesrc;

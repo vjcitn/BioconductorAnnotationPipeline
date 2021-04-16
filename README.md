@@ -92,14 +92,17 @@ install`, or to point to a prefix dir.
 Previous versions of R can be deleted, but it may be advantageous to
 keep the one from the last build.
 
-**5. Set up proper aliases**
+**5. Set up proper path**
 
-Since we run R from the build dir, open `.bashrc` and adjust the alias
+Since we run R from the build dir, open `.bashrc` and adjust the path
 to point to the current version of R, as well as the library
-dir. Mostly this means edit the last part of this alias, which points to the R build dir.
+dir. Mostly this means edit the location of the R install location,
+which points to the R build dir. Note that in the past we used aliases
+to point to R, but when running R from within a bash script the
+aliases are ignored and the site-wide R installation is used instead.
 
 ```sh
-alias R='R_LIBS_USER=~/R-libraries ~/R-4.0.2/bin/R'
+export PATH=/home/ubuntu/R-devel/bin:$PATH
 ```
 The `.bashrc` now points to `R_LIBS_USER` as well, so it might no
 longer be necessary to have that included in the alias for `R`.
