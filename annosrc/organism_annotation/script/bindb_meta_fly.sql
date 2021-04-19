@@ -60,9 +60,9 @@ INSERT INTO map_counts
  SELECT 'SYMBOL', count(DISTINCT _id)
  FROM gene_info;
 
-INSERT INTO map_counts
- SELECT 'UNIGENE', count(DISTINCT _id)
- FROM unigene;
+-- INSERT INTO map_counts
+--  SELECT 'UNIGENE', count(DISTINCT _id)
+--  FROM unigene;
 
 INSERT INTO map_counts
  SELECT 'ENZYME2GENE', count(DISTINCT ec_number)

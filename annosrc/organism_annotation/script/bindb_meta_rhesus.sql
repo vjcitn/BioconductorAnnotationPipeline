@@ -57,9 +57,9 @@ INSERT INTO map_counts
  SELECT 'SYMBOL', count(DISTINCT _id)
  FROM gene_info;
 
-INSERT INTO map_counts
- SELECT 'UNIGENE', count(DISTINCT _id)
- FROM unigene;
+-- INSERT INTO map_counts
+--  SELECT 'UNIGENE', count(DISTINCT _id)
+--  FROM unigene;
 
 INSERT INTO map_counts
  SELECT 'ENZYME2GENE', count(DISTINCT ec_number)
@@ -193,10 +193,10 @@ INSERT INTO map_metadata
  FROM map_metadata
  WHERE map_name='ACCNUM';
 
-INSERT INTO map_metadata
- SELECT 'UNIGENE', source_name, source_url, source_date
- FROM map_metadata
- WHERE map_name='ACCNUM';
+-- INSERT INTO map_metadata
+--  SELECT 'UNIGENE', source_name, source_url, source_date
+--  FROM map_metadata
+--  WHERE map_name='ACCNUM';
 
 INSERT INTO map_metadata
  SELECT 'ENZYME2GENE', source_name, source_url, source_date

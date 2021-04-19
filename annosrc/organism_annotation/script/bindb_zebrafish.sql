@@ -228,18 +228,18 @@ INSERT INTO pubmed
 
 CREATE INDEX c9 ON pubmed(_id);
  
-CREATE TABLE unigene (
- _id INTEGER REFERENCES genes(_id),
- unigene_id TEXT
-);
+-- CREATE TABLE unigene (
+--  _id INTEGER REFERENCES genes(_id),
+--  unigene_id TEXT
+-- );
 
-INSERT INTO unigene 
- SELECT DISTINCT g._id as _id, unigene_id 
- FROM genes as g, genesrc.gene2unigene as i
- WHERE i.gene_id=g.gene_id
- ORDER BY _id;
+-- INSERT INTO unigene 
+--  SELECT DISTINCT g._id as _id, unigene_id 
+--  FROM genes as g, genesrc.gene2unigene as i
+--  WHERE i.gene_id=g.gene_id
+--  ORDER BY _id;
 
-CREATE INDEX c10 ON unigene(_id);
+--CREATE INDEX c10 ON unigene(_id);
 
 DETACH DATABASE genesrc;
  
