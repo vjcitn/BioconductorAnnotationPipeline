@@ -352,27 +352,27 @@ res <- getYeastData(species, db)
 ## Add pfam table
 message("Making table for pfam") 
 
-dbGetQuery(db, "DROP TABLE IF EXISTS pfam;")
+dbExecute(db, "DROP TABLE IF EXISTS pfam;")
 sql <-  "CREATE TABLE pfam (
      _id INTEGER NOT NULL,
      pfam_id CHAR(7) NOT NULL,
      FOREIGN KEY (_id) REFERENCES sgd (_id)
     );"
-dbGetQuery(db, sql)
+dbExecute(db, sql)
 sql <-  "CREATE INDEX pf1 ON pfam(_id);"
-dbGetQuery(db, sql)
+dbExecute(db, sql)
 
 ## And a smart table too
 message("Making table for smart") 
-dbGetQuery(db, "DROP TABLE IF EXISTS smart;")
+dbExecute(db, "DROP TABLE IF EXISTS smart;")
 sql <-  "CREATE TABLE smart (
      _id INTEGER NOT NULL,
      smart_id CHAR(7) NOT NULL,
      FOREIGN KEY (_id) REFERENCES sgd (_id)
     );"
-dbGetQuery(db, sql)
+dbExecute(db, sql)
 sql <-  "CREATE INDEX sm1 ON smart(_id);"
-dbGetQuery(db, sql)
+dbExecute(db, sql)
 
 message("Inserting data for:",species)
 ## Now I need to insert the data:
@@ -384,46 +384,46 @@ date <- date()
 url <- "http://www.UniProt.org/"
 name <- "Uniprot"
   
-dbGetQuery(db, "DELETE FROM metadata where name ='UPSOURCENAME' ")   
+dbExecute(db, "DELETE FROM metadata where name ='UPSOURCENAME' ")   
 sqlMeta1 <- paste0("INSERT INTO metadata (name,value) VALUES ('UPSOURCENAME','",name,"')")
-dbGetQuery(db, sqlMeta1)
+dbExecute(db, sqlMeta1)
   
-dbGetQuery(db, "DELETE FROM metadata where name ='UPSOURCEURL' ")   
+dbExecute(db, "DELETE FROM metadata where name ='UPSOURCEURL' ")   
 sqlMeta2 <- paste0("INSERT INTO metadata (name,value) VALUES ('UPSOURCEURL','",url,"')")
-dbGetQuery(db, sqlMeta2)
+dbExecute(db, sqlMeta2)
   
-dbGetQuery(db, "DELETE FROM metadata where name ='UPSOURCEDATE' ")   
+dbExecute(db, "DELETE FROM metadata where name ='UPSOURCEDATE' ")   
 sqlMeta3 <- paste0("INSERT INTO metadata (name,value) VALUES ('UPSOURCEDATE','",date,"')")
-dbGetQuery(db, sqlMeta3)
-dbGetQuery(db,"DELETE FROM metadata WHERE name LIKE 'IPISOURCE%'")
+dbExecute(db, sqlMeta3)
+dbExecute(db,"DELETE FROM metadata WHERE name LIKE 'IPISOURCE%'")
 
   
 ## And don't forget the map_counts for PROSITE AND PFAM
-dbGetQuery(db, "DELETE FROM map_counts where map_name ='PFAM' ")   
+dbExecute(db, "DELETE FROM map_counts where map_name ='PFAM' ")   
 sqlmapcnt1 <- "INSERT INTO map_counts
                  SELECT 'PFAM', count(DISTINCT _id)
                  FROM pfam;"
-dbGetQuery(db, sqlmapcnt1)
+dbExecute(db, sqlmapcnt1)
 
-dbGetQuery(db, "DELETE FROM map_counts where map_name ='SMART' ")   
+dbExecute(db, "DELETE FROM map_counts where map_name ='SMART' ")   
 sqlmapcnt1 <- "INSERT INTO map_counts
                  SELECT 'SMART', count(DISTINCT _id)
                  FROM smart;"
-dbGetQuery(db, sqlmapcnt1)
+dbExecute(db, sqlmapcnt1)
 
 
 ## ALSO: modify the map_metadata (1st drop the PFAM and prosite entries
-dbGetQuery(db, "DELETE FROM map_metadata where map_name ='PFAM' ") 
+dbExecute(db, "DELETE FROM map_metadata where map_name ='PFAM' ") 
 ## then put our own entries in...
 sqlPFMM <- paste0( "INSERT INTO map_metadata (map_name, source_name, ",
                   "source_url, source_date) VALUES ('PFAM','",name,
                   "','",url,"','",date,"')")
-dbGetQuery(db, sqlPFMM)
+dbExecute(db, sqlPFMM)
 
-dbGetQuery(db, "DELETE FROM map_metadata where map_name ='SMART' ") 
+dbExecute(db, "DELETE FROM map_metadata where map_name ='SMART' ") 
 ## then put our own entries in...
 sqlPFMM <- paste0( "INSERT INTO map_metadata (map_name, source_name, ",
                   "source_url, source_date) VALUES ('SMART','",name,
                   "','",url,"','",date,"')")
-dbGetQuery(db, sqlPFMM)
+dbExecute(db, sqlPFMM)
 message("Done with ",species)

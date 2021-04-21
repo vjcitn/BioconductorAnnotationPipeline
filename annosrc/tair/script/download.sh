@@ -51,7 +51,9 @@ if [ "$LATEST_DATE" != "$TAIRSOURCEDATE" ]; then
       sed -e "1,4d" ATH_GO_GOSLIM1.txt > ATH_GO_GOSLIM.txt
       sed -e "1d" $TAIRAGURLNAME > affy_AG_array_elements1.txt
       sed -e "1d" $TAIRATHURLNAME > affy_ATH1_array_elements1.txt
-      zcat $TAIRPMIDURLNAME | sed -e "1d" > LocusPublished1.txt
+      ## Starting with Spring 2021 download, this file has NULL where
+      ## there used to be spaces so we remove them here as well
+      zcat $TAIRPMIDURLNAME | sed -e "1d" | sed -e 's/NULL//g' > LocusPublished1.txt
       sed -e "1d" $TAIRGENEURLNAME > TAIR_sequenced_genes1
       
       iconv -f WINDOWS-1252 -t UTF-8 TAIR_sequenced_genes1 > TAIR_sequenced_genes2 

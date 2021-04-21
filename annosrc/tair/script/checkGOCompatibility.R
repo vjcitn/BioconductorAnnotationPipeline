@@ -37,7 +37,7 @@ con <- dbConnect(drv, "../../db/chipsrc_arabidopsis.sqlite")
 
 sql <- "ATTACH '../../db/GO.sqlite' as go;"
 ## sql <- "ATTACH '../../db/GO.sqlite_oldBAK' as go;"
-dbGetQuery(con, sql)
+dbExecute(con, sql)
 
 sql <- "select count(distinct go_id) FROM (SELECT go_id from go_bp_all UNION SELECT go_id from go_cc_all UNION SELECT go_id from go_mf_all) where go_id NOT IN (select go_id from go.go_term);"
 
