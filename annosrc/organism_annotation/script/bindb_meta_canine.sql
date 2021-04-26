@@ -177,6 +177,11 @@ INSERT INTO map_metadata
  WHERE map_name='ACCNUM';
 
 INSERT INTO map_metadata
+ SELECT 'GENETYPE', source_name, source_url, source_date
+ FROM map_metadata
+ WHERE map_name='ACCNUM';
+
+INSERT INTO map_metadata
  SELECT 'GO', m1.value, m2.value, m3.value
  FROM metadata AS m1, metadata AS m2, metadata AS m3
  WHERE m1.name='GOSOURCENAME' AND

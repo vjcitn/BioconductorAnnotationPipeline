@@ -183,6 +183,11 @@ INSERT INTO map_metadata
  FROM map_metadata
  WHERE map_name='ACCNUM';
 
+INSERT INTO map_metadata
+ SELECT 'GENETYPE', source_name, sorce_url, source_date
+ FROM map_metadata
+ where map_name='ACCNUM';
+
 --former place of OMIM insertion (moved to make it human specific)
 
 INSERT INTO map_metadata
