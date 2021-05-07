@@ -184,7 +184,7 @@ INSERT INTO map_metadata
  WHERE map_name='ACCNUM';
 
 INSERT INTO map_metadata
- SELECT 'GENETYPE', source_name, sorce_url, source_date
+ SELECT 'GENETYPE', source_name, source_url, source_date
  FROM map_metadata
  where map_name='ACCNUM';
 

@@ -66,7 +66,7 @@ switch(whattype, orgdb = {
     sqlitefiles <- list.files(outDir, pattern="^org")
     packages <- paste(substr(sqlitefiles, 1, nchar(sqlitefiles)-7), ".db", sep="")
     ## include GO.db, PFAM.db
-    packages <- c(packages, "GO.db", "PFAM.db")
+    packages <- c(packages, "GO.db", "PFAM.db", "Orthology.eg.db")
     makeAnnDbPkg(x=packages, dest_dir=orgdbDir)
 },
 txdb = {
@@ -84,11 +84,8 @@ txdb = {
     version <- theversion
     ##source(system.file("script","makeTxDbs.R", package="GenomicFeatures"))
     ## Do this here rather than some file in GenomicFeatures
-    speciesList <- c("mm39","dm6","rn6","rn5","ce11","bosTau8","galGal5",
-                     "galGal4","susScr11","susScr3","rheMac8","rheMac3",
-                     "panTro5","panTro4")
-    tableList <- c("refGene","ensGene","ncbiRefSeq","refGene","ensGene",
-                   rep("refGene", 9))
+    speciesList <- c("hg38","hg38")
+    tableList <- c("refGene","knownGene")
     circ_seqs <- sapply(speciesList, function(x) {
         tmp <- getChromInfoFromUCSC(x)
         tmp[is.na(tmp[,4]),4] <- FALSE

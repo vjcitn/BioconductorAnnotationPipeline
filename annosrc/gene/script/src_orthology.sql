@@ -29,7 +29,6 @@ CREATE TABLE metadata (
 INSERT INTO metadata VALUES('Db type', 'OrthologyDb');
 INSERT INTO metadata VALUES('Supporting package', 'AnnotationDbi');
 INSERT INTO metadata VALUES('DBSCHEMA', 'ORTHOLOGY_DB');
-INSERT INTO metadata VALUES('DBSCHEMAVERSION', '2.1');
 
 
 ANALYZE;

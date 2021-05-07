@@ -10,7 +10,7 @@ cd ../../db
 echo "copy genesrc.sqlite from local to /db"
 cp ../gene/$EGSOURCEDATE/genesrc.sqlite .
 echo "copy orthology.sqlite from local to /db"
-cp ../gene/$EGSOURCEDATE/orthology.sqlite .
+cp ../gene/$EGSOURCEDATE/Orthology.eg.sqlite .
 
 ## create organism specific sqlite db: 
 ## only keep gene2accession and gene2unigene mapping

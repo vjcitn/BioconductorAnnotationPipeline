@@ -76,10 +76,10 @@ echo "creating source sqlite db ..."
 rm -f genesrc.sqlite
 sqlite3 -bail genesrc.sqlite < ../script/srcdb.sql
 
-## create orthology sqlite db
-echo "creating orthology sqlite db ..."
-rm -f orthology.sqlite
-sqlite3 -bail orthology.sqlite < ../script/src_orthology.sql
+## create Orthology.eg sqlite db
+echo "creating Orthology.eg sqlite db ..."
+rm -f Orthology.eg.sqlite
+sqlite3 -bail Orthology.eg.sqlite < ../script/src_orthology.sql
 
 ## record data download date
 echo "inserting data download date ..."
@@ -87,7 +87,7 @@ echo "INSERT INTO metadata VALUES('EGSOURCEDATE', '$EGSOURCEDATE');" > temp_meta
 echo "INSERT INTO metadata VALUES('EGSOURCENAME', '$EGSOURCENAME');" >> temp_metadata.sql
 echo "INSERT INTO metadata VALUES('EGSOURCEURL', '$EGSOURCEURL');" >> temp_metadata.sql
 sqlite3 -bail genesrc.sqlite < temp_metadata.sql
-sqlite3 -bail orthology.sqlite < temp_metadata.sql
+sqlite3 -bail Orthology.eg.sqlite < temp_metadata.sql
 rm -f temp_metadata.sql
 echo "done!"
 

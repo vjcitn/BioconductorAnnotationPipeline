@@ -12,6 +12,7 @@ cp ${COPYFROM}GO.sqlite ${COPYTO}
 cp ${COPYFROM}PFAM.sqlite ${COPYTO}
 cp ${COPYFROM}KEGG.sqlite ${COPYTO}
 cp ${COPYFROM}YEAST.sqlite ${COPYTO}
+cp ${COPYFROM}Orthology.eg.sqlite ${COPYTO}
 
 cd ${COPYTO}
 

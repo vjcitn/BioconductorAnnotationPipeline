@@ -166,9 +166,8 @@ the variable(s) that should be checked, are listed below.
 	+ Appears to be current, now updated weekly.
 	+ Check `GOSOURCEDATE` in `go/script/env.sh`.
 * unigene
-	+ unigene is now defunct, and we just put the old data into
-the databases. Kept now simply for backwards compatibility.
-	+ ftp://ftp.ncbi.nih.gov/repository/UniGene/
+	+ unigene is now defunct. As of Bioconductor 3.13 it isn't used
+	+ However, the directory still exists, but you can ignore it
 	+ Last downloads are from 2013. 
 * gene
 	+ ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
@@ -211,10 +210,8 @@ available in another file in the directory but it will take some investigation.
 	+ Protein families represented by multiple sequence alignments.
 	+ Check `PFAMSOURCEDATE` in `pfam/script/env.sh`.
 * inparanoid
-	+ http://inparanoid.sbc.su.se/download/old_versions/History
-	+ Frozen at version 6.1 (2007), it looks like the last version was 8.0 
-(2013). Not sure worth updating, probably better to find a more current 
-replacement.
+	+ This has been superceded by the Orthology.eg.db package, and
+	won't build or supply these packages after Bioc 3.13
 	+ The scripts in this directory update flybase which is still active.
 	+ ftp://ftp.flybase.net/releases/current/precomputed_files/genes/
 	+ Check `FBSOURCEDATE` in `inparanoid/script/env.sh`.
@@ -240,6 +237,9 @@ replacement.
 * KEGG
 	+ KEGG data are no longer available for download.
 	+ **TODO:** Look into replacing it with `KEGGREST` package.
+	+ Probably a better idea is to just query the KeGG REST API
+ 	directly, as there are still MAP tables in the OrgDb packages.
+	+ Should be doable for Bioc 3.14
 
 When the `src_download.sh` script is done running, confirm that the new data 
 has been downloaded by checking for the date-specific directory. If no new 

@@ -114,24 +114,24 @@ getData <- function(dbFile, db){
 
 ## ## make PFAM and Prosite tables
 makePFAMandPrositeTables <- function(db){
-    dbGetQuery(db, "DROP TABLE IF EXISTS pfam;")
+    dbExecute(db, "DROP TABLE IF EXISTS pfam;")
     sql <-  "CREATE TABLE pfam (
      _id INTEGER REFERENCES genes(_id),
      ipi_id TEXT,
      pfam_id TEXT
     );"
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
     sql <-  "CREATE INDEX c20 ON pfam(_id);"
-    dbGetQuery(db, sql)
-    dbGetQuery(db, "DROP TABLE IF EXISTS prosite;")
+    dbExecute(db, sql)
+    dbExecute(db, "DROP TABLE IF EXISTS prosite;")
     sql <-  "CREATE TABLE prosite (
      _id INTEGER REFERENCES genes(_id),
      ipi_id TEXT,
      prosite_id TEXT
     );"
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
     sql <-  "CREATE INDEX c21 ON prosite(_id);"
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
 }
 
 
@@ -147,13 +147,13 @@ doInserts <- function(db, table, data){
 
   ## make a temp pfam table pfamt
   sqlDrop <-paste0("DROP TABLE IF EXISTS ",table,"t;")
-  dbGetQuery(db, sqlDrop)
+  dbExecute(db, sqlDrop)
 
   sqlCreate <- paste0("CREATE TABLE ",table,"t (
                 gene_id TEXT,
                 ipi_id TEXT,
                 ",table,"_id TEXT);")
-  dbGetQuery(db, sqlCreate)
+  dbExecute(db, sqlCreate)
 
   
   ## 1st insert for pfam
@@ -172,12 +172,12 @@ doInserts <- function(db, table, data){
                 FROM genes as g, ",table,"t as i
                 WHERE g.gene_id=i.gene_id
                 ORDER BY _id")
-  dbGetQuery(db, sqlIns2)
+  dbExecute(db, sqlIns2)
 
   
   ## then drop the table
   sqlDrop <- paste0("DROP TABLE ",table,"t")
-  dbGetQuery(db, sqlDrop)
+  dbExecute(db, sqlDrop)
   
 }
 
@@ -206,45 +206,45 @@ for(species in speciesList){
   url <- "http://www.UniProt.org/"
   name <- "Uniprot"
   
-  dbGetQuery(db, "DELETE FROM metadata where name ='UPSOURCENAME' ")   
+  dbExecute(db, "DELETE FROM metadata where name ='UPSOURCENAME' ")   
   sqlMeta1 <- paste0("INSERT INTO metadata (name,value) VALUES ('UPSOURCENAME','",name,"')")
-  dbGetQuery(db, sqlMeta1)
+  dbExecute(db, sqlMeta1)
   
-  dbGetQuery(db, "DELETE FROM metadata where name ='UPSOURCEURL' ")   
+  dbExecute(db, "DELETE FROM metadata where name ='UPSOURCEURL' ")   
   sqlMeta2 <- paste0("INSERT INTO metadata (name,value) VALUES ('UPSOURCEURL','",url,"')")
-  dbGetQuery(db, sqlMeta2)
+  dbExecute(db, sqlMeta2)
   
-  dbGetQuery(db, "DELETE FROM metadata where name ='UPSOURCEDATE' ")   
+  dbExecute(db, "DELETE FROM metadata where name ='UPSOURCEDATE' ")   
   sqlMeta3 <- paste0("INSERT INTO metadata (name,value) VALUES ('UPSOURCEDATE','",date,"')")
-  dbGetQuery(db, sqlMeta3)
-  dbGetQuery(db,"DELETE FROM metadata WHERE name LIKE 'IPISOURCE%'")
+  dbExecute(db, sqlMeta3)
+  dbExecute(db,"DELETE FROM metadata WHERE name LIKE 'IPISOURCE%'")
 
   
   ## And don't forget the map_counts for PROSITE AND PFAM
-  dbGetQuery(db, "DELETE FROM map_counts where map_name ='PFAM' ")   
+  dbExecute(db, "DELETE FROM map_counts where map_name ='PFAM' ")   
   sqlmapcnt1 <- "INSERT INTO map_counts
                  SELECT 'PFAM', count(DISTINCT _id)
                  FROM pfam;"
-  dbGetQuery(db, sqlmapcnt1)
+  dbExecute(db, sqlmapcnt1)
 
-  dbGetQuery(db, "DELETE FROM map_counts where map_name ='PROSITE' ")   
+  dbExecute(db, "DELETE FROM map_counts where map_name ='PROSITE' ")   
   sqlmapcnt2 <- "INSERT INTO map_counts
                  SELECT 'PROSITE', count(DISTINCT _id)
                  FROM prosite;"
-  dbGetQuery(db, sqlmapcnt2)
+  dbExecute(db, sqlmapcnt2)
 
   ## ALSO: modify the map_metadata (1st drop the PFAM and prosite entries
-  dbGetQuery(db, "DELETE FROM map_metadata where map_name ='PFAM' ") 
-  dbGetQuery(db, "DELETE FROM map_metadata where map_name ='PROSITE' ")
+  dbExecute(db, "DELETE FROM map_metadata where map_name ='PFAM' ") 
+  dbExecute(db, "DELETE FROM map_metadata where map_name ='PROSITE' ")
   ## then put our own entries in...
   sqlPFMM <- paste0( "INSERT INTO map_metadata (map_name, source_name, ",
                     "source_url, source_date) VALUES ('PFAM','",name,
                     "','",url,"','",date,"')")
-  dbGetQuery(db, sqlPFMM)
+  dbExecute(db, sqlPFMM)
   sqlPSMM <- paste0( "INSERT INTO map_metadata (map_name, source_name, ",
                     "source_url, source_date) VALUES ('PROSITE','",name,
                     "','",url,"','",date,"')")
-  dbGetQuery(db, sqlPSMM)
+  dbExecute(db, sqlPSMM)
   
 }
 
@@ -308,12 +308,12 @@ doYeastInserts <- function(db, table, data){
 
   ## make a temp pfam table pfamt
   sqlDrop <-paste0("DROP TABLE IF EXISTS ",table,"t;")
-  dbGetQuery(db, sqlDrop)
+  dbExecute(db, sqlDrop)
 
   sqlCreate <- paste0("CREATE TABLE ",table,"t (
                 gene_id TEXT,
                 ",table,"_id TEXT);")
-  dbGetQuery(db, sqlCreate)
+  dbExecute(db, sqlCreate)
   
   ## 1st insert
   sqlIns <- paste0("INSERT into ",table,"t
@@ -331,11 +331,11 @@ doYeastInserts <- function(db, table, data){
                 FROM genes as g, ",table,"t as i
                 WHERE g.gene_id=i.gene_id
                 ORDER BY _id")
-  dbGetQuery(db, sqlIns2)
+  dbExecute(db, sqlIns2)
 
   ## then drop the table
   sqlDrop <- paste0("DROP TABLE ",table,"t")
-  dbGetQuery(db, sqlDrop)
+  dbExecute(db, sqlDrop)
   
 }
 
