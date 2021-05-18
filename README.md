@@ -173,10 +173,12 @@ the variable(s) that should be checked, are listed below.
 	+ ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
 	+ Updated daily.
 	+ Used to create organism specific sqlite data. We only keep 
-gene2accession and gene2unigene mapping data extracted from both Entrez Gene 
-and UniGene used to generate the probe to Entrez Gene mapping for individual 
-chips.
+	gene2accession and gene2unigene mapping data extracted from both Entrez Gene 
+	and UniGene used to generate the probe to Entrez Gene mapping for individual 
+	chips.
 	+ Check `EGSOURCEDATE` in `gene/script/env.sh`.
+	+ As of Bioconductor 3.13 we also download orthology data to
+	make the Orthology.eg.db package.
 * goext
 	+ http://www.geneontology.org/external2go
 	+ Maps GO to external classification systems (other vocabularies).
@@ -184,11 +186,11 @@ chips.
 * ucsc
 	+ ftp://hgdownload.cse.ucsc.edu/goldenPath/
 	+ Source code ranges from 2010-present because genome update occur at 
-different times.
+	different times.
 	+ Check `GPSOURCEDATE_*` for each of the organisms in 
-`ucsc/script/env.sh`.
+	`ucsc/script/env.sh`.
 	+ Manually update `BUILD_*` with the most current build for each of 
-the organisms in `ucsc/script/env.sh`.
+	the organisms in `ucsc/script/env.sh`.
 * yeast
 	+ http://downloads.yeastgenome.org/
 	+ Check `YGSOURCEDATE` in `yeast/script/env.sh`.
@@ -199,12 +201,15 @@ the organisms in `ucsc/script/env.sh`.
 * plasmoDB
 	+ http://plasmodb.org/common/downloads/release-28/Pfalciparum3D7/txt/
 	+ We are using release 28 (March 2016) and the most current version 
-is 31 (March 2017). We use version 28 because that is the last time the 
-PlasmoDB-28_Pfalciparum3D7Gene.txt file was provided and that's what the code 
-is set up to parse. 
+	is 31 (March 2017). We use version 28 because that is the last time the 
+	PlasmoDB-28_Pfalciparum3D7Gene.txt file was provided and that's what the code 
+	is set up to parse. 
 	+ **TODO:** Don't see a clear replacement - the information might be 
-available in another file in the directory but it will take some investigation.
+	available in another file in the directory but it will take some investigation.
 	+ Check `PLASMOSOURCEDATE` in `plasmoDB/script/env.sh`.
+	+ The plan as of Bioconductor 3.13 is to deprecate and then
+	defunct the plasmo data, but that may take some investigation
+	because some of the ChipDb packages may have those data as well?
 * pfam
 	+ ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release
 	+ Protein families represented by multiple sequence alignments.
@@ -427,6 +432,28 @@ Rscript makeTerminalDBPkgs.R OrgDb 20200920 3.12.0
 
 Which will build all the `OrgDb` packages in the 20200920_OrgDbs
 directory, with 3.12.0 as the version.
+
+Because we removed UniGene and added Gene type data to the OrgDb and
+ChipDb packages in 3.13, we had to rebuild all the ChipDb packages to
+reflect those changes. There are three scripts called getAnnos.R,
+getUpdatedAnnotations.R, and makeTranscriptPkgs.R that can be used to
+do that, if necessary. For the older set of Affy arrays (everything
+before the Gene ST and Exon ST arrays), there is functionality in
+AnnotationForge to parse the Affy CSV annotation file, and getAnnos.R
+simply downloads all those files using the AffyCompatible package and
+then builds. Remember to update the hard-coded version number and
+build dir in that script.
+
+For the newer arrays the annotation CSV files are too complicated for
+the parser that exists in AnnotationForge. And it's probably not worth
+adding a parser for those files, given that we usually just increment
+the version rather than re-building each release. Anyway,
+getUpdatedAnnotations.R will download all the newer Affy array CSV
+files, and then makeTranscriptPkgs.R will parse and build. The version
+is hard-coded and has to be changed. The script just builds the
+packages wherever they were downloaded, so after building/checking,
+move those tar.gz files in with the other ChipDb packages so they can
+all be uploaded to malbec1.
 
 **2. Build, check, and install the new packages**
 
