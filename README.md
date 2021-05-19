@@ -130,6 +130,23 @@ library(BiocManager)
 useDevel(TRUE)
 BiocManager::install(ask = FALSE)
 ```
+**7. Clone and modify AnnotationDbi or AnnotationForge**
+
+There is always the possibility that either AnnotationForge or
+AnnotationDbi will need to be modified in order to successfully build
+the annotations. In which case they can be cloned on the AWS instance
+and modified there (but the AWS user doesn't have developer rights at
+git.bioconductor.org) or the modifications can be made on a separate
+computer that does have developer access, and then just cloned using
+`git clone
+https://git.bioconductor.org/packages/AnnotationForge`. Regardless,
+any changes made to either package should be propagated back to the
+master branch. If there are significant changes that need to be made,
+first fork into your own github repo, then clone on AWS, then make a
+new branch, do all the changes there, and once they are finalized and
+the package will build and check the fork can be merged back into
+master and propagated back to the master branch on
+git@git.bioconductor.org. 
 
 [Back to top](#top)
 
