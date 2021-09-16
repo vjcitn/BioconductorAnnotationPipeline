@@ -1,4 +1,12 @@
 #!/bin/sh
+
+IVECHECKEDIT=$1
+
+if [ -z "$IVECHECKEDIT" ]l; then
+    echo "First read what is in the env.sh script and make sure the links are up to date\nAnd then re-run this script as ./download.sh TRUE"
+    exit
+fi
+
 set -e
 . ./env.sh
 

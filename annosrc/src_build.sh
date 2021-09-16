@@ -24,9 +24,10 @@ SRC_BASE=`pwd`
 echo "copy chrlength.sqlite to db/"
 cd $SRC_BASE/chrlength; sh getdb.sh
 
-echo "building unigene"
-cd $SRC_BASE/unigene/script; sh getdb.sh 
-echo "finished unigene"
+## as of spring 2021 we no longer use Unigene
+# echo "building unigene"
+# cd $SRC_BASE/unigene/script; sh getdb.sh 
+# echo "finished unigene"
 
 # Creates organism specific chipmapsrc packages; best to use screen or tmux
 echo "building gene"

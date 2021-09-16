@@ -84,8 +84,8 @@ txdb = {
     version <- theversion
     ##source(system.file("script","makeTxDbs.R", package="GenomicFeatures"))
     ## Do this here rather than some file in GenomicFeatures
-    speciesList <- c("hg38","hg38")
-    tableList <- c("refGene","knownGene")
+    speciesList <- c("canFam4","canFam5","rheMac10","rn7")
+    tableList <- rep("refGene", 4)
     circ_seqs <- sapply(speciesList, function(x) {
         tmp <- getChromInfoFromUCSC(x)
         tmp[is.na(tmp[,4]),4] <- FALSE

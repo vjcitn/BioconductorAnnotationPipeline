@@ -22,7 +22,7 @@ popEGTable = function(table, db) {
         ensid VARCHAR(20) NOT NULL,
         gene_id VARCHAR(15) NOT NULL )
     ;", sep="")
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
 
     ##Populate that table  -- change this to import from FILE
     file = paste(table,"EnsEG.tab",sep="")
@@ -32,18 +32,16 @@ popEGTable = function(table, db) {
 
     sqlIns <- paste("INSERT INTO ",table,"(ensid,gene_id) VALUES (?,?);",
                     sep="")
-    dbBegin(db)
-    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
-    dbClearResult(rslt)
-    dbCommit(db)
+
+    dbExecute(db, sqlIns, params=unclass(unname(data)))
         
     ##Two indices per table
     ind1 = paste(table,"_ens",sep="")
     sql<- paste("CREATE INDEX ",ind1," ON ",table,"(ensid);",sep="")
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
     ind2 = paste(table,"_eg",sep="")
     sql<- paste("CREATE INDEX ",ind2," ON ",table,"(gene_id);",sep="")
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
 }
 
 
@@ -56,7 +54,7 @@ popTRANSTable = function(table, db) {
         ensid VARCHAR(20) NOT NULL,
         ens_gene_id VARCHAR(15) NOT NULL )
     ;", sep="")
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
 
     ## Populate that table
     file = paste(table,"_trans.tab",sep="")
@@ -66,18 +64,17 @@ popTRANSTable = function(table, db) {
 
     sqlIns <- paste("INSERT INTO ",atable,"(ensid,ens_gene_id) VALUES (?,?);",
                     sep="")
-    dbBegin(db)
-    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
-    dbClearResult(rslt)
-    dbCommit(db)
+
+    dbExecute(db, sqlIns, params=unclass(unname(data)))
+    
         
     ##Two indices per table
     indt1 = paste(atable,"_ens",sep="")
     sql<- paste("CREATE INDEX ",indt1," ON ",atable,"(ensid);",sep="")
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
     indt2 = paste(atable,"_ensgn",sep="")
     sql<- paste("CREATE INDEX ",indt2," ON ",atable,"(ens_gene_id);",sep="")
-    dbGetQuery(db, sql)    
+    dbExecute(db, sql)    
 }
 
 ## Create and populate PROTTable 
@@ -89,7 +86,7 @@ popPROTTable = function(table, db) {
         ensid VARCHAR(20) NOT NULL,
         ens_gene_id VARCHAR(15) NOT NULL )
     ;", sep="")
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
 
     file = paste(table,"_prot.tab",sep="")
     data = read.delim(file=file, header=FALSE, sep="\t",
@@ -98,18 +95,17 @@ popPROTTable = function(table, db) {
 
     sqlIns <- paste("INSERT INTO ",atable,"(ensid,ens_gene_id) VALUES (?,?);",
                     sep="")
-    dbBegin(db)
-    rslt <- dbSendQuery(db, sqlIns, params=unclass(unname(data)))
-    dbClearResult(rslt)
-    dbCommit(db)
+    
+    dbExecute(db, sqlIns, params=unclass(unname(data)))
+    
         
     ##Two indices per table
     indp1 = paste(atable,"_ens",sep="")
     sql<- paste("CREATE INDEX ",indp1," ON ",atable,"(ensid);",sep="")
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
     indp2 = paste(atable,"_ensgn",sep="")
     sql<- paste("CREATE INDEX ",indp2," ON ",atable,"(ens_gene_id);",sep="")
-    dbGetQuery(db, sql)
+    dbExecute(db, sql)
 }  
 ## -----------------------------------------------------------------------
 
@@ -132,18 +128,21 @@ speciesFrame <- data.frame(dataset=dataset, host=host, mart=mart,
 ##       (transcript IDs) and protdata (protein IDs) tables
 message("creating EnsEG.tab files ...")
 apply(speciesFrame, 1, 
-    function(x) {
+      function(x) {
+    if(x["host"] == "metazoa.ensembl.org")
+        egdata <- getBM(c("ensembl_gene_id", "entrezgene_id"),
+                        mart = useMart(x["mart"], x["dataset"], x["host"]))
+    else
         egdata <- getBM(attributes=c("ensembl_gene_id", "entrezgene_id"), 
-                       mart=useMart(biomart=x["mart"], dataset=x["dataset"], 
-                                    host=x["host"]))
-        if (nrow(egdata) == 0L)
-            warning(paste0("no biomaRt data for ", x["dataset"]))
-        ## Remove rows with entrezgene=NA
-        egdata <- egdata[!is.na(egdata[, 2]), ]
-        write.table(egdata, 
-                    file =paste(x["sqlitetable"], "EnsEG.tab", sep=""), 
-                    quote=FALSE, sep="\t", row.names=FALSE, col.names=FALSE)
-    })
+                        mart=useEnsembl(biomart=x["mart"], dataset=x["dataset"]))
+    if (nrow(egdata) == 0L)
+        warning(paste0("no biomaRt data for ", x["dataset"]))
+    ## Remove rows with entrezgene=NA
+    egdata <- egdata[!is.na(egdata[, 2]), ]
+    write.table(egdata, 
+                file =paste(x["sqlitetable"], "EnsEG.tab", sep=""), 
+                quote=FALSE, sep="\t", row.names=FALSE, col.names=FALSE)
+})
 
 ## Call pop*Table for each species which adds org-specific tables to ensembl.sqlite 
 drv <- dbDriver("SQLite")

@@ -11,9 +11,10 @@ echo "downloading go"
 cd $SRC_BASE/go/script; sh download.sh
 echo "finished downloading go"
 
-echo "downloading unigene"
-cd $SRC_BASE/unigene/script; sh download.sh  
-echo "finished downloading unigene"
+# As of Spring 2021 we no longer use UniGene
+# echo "downloading unigene"
+# cd $SRC_BASE/unigene/script; sh download.sh  
+# echo "finished downloading unigene"
 
 echo "downloading gene"
 cd $SRC_BASE/gene/script; sh download.sh

@@ -127,8 +127,7 @@ for the Fall build it's slightly different
 
 ```r
 library(BiocManager)
-useDevel(TRUE)
-BiocManager::install(ask = FALSE)
+BiocManager::install(version = "devel", ask = FALSE)
 ```
 **7. Clone and modify AnnotationDbi or AnnotationForge**
 
@@ -163,9 +162,9 @@ sh src_download.sh
 There are data-specific directories that contain their own specific 
 `script/download.sh` scripts. These data-specific scripts are called by the 
 'master' `src_download.sh` script. The script can be run as a whole or it can 
-be run one data type at a time. To run it one data type at a time use an 
-`if false; then ... fi` statement, where `...` are the download scripts that 
-should not be run.
+be run one data type at a time. The easiest thing to do is to look at
+the `src_download.sh` script, and run each command, by hand, in each
+directory. That way if there is a problem it is easy to track down.
 
 In order to monitor that the download script is running properly, it is good 
 practice to know which of the data-specific directories will get new data 
