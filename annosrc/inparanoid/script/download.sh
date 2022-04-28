@@ -6,7 +6,7 @@ set -e
 THIS_YEAR=`date|awk '{print $6}'`
 LATEST_INP_DATE=$IPHVMSOURCEDATE
 BASE_FB_URL=$FBSOURCEURL
-LATEST_FB_DATE=`curl -IL $BASE_FB_URL/$FILE | grep "Last-Modified" | awk '{print $5 "-" $4 $3}'`
+LATEST_FB_DATE=`curl --fail -IL $BASE_FB_URL/$FILE | grep "Last-Modified" | awk '{print $5 "-" $4 $3}'`
 
 
 if [ -z "$LATEST_FB_DATE" ]; then
@@ -20,7 +20,7 @@ if [ "$LATEST_FB_DATE" != "$FBSOURCEDATE" ]; then
 	mkdir -p ../$LATEST_FB_DATE
 	cd ../$LATEST_FB_DATE 
 
-	curl --disable-epsv -O $FBSOURCEURL/$FILE
+	curl --fail --disable-epsv -O $FBSOURCEURL/$FILE
         gunzip $FILE	
         sed -i -e "/^#.*$/ {d}" $UZFILE  ## remove comments
         cat $UZFILE | perl -ne 'chomp($_); $_ =~ s/^FBgn\d+\tFBtr\d+$//g; print($_,"\n");' > fbgn_fbtr_fbpp_purged.tsv

@@ -4,7 +4,7 @@ if [ "$IPHVMSOURCEDATE" = "" ]; then
   . ./env.sh
 fi
 
-cd ../$IPHVMSOURCEDATE
+cd ../$FBSOURCEDATE
 
 ## No longer necessary to build this:
 #R --slave < ../script/bindb.R

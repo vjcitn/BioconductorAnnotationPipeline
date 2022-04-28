@@ -4,7 +4,7 @@ if [ "$IPHVMSOURCEDATE" = "" ]; then
   . ./env.sh
 fi
 
-cd ../$IPHVMSOURCEDATE/
+cd ../$FBSOURCEDATE/
 
 ## Note: Don't need to re-parse the static inparanoid data: 
 ## Run the script that parses the huge protein to gene ID maps.

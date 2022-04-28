@@ -2,8 +2,8 @@
 set -e
 BASE_URL=ftp://ftp.genome.jp/pub/kegg
 THIS_YEAR=`date|awk '{print $6}'`
-LATEST_PATHWAY=`curl -s -L --disable-epsv $BASE_URL/pathway/|grep "map_title.tab"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_GENOME=`curl -s -L --disable-epsv $BASE_URL/|grep "genes"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_PATHWAY=`curl --fail -s -L --disable-epsv $BASE_URL/pathway/|grep "map_title.tab"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_GENOME=`curl --fail -s -L --disable-epsv $BASE_URL/|grep "genes"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 . ./env.sh
 
 if [ "$LATEST_PATHWAY" != "$PATHNAMESOURCEDATE" ]; then
@@ -11,7 +11,7 @@ if [ "$LATEST_PATHWAY" != "$PATHNAMESOURCEDATE" ]; then
   sed -i -e "s/ PATHNAMESOURCEDATE=.*$/ PATHNAMESOURCEDATE=$LATEST_PATHWAY/g" env.sh    
   mkdir -p ../$LATEST_PATHWAY
   cd ../$LATEST_PATHWAY
-  curl --disable-epsv -O $BASE_URL/pathway/map_title.tab
+  curl --fail --disable-epsv -O $BASE_URL/pathway/map_title.tab
   cd ../script  
   #sh getsrc1.sh
 else
@@ -23,45 +23,45 @@ if [ "$LATEST_GENOME" != "$KEGGSOURCEDATE" ]; then
   sed -i -e "s/ KEGGSOURCEDATE=.*$/ KEGGSOURCEDATE=$LATEST_GENOME/g" env.sh    
   mkdir -p ../$LATEST_GENOME
   cd ../$LATEST_GENOME
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/hsa/hsa_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/hsa/hsa_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/mmu/mmu_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/mmu/mmu_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/rno/rno_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/rno/rno_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/sce/sce_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/sce/sce_mips-sce.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/ath/ath_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/ath/ath_tigr-ath.list
-  curl --disable-epsv -O $BASE_URL/genes/organisms/ath/ath_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/dme/dme_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/dme/dme_flybase-dme.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/pfa/pfa_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/pfa/pfa_plasmodb-pfa.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/dre/dre_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/dre/dre_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/eco/eco_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/eco/eco_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/ecs/ecs_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/ecs/ecs_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/cfa/cfa_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/cfa/cfa_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/bta/bta_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/bta/bta_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/cel/cel_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/cel/cel_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/ssc/ssc_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/ssc/ssc_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/gga/gga_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/gga/gga_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/mcc/mcc_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/mcc/mcc_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/xla/xla_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/xla/xla_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/aga/aga_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/aga/aga_ncbi-geneid.list
-  curl --disable-epsv -O $BASE_URL/pathway/organisms/ptr/ptr_gene_map.tab
-  curl --disable-epsv -O $BASE_URL/genes/organisms/ptr/ptr_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/hsa/hsa_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/hsa/hsa_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/mmu/mmu_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/mmu/mmu_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/rno/rno_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/rno/rno_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/sce/sce_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/sce/sce_mips-sce.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/ath/ath_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/ath/ath_tigr-ath.list
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/ath/ath_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/dme/dme_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/dme/dme_flybase-dme.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/pfa/pfa_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/pfa/pfa_plasmodb-pfa.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/dre/dre_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/dre/dre_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/eco/eco_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/eco/eco_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/ecs/ecs_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/ecs/ecs_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/cfa/cfa_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/cfa/cfa_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/bta/bta_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/bta/bta_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/cel/cel_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/cel/cel_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/ssc/ssc_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/ssc/ssc_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/gga/gga_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/gga/gga_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/mcc/mcc_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/mcc/mcc_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/xla/xla_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/xla/xla_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/aga/aga_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/aga/aga_ncbi-geneid.list
+  curl --fail --disable-epsv -O $BASE_URL/pathway/organisms/ptr/ptr_gene_map.tab
+  curl --fail --disable-epsv -O $BASE_URL/genes/organisms/ptr/ptr_ncbi-geneid.list
 
 
 ## In summer of 2009 KEGG decided to stop supporting .gene files.

@@ -15,7 +15,7 @@ BASE_URL=$TAIRSOURCEURL
 # There is actually no date checking - instead it's incumbent (for now) that all the URLs in env.sh get updated by hand by whomever runs this script.
 
 # THIS_YEAR=`date|awk '{print $6}'`
-# #LATEST_DATE=`curl -s -L --disable-epsv $BASE_URL/|grep "User_Requests"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# #LATEST_DATE=`curl --fail -s -L --disable-epsv $BASE_URL/|grep "User_Requests"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
  LATEST_DATE=2020-Apr01
 
 if [ -z "$LATEST_DATE" ]; then
@@ -26,15 +26,15 @@ fi
 if [ "$LATEST_DATE" != "$TAIRSOURCEDATE" ]; then
       mkdir -p ../$TAIRSOURCEDATE
       cd ../$TAIRSOURCEDATE
-      curl --disable-epsv -O $TAIRGENEURL
-      curl --disable-epsv -O $TAIRCHRURL
-      curl --disable-epsv -O $TAIRATHURL
-      curl --disable-epsv -O $TAIRAGURL
-      curl --disable-epsv -O $TAIRGOURL
-      curl --disable-epsv -O $TAIRSYMBOLURL 
-      curl --disable-epsv -O $TAIRPATHURL
-      curl --disable-epsv -O $TAIRPMIDURL
-      curl --disable-epsv -O $TAIRGFF
+      curl --fail --disable-epsv -O $TAIRGENEURL
+      curl --fail --disable-epsv -O $TAIRCHRURL
+      curl --fail --disable-epsv -O $TAIRATHURL
+      curl --fail --disable-epsv -O $TAIRAGURL
+      curl --fail --disable-epsv -O $TAIRGOURL
+      curl --fail --disable-epsv -O $TAIRSYMBOLURL 
+      curl --fail --disable-epsv -O $TAIRPATHURL
+      curl --fail --disable-epsv -O $TAIRPMIDURL
+      curl --fail --disable-epsv -O $TAIRGFF
       cd ../script  
       #TAIRATHURL=`echo $TAIRATHURL|sed -e 's/\//\\\\\//g'`
       #TAIRAGURL=`echo $TAIRAGURL|sed -e 's/\//\\\\\//g'`
@@ -55,7 +55,8 @@ if [ "$LATEST_DATE" != "$TAIRSOURCEDATE" ]; then
     
       # In the following files, first line is column name
       cd ../$TAIRSOURCEDATE
-      cp $TAIRGOURLNAME ATH_GO_GOSLIM1.txt
+      zcat $TAIRGOURLNAME > ATH_GO_GOSLIM1.txt
+      #cp $TAIRGOURLNAME ATH_GO_GOSLIM1.txt
       sed -e "1,4d" ATH_GO_GOSLIM1.txt > ATH_GO_GOSLIM.txt
       sed -e "1d" $TAIRAGURLNAME > affy_AG_array_elements1.txt
       sed -e "1d" $TAIRATHURLNAME > affy_ATH1_array_elements1.txt

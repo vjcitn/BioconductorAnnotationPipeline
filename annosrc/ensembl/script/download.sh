@@ -7,7 +7,7 @@ THIS_YEAR=`date|awk '{print $6}'`
 ##NOTE! the lack of a current_fasta dir for metazoans means we have to update the mosquito every time.  (WEAK, but at least we can get it)
 
 PARENT_EN_URL="ftp://ftp.ensembl.org/pub/current_README"
-LATEST_EN_DATE=`curl -IL $PARENT_EN_URL | grep "Last-Modified" | awk '{print $5 "-" $4 $3}'`
+LATEST_EN_DATE=`curl --fail -IL $PARENT_EN_URL | grep "Last-Modified" | awk '{print $5 "-" $4 $3}'`
 
 if [ -z "$LATEST_EN_DATE" ]; then
         echo "download.sh: current_fasta directory in $PARENT_EN_URL not found"

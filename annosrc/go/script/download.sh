@@ -2,7 +2,7 @@
 set -e
 . ./env.sh
 
-LATEST=`curl --silent --range 0-100 $GOSOURCEURL | head -n 2 | tail -n 1 | awk '{print $2}'`
+LATEST=`curl --fail --silent --range 0-100 $GOSOURCEURL | head -n 2 | tail -n 1 | awk '{print $2}'`
 LATEST_DATE=`basename $LATEST`
 
 if [ -z "$LATEST_DATE" ]; then
@@ -15,7 +15,7 @@ if [ "$LATEST_DATE" != "$GOSOURCEDATE" ]; then
         sed -i -e "s/ GOSOURCEDATE=.*$/ GOSOURCEDATE=$LATEST_DATE/g" env.sh    
         mkdir ../$LATEST_DATE
         cd ../$LATEST_DATE
-        curl -O $GOSOURCEURL
+        curl --fail -O $GOSOURCEURL
         cd ../script  
 else
         echo "the latest $GOSOURCENAME is still $LATEST_DATE"

@@ -257,7 +257,7 @@ popEnsembl2PROTTable(c("chipsrc_yeast.sqlite" = "scerevisiae_gene_ensembl"))
 
 message("starting worm")
 library(biomaRt)
-mart <- useEnsembl("ensembl", "celegans_gene_ensembl")
+mart <- useEnsembl("ensembl", "celegans_gene_ensembl", mirror = "useast")
 wormBase <- getBM(c("ensembl_gene_id", "entrezgene_id", "wormbase_gene"), 
                   mart=mart)
 
@@ -277,10 +277,16 @@ names(wormBase) <- c('gene_id','_id','ensembl','WBid')
 ## insert
 sql <- 'INSERT INTO wormbase values (:_id, :WBid)'
 dbBegin(wcon)
-res <- dbExecute(wcon,sql)
-dbBind(res, wormBase[c("_id", "WBid")])
-dbFetch(res)
-dbClearResult(res)
+#res <- dbExecute(wcon,sql)
+
+rs = dbSendStatement(wcon, sql)
+dbBind(rs, wormBase[c("_id", "WBid")])
+dbClearResult(rs)
+
+#dbBind(res, wormBase[c("_id", "WBid")])
+#dbFetch(res)
+#dbClearResult(res)
+
 dbCommit(wcon)
 
 ##And finally, remove duplicated rows
@@ -290,3 +296,4 @@ sqlIns <- paste("DELETE FROM wormbase
                      GROUP BY _id, WBid
                      HAVING min(rowid));", sep="")
 dbExecute(wcon, sqlIns)
+dbDisconnect(wcon)

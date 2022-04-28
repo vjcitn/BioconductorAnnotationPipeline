@@ -14,24 +14,24 @@ THIS_YEAR=`date|awk '{print $6}'`
 ## which is not current for many organisms.
 
 ## Note: pig and arabidopsis are not at UCSC
-LATEST_HUMAN=`curl -s -L $UCSCBASEURL| grep -F $BUILD_human |awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_MOUSE=`curl -s -L $UCSCBASEURL|grep -F $BUILD_mouse|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_RAT=`curl -s -L $UCSCBASEURL|grep -F $BUILD_rat|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_FLY=`curl -s -L $UCSCBASEURL|grep -F $BUILD_fly|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_FISH=`curl -s -L $UCSCBASEURL|grep -F $BUILD_fish|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_YEAST=`curl -s -L $UCSCBASEURL|grep -F $BUILD_yeast|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_CANINE=`curl -s -L $UCSCBASEURL|grep -F $BUILD_canine|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_BOVINE=`curl -s -L $UCSCBASEURL|grep -F $BUILD_bovine|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_WORM=`curl -s -L $UCSCBASEURL|grep -F $BUILD_worm|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_RHESUS=`curl -s -L $UCSCBASEURL|grep -F $BUILD_rhesus|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_ANOPHELES=`curl -s -L $UCSCBASEURL|grep -F $BUILD_anopheles|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_CHIMP=`curl -s -L $UCSCBASEURL|grep -F $BUILD_chimp|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
-LATEST_CHICKEN=`curl -s -L $UCSCBASEURL|grep -F $BUILD_chicken|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_HUMAN=`curl --fail -s -L $UCSCBASEURL| grep -F $BUILD_human |awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_MOUSE=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_mouse|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_RAT=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_rat|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_FLY=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_fly|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_FISH=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_fish|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_YEAST=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_yeast|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_CANINE=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_canine|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_BOVINE=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_bovine|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_WORM=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_worm|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_RHESUS=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_rhesus|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_ANOPHELES=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_anopheles|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_CHIMP=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_chimp|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+LATEST_CHICKEN=`curl --fail -s -L $UCSCBASEURL|grep -F $BUILD_chicken|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 
 ## refLink shared by all; download once
 ## TODO: modify scripts to look in single place for refLink vs each organism directory
 cd ../
-curl --disable-epsv -O $UCSCREFLINKURL
+curl --fail --disable-epsv -O $UCSCREFLINKURL
 cd script
 
 
@@ -41,10 +41,10 @@ if [ "$LATEST_HUMAN" != "$GPSOURCEDATE_human" ]; then
 	mkdir ../human/$LATEST_HUMAN
 	cd ../human/$LATEST_HUMAN
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_human/database/knownToLocusLink.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_human/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_human/database/cytoBand.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_human/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_human/database/knownToLocusLink.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_human/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_human/database/cytoBand.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_human/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
 	cd ../../script
 else
@@ -57,9 +57,9 @@ if [ "$LATEST_MOUSE" != "$GPSOURCEDATE_mouse" ]; then
 	mkdir ../mouse/$LATEST_MOUSE
 	cd ../mouse/$LATEST_MOUSE
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_mouse/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_mouse/database/cytoBand.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_mouse/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_mouse/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_mouse/database/cytoBand.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_mouse/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing
  	touch knownToLocusLink.txt; gzip knownToLocusLink.txt
@@ -74,8 +74,8 @@ if [ "$LATEST_RAT" != "$GPSOURCEDATE_rat" ]; then
 	mkdir ../rat/$LATEST_RAT
 	cd ../rat/$LATEST_RAT
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_rat/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_rat/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_rat/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_rat/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing
  	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 
@@ -91,9 +91,9 @@ if [ "$LATEST_FLY" != "$GPSOURCEDATE_fly" ]; then
 	mkdir ../fly/$LATEST_FLY
 	cd ../fly/$LATEST_FLY
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_fly/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_fly/database/cytoBand.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_fly/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_fly/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_fly/database/cytoBand.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_fly/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing
  	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 
@@ -108,8 +108,8 @@ if [ "$LATEST_FISH" != "$GPSOURCEDATE_fish" ]; then
 	mkdir ../fish/$LATEST_FISH
 	cd ../fish/$LATEST_FISH
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_fish/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_fish/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_fish/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_fish/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing
  	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 
@@ -125,8 +125,8 @@ if [ "$LATEST_CANINE" != "$GPSOURCEDATE_canine" ]; then
 	mkdir ../canine/$LATEST_CANINE
 	cd ../canine/$LATEST_CANINE
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_canine/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_canine/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_canine/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_canine/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing
 	touch cytoBand.txt; gzip cytoBand.txt 
@@ -143,8 +143,8 @@ if [ "$LATEST_BOVINE" != "$GPSOURCEDATE_bovine" ]; then
 	mkdir ../bovine/$LATEST_BOVINE
 	cd ../bovine/$LATEST_BOVINE
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_bovine/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_bovine/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_bovine/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_bovine/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing
 	touch cytoBand.txt; gzip cytoBand.txt 
@@ -160,8 +160,8 @@ if [ "$LATEST_WORM" != "$GPSOURCEDATE_worm" ]; then
 	mkdir ../worm/$LATEST_WORM
 	cd ../worm/$LATEST_WORM
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_worm/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_worm/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_worm/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_worm/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing
  	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 
@@ -177,8 +177,8 @@ if [ "$LATEST_CHICKEN" != "$GPSOURCEDATE_chicken" ]; then
 	mkdir ../chicken/$LATEST_CHICKEN
 	cd ../chicken/$LATEST_CHICKEN
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_chicken/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_chicken/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_chicken/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_chicken/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing
   	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 
@@ -195,7 +195,7 @@ if [ "$LATEST_YEAST" != "$GPSOURCEDATE_yeast" ]; then
 	mkdir ../yeast/$LATEST_YEAST
 	cd ../yeast/$LATEST_YEAST
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_yeast/database/chromInfo.txt.gz #used
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_yeast/database/chromInfo.txt.gz #used
         ## missing (not used)
   	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 
 	touch refGene.txt; gzip refGene.txt
@@ -212,8 +212,8 @@ if [ "$LATEST_RHESUS" != "$GPSOURCEDATE_rhesus" ]; then
 	mkdir ../rhesus/$LATEST_RHESUS
 	cd ../rhesus/$LATEST_RHESUS
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_rhesus/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_rhesus/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_rhesus/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_rhesus/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing 
   	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 
@@ -229,7 +229,7 @@ if [ "$LATEST_ANOPHELES" != "$GPSOURCEDATE_anopheles" ]; then
 	mkdir ../anopheles/$LATEST_ANOPHELES
 	cd ../anopheles/$LATEST_ANOPHELES
 
-        curl --disable-epsv -O $UCSCBASEURL/$BUILD_anopheles/database/chromInfo.txt.gz
+        curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_anopheles/database/chromInfo.txt.gz
         ## missing (not used) 
   	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 
 	touch cytoBand.txt; gzip cytoBand.txt
@@ -246,8 +246,8 @@ if [ "$LATEST_CHIMP" != "$GPSOURCEDATE_chimp" ]; then
 	mkdir ../chimp/$LATEST_CHIMP
 	cd ../chimp/$LATEST_CHIMP
 
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_chimp/database/refGene.txt.gz
-	curl --disable-epsv -O $UCSCBASEURL/$BUILD_chimp/database/chromInfo.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_chimp/database/refGene.txt.gz
+	curl --fail --disable-epsv -O $UCSCBASEURL/$BUILD_chimp/database/chromInfo.txt.gz
         cp ../../refLink.txt.gz .
         ## missing 
   	touch knownToLocusLink.txt; gzip knownToLocusLink.txt 

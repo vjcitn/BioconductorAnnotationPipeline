@@ -11,9 +11,9 @@ export IPSOURCEURL="http://inparanoid.sbc.su.se/download/current/sqltables/"
 # export ENSOURCENAME="Ensembl"
 # export ENSOURCEURL="ftp://ftp.ensembl.org/pub/current_fasta"
 
-export FBSOURCEDATE=2021-Aug04
+export FBSOURCEDATE=2022-Jan30
 export FBSOURCENAME="Flybase"
 export FBSOURCEURL="ftp://ftp.flybase.net/releases/current/precomputed_files/genes/"
-export FILE=`curl -s -L $FBSOURCEURL | grep "fbgn_fbtr_fbpp_fb" | awk '{print $NF}'`
+export FILE=`curl --fail -s -L $FBSOURCEURL | grep "fbgn_fbtr_fbpp_fb" | awk '{print $NF}'`
 export UZFILE=`echo $FILE | sed 's/\.gz//'`
 

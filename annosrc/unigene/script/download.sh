@@ -5,85 +5,85 @@ THIS_YEAR=`date|awk '{print $6}'`
 
 echo "We no longer build unigene tables!"
 
-# LATEST_DATE_HUMAN=`curl -s --disable-epsv -L $UGSOURCEURL_human/|grep "Hs.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_HUMAN=`curl --fail -s --disable-epsv -L $UGSOURCEURL_human/|grep "Hs.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_HUMAN" ]; then
 #        echo "download.sh: Hs.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_MOUSE=`curl -s --disable-epsv -L $UGSOURCEURL_mouse/|grep "Mm.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_MOUSE=`curl --fail -s --disable-epsv -L $UGSOURCEURL_mouse/|grep "Mm.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_MOUSE" ]; then
 #        echo "download.sh: Mm.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_RAT=`curl -s --disable-epsv -L $UGSOURCEURL_rat/|grep "Rn.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_RAT=`curl --fail -s --disable-epsv -L $UGSOURCEURL_rat/|grep "Rn.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_RAT" ]; then
 #        echo "download.sh: Rn.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_FLY=`curl -s --disable-epsv -L $UGSOURCEURL_fly/|grep "Dm.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_FLY=`curl --fail -s --disable-epsv -L $UGSOURCEURL_fly/|grep "Dm.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_FLY" ]; then
 #        echo "download.sh: Dm.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_FISH=`curl -s --disable-epsv -L $UGSOURCEURL_fish/|grep "Dr.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_FISH=`curl --fail -s --disable-epsv -L $UGSOURCEURL_fish/|grep "Dr.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_FISH" ]; then
 #        echo "download.sh: Dr.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_CANINE=`curl -s --disable-epsv -L $UGSOURCEURL_canine/|grep "Cfa.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_CANINE=`curl --fail -s --disable-epsv -L $UGSOURCEURL_canine/|grep "Cfa.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_CANINE" ]; then
 #        echo "download.sh: Cfa.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_BOVINE=`curl -s --disable-epsv -L $UGSOURCEURL_bovine/|grep "Bt.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_BOVINE=`curl --fail -s --disable-epsv -L $UGSOURCEURL_bovine/|grep "Bt.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_BOVINE" ]; then
 #        echo "download.sh: Bt.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_WORM=`curl -s --disable-epsv -L $UGSOURCEURL_worm/|grep "Cel.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_WORM=`curl --fail -s --disable-epsv -L $UGSOURCEURL_worm/|grep "Cel.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_WORM" ]; then
 #        echo "download.sh: Cel.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_PIG=`curl -s --disable-epsv -L $UGSOURCEURL_pig/|grep "Ssc.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_PIG=`curl --fail -s --disable-epsv -L $UGSOURCEURL_pig/|grep "Ssc.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_PIG" ]; then
 #        echo "download.sh: Ssc.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_CHICKEN=`curl -s --disable-epsv -L $UGSOURCEURL_chicken/|grep "Gga.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_CHICKEN=`curl --fail -s --disable-epsv -L $UGSOURCEURL_chicken/|grep "Gga.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_CHICKEN" ]; then
 #        echo "download.sh: Gga.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_RHESUS=`curl -s --disable-epsv -L $UGSOURCEURL_rhesus/|grep "Mmu.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_RHESUS=`curl --fail -s --disable-epsv -L $UGSOURCEURL_rhesus/|grep "Mmu.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_RHESUS" ]; then
 #        echo "download.sh: Mmu.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_XENOPUS=`curl -s --disable-epsv -L $UGSOURCEURL_xenopus/|grep "Xl.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_XENOPUS=`curl --fail -s --disable-epsv -L $UGSOURCEURL_xenopus/|grep "Xl.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_XENOPUS" ]; then
 #        echo "download.sh: Xl.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_ARABIDOPSIS=`curl -s --disable-epsv -L $UGSOURCEURL_arabidopsis/|grep "At.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_ARABIDOPSIS=`curl --fail -s --disable-epsv -L $UGSOURCEURL_arabidopsis/|grep "At.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_ARABIDOPSIS" ]; then
 #        echo "download.sh: At.data.gz from $UGSOURCEURL not found"
 #        exit 1
 # fi
 
-# LATEST_DATE_ANOPHELES=`curl -s --disable-epsv -L $UGSOURCEURL_anopheles/|grep "Aga.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
+# LATEST_DATE_ANOPHELES=`curl --fail -s --disable-epsv -L $UGSOURCEURL_anopheles/|grep "Aga.data.gz"|awk '{print $8 "-" $6 $7}'|sed -e "s/^[0-9]*:[0-9]*-/$THIS_YEAR-/g"`
 # if [ -z "$LATEST_DATE_ANOPHELES" ]; then
 #        echo "download.sh: Aga.data.gz from $UGSOURCEURL not found"
 #        exit 1
@@ -96,7 +96,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_human=.*$/ UGSOURCEDATE_human=$LATEST_DATE_HUMAN/g" env.sh
 # 	mkdir ../human/$LATEST_DATE_HUMAN
 # 	cd ../human/$LATEST_DATE_HUMAN
-# 	curl --disable-epsv -O $UGSOURCEURL_human/Hs.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_human/Hs.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh human
 # else
@@ -108,7 +108,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_mouse=.*$/ UGSOURCEDATE_mouse=$LATEST_DATE_MOUSE/g" env.sh
 # 	mkdir ../mouse/$LATEST_DATE_MOUSE
 # 	cd ../mouse/$LATEST_DATE_MOUSE
-# 	curl --disable-epsv -O $UGSOURCEURL_mouse/Mm.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_mouse/Mm.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh mouse
 # else
@@ -120,7 +120,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_rat=.*$/ UGSOURCEDATE_rat=$LATEST_DATE_RAT/g" env.sh
 # 	mkdir ../rat/$LATEST_DATE_RAT
 # 	cd ../rat/$LATEST_DATE_RAT
-# 	curl --disable-epsv -O $UGSOURCEURL_rat/Rn.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_rat/Rn.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh rat
 # else
@@ -132,7 +132,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_fly=.*$/ UGSOURCEDATE_fly=$LATEST_DATE_FLY/g" env.sh
 # 	mkdir ../fly/$LATEST_DATE_FLY
 # 	cd ../fly/$LATEST_DATE_FLY
-# 	curl --disable-epsv -O $UGSOURCEURL_fly/Dm.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_fly/Dm.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh fly
 # else
@@ -144,7 +144,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_fish=.*$/ UGSOURCEDATE_fish=$LATEST_DATE_FISH/g" env.sh
 # 	mkdir ../fish/$LATEST_DATE_FISH
 # 	cd ../fish/$LATEST_DATE_FISH
-# 	curl --disable-epsv -O $UGSOURCEURL_fish/Dr.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_fish/Dr.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh fish
 # else
@@ -156,7 +156,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_canine=.*$/ UGSOURCEDATE_canine=$LATEST_DATE_CANINE/g" env.sh
 # 	mkdir ../canine/$LATEST_DATE_CANINE
 # 	cd ../canine/$LATEST_DATE_CANINE
-# 	curl --disable-epsv -O $UGSOURCEURL_canine/Cfa.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_canine/Cfa.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh canine
 # else
@@ -168,7 +168,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_bovine=.*$/ UGSOURCEDATE_bovine=$LATEST_DATE_BOVINE/g" env.sh
 # 	mkdir ../bovine/$LATEST_DATE_BOVINE
 # 	cd ../bovine/$LATEST_DATE_BOVINE
-# 	curl --disable-epsv -O $UGSOURCEURL_bovine/Bt.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_bovine/Bt.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh bovine
 # else
@@ -180,7 +180,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_worm=.*$/ UGSOURCEDATE_worm=$LATEST_DATE_WORM/g" env.sh
 # 	mkdir ../worm/$LATEST_DATE_WORM
 # 	cd ../worm/$LATEST_DATE_WORM
-# 	curl --disable-epsv -O $UGSOURCEURL_worm/Cel.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_worm/Cel.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh worm
 # else
@@ -192,7 +192,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_pig=.*$/ UGSOURCEDATE_pig=$LATEST_DATE_PIG/g" env.sh
 # 	mkdir ../pig/$LATEST_DATE_PIG
 # 	cd ../pig/$LATEST_DATE_PIG
-# 	curl --disable-epsv -O $UGSOURCEURL_pig/Ssc.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_pig/Ssc.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh pig
 # else
@@ -204,7 +204,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_chicken=.*$/ UGSOURCEDATE_chicken=$LATEST_DATE_CHICKEN/g" env.sh
 # 	mkdir ../chicken/$LATEST_DATE_CHICKEN
 # 	cd ../chicken/$LATEST_DATE_CHICKEN
-# 	curl --disable-epsv -O $UGSOURCEURL_chicken/Gga.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_chicken/Gga.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh chicken
 # else
@@ -216,7 +216,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_rhesus=.*$/ UGSOURCEDATE_rhesus=$LATEST_DATE_RHESUS/g" env.sh
 # 	mkdir ../rhesus/$LATEST_DATE_RHESUS
 # 	cd ../rhesus/$LATEST_DATE_RHESUS
-# 	curl --disable-epsv -O $UGSOURCEURL_rhesus/Mmu.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_rhesus/Mmu.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh rhesus
 # else
@@ -228,7 +228,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_xenopus=.*$/ UGSOURCEDATE_xenopus=$LATEST_DATE_XENOPUS/g" env.sh
 # 	mkdir ../xenopus/$LATEST_DATE_XENOPUS
 # 	cd ../xenopus/$LATEST_DATE_XENOPUS
-# 	curl --disable-epsv -O $UGSOURCEURL_xenopus/Xl.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_xenopus/Xl.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh xenopus
 # else
@@ -240,7 +240,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_arabidopsis=.*$/ UGSOURCEDATE_arabidopsis=$LATEST_DATE_ARABIDOPSIS/g" env.sh
 # 	mkdir ../arabidopsis/$LATEST_DATE_ARABIDOPSIS
 # 	cd ../arabidopsis/$LATEST_DATE_ARABIDOPSIS
-# 	curl --disable-epsv -O $UGSOURCEURL_arabidopsis/At.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_arabidopsis/At.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh arabidopsis
 # else
@@ -252,7 +252,7 @@ echo "We no longer build unigene tables!"
 #         sed -i -e "s/ UGSOURCEDATE_anopheles=.*$/ UGSOURCEDATE_anopheles=$LATEST_DATE_ANOPHELES/g" env.sh
 # 	mkdir ../anopheles/$LATEST_DATE_ANOPHELES
 # 	cd ../anopheles/$LATEST_DATE_ANOPHELES
-# 	curl --disable-epsv -O $UGSOURCEURL_anopheles/Aga.data.gz
+# 	curl --fail --disable-epsv -O $UGSOURCEURL_anopheles/Aga.data.gz
 # 	cd ../../script
 # 	#sh getsrc.sh anopheles
 # else
