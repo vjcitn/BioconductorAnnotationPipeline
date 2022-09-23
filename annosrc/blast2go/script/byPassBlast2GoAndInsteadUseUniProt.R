@@ -29,6 +29,7 @@ if (!file.exists("uniprot2go.sqlite")) {
     ##Connect to the new DB
     drv <- dbDriver("SQLite")
     db <- dbConnect(drv,dbname="uniprot2go.sqlite")
+    options(download.file.method = "wget")
     AnnotationForge:::.downloadAndPopulateAltGOData(db, scriptDir, rebuildCache=TRUE)
 } else {
     ##Connect to the new DB

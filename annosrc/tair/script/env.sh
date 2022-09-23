@@ -8,12 +8,13 @@ set -e
 # We can't just use the current day if we run the scripts that rely on this script on different days
 # so we check the most recent dir in ../ that starts with a number, and if it's less than a week old,
 # we just use that.
+## For Fall 2022 release I changed to 10 because I was debugging code for a week so date of download was older
 CURDIR=`ls -dt ../* | awk -e '$1 ~ /..\/[0-9]+/ {print $1}' | head -n 1`
 CDATE=`date -r $CURDIR +%s`
 NOW=`date +%s`
 DAYDIFF=$(((NOW - CDATE)/86400))
 
-if [ "$DAYDIFF" -gt  7 ]; then
+if [ "$DAYDIFF" -gt  10 ]; then
     export TAIRSOURCEDATE=`date +%Y-%b%d`
 else
     export TAIRSOURCEDATE=`echo $CURDIR | sed 's/\.\.\///'`
@@ -28,14 +29,14 @@ export TAIRGOURLNAME="ATH_GO_GOSLIM.txt.gz"
 export TAIRGENEURL="https://www.arabidopsis.org/download_files/Genes/TAIR10_genome_release/TAIR10_functional_descriptions"
 export TAIRGENEURLNAME="TAIR10_functional_descriptions"
 
-export TAIRSYMBOLURL="https://www.arabidopsis.org/download_files/Public_Data_Releases/TAIR_Data_20201231/gene_aliases_20201231.txt.gz"
-export TAIRSYMBOLURLNAME="gene_aliases_20201231.txt.gz"
+export TAIRSYMBOLURL="https://www.arabidopsis.org/download_files/Public_Data_Releases/TAIR_Data_20210630/gene_aliases_20210630.txt.gz"
+export TAIRSYMBOLURLNAME="gene_aliases_20210630.txt.gz"
 
 export TAIRPATHURL="ftp://ftp.plantcyc.org/pmn/Pathways/Data_dumps/PMN15_January2021/pathways/ara_pathways.20210325.txt"
 export TAIRPATHURLNAME="ara_pathways.20210325.txt"
 
-export TAIRPMIDURL="https://www.arabidopsis.org/download_files/Public_Data_Releases/TAIR_Data_20201231/Locus_Published_20201231.txt.gz"
-export TAIRPMIDURLNAME="Locus_Published_20201231.txt.gz"
+export TAIRPMIDURL="https://www.arabidopsis.org/download_files/Public_Data_Releases/TAIR_Data_20210630/Locus_Published_20210630.txt.gz"
+export TAIRPMIDURLNAME="Locus_Published_20210630.txt.gz"
 
 export TAIRCHRURL="https://www.arabidopsis.org/download_files/Maps/seqviewer_data/sv_gene.data"
 export TAIRCHRURLNAME="sv_gene.data"

@@ -9,6 +9,7 @@
 .libPaths("~/R-libraries")
 library("RSQLite")
 library("UniProt.ws")
+library("httr")
 drv <- dbDriver("SQLite")
 
 ## Path to all the Db's.
@@ -26,7 +27,7 @@ speciesList = c("chipsrc_human.sqlite",
 ## Modified to get uniprots where we may not have an IPI
 getuniProtAndIPIs <- function(genes, dbFile){
 
-  ups <- UniProt.ws:::mapUniprot(from='P_ENTREZGENEID',to='ACC',query=genes)
+  ups <- UniProt.ws::mapUniProt(from='GeneID',to='UniProtKB',query=genes)
   ## NOW hack in the old IPI data
   baseDir <- "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/uniprot/OLDCHIPSRC"
   con <- dbConnect(drv,dbname=file.path(baseDir, dbFile))
@@ -36,31 +37,39 @@ getuniProtAndIPIs <- function(genes, dbFile){
   
   ## return as a single frame.
   ## Currently, I use an inner join here b/c DB is gene centric 
-  base <- merge(ups, ips, by.x ="P_ENTREZGENEID", by.y ="P_ENTREZGENEID", all.x=TRUE)
+  base <- merge(ups, ips, by.x ="From", by.y ="P_ENTREZGENEID", all.x=TRUE)
+  colnames(base)[which(names(base) == "From")] <- "P_ENTREZGENEID"
+  colnames(base)[which(names(base) == "To")] <- "ACC"
   base
 }
 
 
-getOneToMany <- function(taxId, type=c("PFAM","prosite","SMART")){ 
+getOneToMany <- function(taxId, type=c("pfam","prosite","smart")){ 
   type <- match.arg(type)
-  url <- paste0("http://www.uniprot.org/uniprot/?query=organism:",taxId,"&format=tab&columns=id,database(")
-  fullUrl <- paste0(url,type,")")
-#  message("Reading in data from UniProt web services.")
-##   dat <- read.delim(fullUrl, stringsAsFactors=FALSE)
-  dat <- UniProt.ws:::.tryReadResult(fullUrl)
+  #url <- paste0("http://www.uniprot.org/uniprot/?query=organism_id:",taxId,"&format=tab&columns=id,database(")
+  #fullUrl <- paste0(url,type,")")
+  #message("Reading in data from UniProt web services.")
+  #dat <- read.delim(fullUrl, stringsAsFactors=FALSE)
+  #dat <- UniProt.ws:::.tryReadResult(fullUrl)
+
+  temp <- tempfile()
+  with_verbose({resp <- GET(paste0("https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Cxref_",type,"&format=tsv&query=%28taxonomy_id%3A",taxId,"%29"), write_disk(temp))})
+  dat <- read.delim(temp)
+
   colnames(dat) <- c('ids', 'ids2')
   ## split up the strings
   dat[[2]] <- strsplit( as.character(dat[[2]]), split=";")
   ## get number of things matched to each ID in col 1
-  lens <- unlist(lapply(dat[[2]],length))
+  lens <- lengths(dat[[2]])
   ## make factor based on dat[[1]], repeated lens times
   ids <- rep.int(dat[[1]],lens) ## this excludes ones where lens==0
-  ids2 <- unlist(dat[[2]])
+  ids2 <- unlist(dat[[2]], use.names = FALSE)
   if(length(ids)==length(ids2)){
     res <- cbind(ids,ids2)
   }else{
     stop("getOneToMany: ids != ids2")
   }
+  
   ## recover dat[[1]] where lens==0
   rem <- dat[lens==0,]
   rem[[2]] <- NA ## these values are all NA
@@ -89,7 +98,7 @@ getData <- function(dbFile, db){
   ## NO MORE IPIs! (temporarily we will populate with values from last time)
   
   ## get the pfam Id's
-  pfam <- getOneToMany(taxId, type="PFAM")
+  pfam <- getOneToMany(taxId, type="pfam")
   colnames(pfam) <- c("ACC", "PFAM")
   ## and the prosite Id's.
   prosite <- getOneToMany(taxId, type="prosite")
@@ -265,7 +274,7 @@ for(species in speciesList){
 ################################################################################
 
 getuniProt <- function(genes, dbFile){
-    UniProt.ws:::mapUniprot(from='P_ENTREZGENEID',to='ACC',query=genes)
+    UniProt.ws::mapUniProt(from='GeneID',to='UniProtKB',query=genes)
 }
 
 getYeastData <- function(dbFile, db){
@@ -277,13 +286,15 @@ getYeastData <- function(dbFile, db){
 
   ## ## get the UniProt
   base <- getuniProt(genes, dbFile)
-  
+  colnames(base)[which(names(base) == "From")] <- "P_ENTREZGENEID"
+  colnames(base)[which(names(base) == "To")] <- "ACC"
+
   ## get the pfam Id's
-  pfam <- getOneToMany(taxId, type="PFAM")
+  pfam <- getOneToMany(taxId, type="pfam")
   colnames(pfam) <- c("ACC", "PFAM")
   pfam <- pfam[!is.na(pfam$PFAM),]
   ## And smart IDs
-  smart <- getOneToMany(taxId, type="SMART")
+  smart <- getOneToMany(taxId, type="smart")
   colnames(smart) <- c("ACC", "SMART")
   smart <- smart[!is.na(smart$SMART),]
   
