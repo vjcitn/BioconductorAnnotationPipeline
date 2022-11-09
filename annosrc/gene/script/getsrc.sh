@@ -45,8 +45,14 @@ echo "removing gene_refseq_uniprotkb_collab comments"
 sed -i -e "/^#.*$/ {d}" gene_refseq_uniprotkb_collab
 echo "removing gene_orthologs comments"
 cut -f 1,2,4,5 gene_orthologs > tmp
-sed  -e "/^#.*$/ {d}" tmp > gene_orthologs 
+sed  -e "/^#.*$/ {d}" tmp > gene_orthologs
 echo "done removing comments"
+echo "adding reverse mappings to gene_orthologs"
+awk '{print $3"\t"$4"\t"$1"\t"$2}' gene_orthologs > gene_orthologs2
+cat gene_orthologs gene_orthologs2 > tmp
+mv tmp gene_orthologs
+rm gene_orthologs2 tmp
+echo "done with gene_orthologs"
 echo "fixing txid mappings ..."
 awk -F'|' '{if($4 ~ /scientific name/) print toupper($1$2)}' names.dmp |
     tr -s '\t' | sed 's/ /_/g' |  cut -f 1-2 > names.txt
