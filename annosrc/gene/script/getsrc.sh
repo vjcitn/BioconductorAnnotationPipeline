@@ -51,7 +51,7 @@ echo "adding reverse mappings to gene_orthologs"
 awk '{print $3"\t"$4"\t"$1"\t"$2}' gene_orthologs > gene_orthologs2
 cat gene_orthologs gene_orthologs2 > tmp
 mv tmp gene_orthologs
-rm gene_orthologs2 tmp
+rm gene_orthologs2
 echo "done with gene_orthologs"
 echo "fixing txid mappings ..."
 awk -F'|' '{if($4 ~ /scientific name/) print toupper($1$2)}' names.dmp |

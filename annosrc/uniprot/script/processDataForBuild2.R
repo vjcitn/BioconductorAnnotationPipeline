@@ -26,7 +26,7 @@ speciesList = c("chipsrc_human.sqlite",
 ## Modified to get uniprots where we may not have an IPI
 getuniProtAndIPIs <- function(genes, dbFile){
 
-  ups <- UniProt.ws:::mapUniprot(from='P_ENTREZGENEID',to='ACC',query=genes)
+  ups <- UniProt.ws::mapUniProt(from='P_ENTREZGENEID',to='ACC',query=genes)
   ## NOW hack in the old IPI data
   baseDir <- "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/uniprot/OLDCHIPSRC"
   con <- dbConnect(drv,dbname=file.path(baseDir, dbFile))
@@ -268,7 +268,7 @@ for(species in speciesList){
 ################################################################################
 
 getuniProt <- function(genes, dbFile){
-    UniProt.ws:::mapUniprot(from='P_ENTREZGENEID',to='ACC',query=genes)
+    UniProt.ws::mapUniProt(from='P_ENTREZGENEID',to='ACC',query=genes)
 }
 
 getYeastData <- function(dbFile, db){
