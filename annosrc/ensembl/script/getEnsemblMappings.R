@@ -129,7 +129,8 @@ speciesFrame <- data.frame(dataset=dataset, host=host, mart=mart,
 message("creating EnsEG.tab files ...")
 apply(speciesFrame, 1, 
       function(x) {
-    if(x["host"] == "metazoa.ensembl.org")
+    tryCatch({
+	    if(x["host"] == "metazoa.ensembl.org")
         egdata <- getBM(c("ensembl_gene_id", "entrezgene_id"),
                         mart = useMart(x["mart"], x["dataset"], x["host"]))
     else
@@ -142,6 +143,10 @@ apply(speciesFrame, 1,
     write.table(egdata, 
                 file =paste(x["sqlitetable"], "EnsEG.tab", sep=""), 
                 quote=FALSE, sep="\t", row.names=FALSE, col.names=FALSE)
+   }, error = function(e) {
+    message(x["host"], " ", x["dataset"], " failed: ", conditionMessage(e))
+    }
+    )
 })
 
 ## Call pop*Table for each species which adds org-specific tables to ensembl.sqlite 

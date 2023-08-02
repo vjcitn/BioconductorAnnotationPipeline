@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-export GOSOURCEDATE=2022-07-01
+export GOSOURCEDATE=2023-01-01
 export GOSOURCENAME="Gene Ontology"
 export GOSOURCEURL="http://current.geneontology.org/ontology/go-basic.obo"
 #export GOSOURCEURL="ftp://ftp.geneontology.org/pub/go/godatabase/archive/latest-lite/"

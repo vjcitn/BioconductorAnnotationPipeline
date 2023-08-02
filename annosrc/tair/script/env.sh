@@ -35,8 +35,8 @@ export TAIRSYMBOLURLNAME="gene_aliases_20210630.txt.gz"
 export TAIRPATHURL="ftp://ftp.plantcyc.org/pmn/Pathways/Data_dumps/PMN15_January2021/pathways/ara_pathways.20210325.txt"
 export TAIRPATHURLNAME="ara_pathways.20210325.txt"
 
-export TAIRPMIDURL="https://www.arabidopsis.org/download_files/Public_Data_Releases/TAIR_Data_20210630/Locus_Published_20210630.txt.gz"
-export TAIRPMIDURLNAME="Locus_Published_20210630.txt.gz"
+export TAIRPMIDURL="https://www.arabidopsis.org/download_files/Public_Data_Releases/TAIR_Data_20211231/Locus_Published_20211231.txt.gz"
+export TAIRPMIDURLNAME="Locus_Published_20211231.txt.gz"
 
 export TAIRCHRURL="https://www.arabidopsis.org/download_files/Maps/seqviewer_data/sv_gene.data"
 export TAIRCHRURLNAME="sv_gene.data"

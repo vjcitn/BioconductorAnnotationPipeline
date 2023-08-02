@@ -27,7 +27,17 @@ speciesList = c("chipsrc_human.sqlite",
 ## Modified to get uniprots where we may not have an IPI
 getuniProtAndIPIs <- function(genes, dbFile){
 
-  ups <- UniProt.ws::mapUniProt(from='GeneID',to='UniProtKB',query=genes)
+  # split genes into groups of 100,000 since that's the max input for mapUniProt
+  splitDat <- split(genes, ceiling(seq_along(genes) / 100000))
+
+  # single output
+  singleOut <- lapply(splitDat, function(x) {
+    UniProt.ws::mapUniProt(from='GeneID',to='UniProtKB',query=x)
+  })
+
+  # concatenate rows
+  ups <- do.call(rbind, singleOut)
+  rownames(ups) <- NULL
   ## NOW hack in the old IPI data
   baseDir <- "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/uniprot/OLDCHIPSRC"
   con <- dbConnect(drv,dbname=file.path(baseDir, dbFile))
@@ -96,7 +106,10 @@ getData <- function(dbFile, db){
   ## ## get the UniProt and IPI Id's (merged into a table)
   base <- getuniProtAndIPIs(genes, dbFile)
   ## NO MORE IPIs! (temporarily we will populate with values from last time)
-  
+  colnames(base)[which(names(base) == "From")] <- "P_ENTREZGENEID"
+  colnames(base)[which(names(base) == "Entry")] <- "ACC"
+
+
   ## get the pfam Id's
   pfam <- getOneToMany(taxId, type="pfam")
   colnames(pfam) <- c("ACC", "PFAM")
@@ -287,7 +300,7 @@ getYeastData <- function(dbFile, db){
   ## ## get the UniProt
   base <- getuniProt(genes, dbFile)
   colnames(base)[which(names(base) == "From")] <- "P_ENTREZGENEID"
-  colnames(base)[which(names(base) == "To")] <- "ACC"
+  colnames(base)[which(names(base) == "Entry")] <- "ACC"
 
   ## get the pfam Id's
   pfam <- getOneToMany(taxId, type="pfam")
