@@ -5,7 +5,8 @@ CREATE TABLE genes (
        taxid INTEGER NOT NULL,
        gene_id INTEGER NOT NULL,
        other_taxid INTEGER NOT NULL,
-       other_gene_id INTEGER NOT NULL
+       other_gene_id INTEGER NOT NULL,
+       PRIMARY KEY (taxid, gene_id, other_taxid, other_gene_id)
 );
 
 .import gene_orthologs genes
