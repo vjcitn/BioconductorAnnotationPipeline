@@ -20,9 +20,10 @@ echo "downloading gene"
 cd $SRC_BASE/gene/script; sh download.sh
 echo "finished downloading gene"
 
-echo "downloading goext"
-cd $SRC_BASE/goext/script; sh download.sh
-echo "finished downloading goext"
+### NOTE: There has been a timeout when downloading data, do by hand
+#echo "downloading goext"
+#cd $SRC_BASE/goext/script; sh download.sh
+#echo "finished downloading goext"
 
 ### NOTE: Update genome build versions in env.sh to most current.
 echo "downloading ucsc"
