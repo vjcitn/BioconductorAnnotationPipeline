@@ -32,7 +32,9 @@ CREATE TABLE gene_association (
   object_type TEXT NOT NULL,
   taxon TEXT NOT NULL,
   annotation_date TEXT NOT NULL,
-  assigned_by TEXT NOT NULL
+  assigned_by TEXT NOT NULL,
+  annotation_extension TEXT,
+  gene_product_form TEXT
 ) ;
 .import gene_association.sgd gene_association
 --attach the GO database from earlier.

@@ -2,8 +2,9 @@
 
 ATTACH DATABASE 'genesrc.sqlite' AS genesrc;
 
-INSERT INTO metadata
- SELECT * FROM genesrc.metadata;
+-- This just adds extra rows to genesrc
+-- INSERT INTO metadata
+--  SELECT * FROM genesrc.metadata;
 
 CREATE TABLE accession (
  gene_id INTEGER,

@@ -2,13 +2,14 @@
 
 ATTACH DATABASE 'genesrc.sqlite' AS genesrc;
 
-CREATE TABLE metadata (
- name TEXT,
- value TEXT
-);
+-- We never use metadata from chipmapsrc
+-- CREATE TABLE metadata (
+--  name TEXT,
+--  value TEXT
+-- );
 
-INSERT INTO metadata
- SELECT * FROM genesrc.metadata;
+-- INSERT INTO metadata
+--  SELECT * FROM genesrc.metadata;
 
 CREATE TABLE accession (
  gene_id INTEGER,

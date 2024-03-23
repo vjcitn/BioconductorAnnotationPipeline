@@ -20,7 +20,8 @@ if [ "$LATEST_PFAM_DATE" != "$PFAMSOURCEDATE" ]; then
         mkdir ../$LATEST_PFAM_DATE
         cd ../$LATEST_PFAM_DATE
 	wget $BASE_URL/$FILE
-	gunzip $FILE
+	## don't decompress
+	## gunzip $FILE
 	cd ../script
 else
         echo "the latest data for $FILE is still $PFAMSOURCEDATE"

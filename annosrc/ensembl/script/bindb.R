@@ -257,7 +257,17 @@ popEnsembl2PROTTable(c("chipsrc_yeast.sqlite" = "scerevisiae_gene_ensembl"))
 
 message("starting worm")
 library(biomaRt)
-mart <- useEnsembl("ensembl", "celegans_gene_ensembl", mirror = "useast")
+## biomart is pretty up and down, so let's try to harden this
+getMart <- function(biomart, species) {
+    e <- simpleError("")
+    while(is(e, "simpleError")) {
+        e <- tryCatch(useEnsembl(biomart, species), error = function(x) x)
+    }
+    e
+}
+
+mart <- getMart("ensembl","celegans_gene_ensembl")
+
 wormBase <- getBM(c("ensembl_gene_id", "entrezgene_id", "wormbase_gene"), 
                   mart=mart)
 

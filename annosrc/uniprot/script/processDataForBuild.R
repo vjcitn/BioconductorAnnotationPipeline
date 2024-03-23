@@ -208,7 +208,6 @@ doInserts <- function(db, table, data){
 require("RSQLite")
 
 for(species in speciesList){
-
   ## DB connection
   db <- dbConnect(drv,dbname=file.path(dir, species))
   

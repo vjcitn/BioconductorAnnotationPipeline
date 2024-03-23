@@ -12,15 +12,19 @@
 # #I will begin by separating things into sequence (GS) based 
 # #entries and the file based annotations
 
-echo "Pfam-A.part"
-rm -f Pfam-A.part
-grep "#=G[F,S]" Pfam-A.full  > Pfam-A.part
-echo "Pfam-A.GF"
+## Updated 2024-03-18
+## Just do this on a stream
+#echo "Pfam-A.part"
+#rm -f Pfam-A.part
+#grep "#=G[F,S]" Pfam-A.full  > Pfam-A.part
+echo "Pfam-A.GF And Pfam-A.GS"
 rm -f Pfam-A.GF
-grep "#=GF" Pfam-A.full  > Pfam-A.GF
-echo "Pfam-A.GS"
 rm -f Pfam-A.GS
-grep "#=GS" Pfam-A.full  > Pfam-A.GS
+zcat Pfam-A.full.gz | awk '{if(/^#=GS/) print > "Pfam-A.GS"; else if(/^#=GF/) print > "Pfam-A.GF"}'
+#grep "#=GF" Pfam-A.full  > Pfam-A.GF
+# echo "Pfam-A.GS"
+# rm -f Pfam-A.GS
+# grep "#=GS" Pfam-A.full  > Pfam-A.GS
 
 #Next I will split the GF based stuff into 5 files.  
 #Each one needs to have its own set of alternating AC accessions 
@@ -94,7 +98,7 @@ rm -f tempIDs*
 #=GF AC and #GS ... DR PDB
 echo "PDB_IDs"
 rm -f PDB_IDs.txt
-grep -E "GF AC|DR PDB" Pfam-A.part > tempIDs
+zcat Pfam-A.full.gz | grep -E "GF AC|DR PDB" - > tempIDs
 cat tempIDs | awk -F " " '{print $2"\t"$3"\t"$4"\t"$5" "$6"\t"$7}' > tempIDs2
 sed -i -e "s/;//g" tempIDs2
 cat tempIDs2 | perl -ne 'chomp($_);s/(.+?)\t(DR)\t(PDB)\t(.+?)\t(\d+?)-(\d+?)/$3\t$4\t$5\t$6/g;print($_,"\n")' > tempIDs3

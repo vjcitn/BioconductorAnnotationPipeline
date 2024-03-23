@@ -30,7 +30,7 @@ if (!file.exists("uniprot2go.sqlite")) {
     drv <- dbDriver("SQLite")
     db <- dbConnect(drv,dbname="uniprot2go.sqlite")
     options(download.file.method = "wget")
-    AnnotationForge:::.downloadAndPopulateAltGOData(db, scriptDir, rebuildCache=TRUE)
+    AnnotationForge:::.downloadAndPopulateAltGOData(db, scriptDir, rebuildCache=FALSE)
 } else {
     ##Connect to the new DB
     drv <- dbDriver("SQLite")
@@ -40,7 +40,7 @@ if (!file.exists("uniprot2go.sqlite")) {
 ## make simple sub-tables that contain the data bases from these organisms:
 taxIDList = c("Canis_familiaris"="9615",
                 "Sus_Scrofa"="9823",
-                "Anopheles_gambiae"="180454",
+                "Anopheles_gambiae"="7165",
                 "Xenopus_laevis"="8355",
                 "Macaca_mulatta"="9544",
                 "Pan_troglodytes"="9598")

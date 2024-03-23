@@ -2,8 +2,9 @@
 
 ATTACH DATABASE 'genesrc.sqlite' AS genesrc;
 
-INSERT INTO metadata
- SELECT * FROM genesrc.metadata;
+-- This just pollutes genesrc with extra rows
+-- INSERT INTO metadata
+--  SELECT * FROM genesrc.metadata;
 
 CREATE TABLE accession (
  gene_id INTEGER,
@@ -13,12 +14,12 @@ CREATE TABLE accession (
 INSERT INTO accession
  SELECT min(gene_id), rna_accession
  FROM genesrc.gene2accession 
- WHERE  tax_id='180454' AND rna_accession != '-'
+ WHERE  tax_id='7165' AND rna_accession != '-'
  GROUP BY rna_accession
 UNION
  SELECT min(gene_id), protein_accession
  FROM genesrc.gene2accession 
- WHERE tax_id='180454'  AND protein_accession != '-'
+ WHERE tax_id='7165'  AND protein_accession != '-'
  GROUP BY protein_accession;
 
 CREATE INDEX a1 ON accession(accession);
@@ -31,12 +32,12 @@ CREATE TABLE refseq (
 INSERT INTO refseq
  SELECT min(gene_id), rna_accession
  FROM genesrc.gene2refseq 
- WHERE  tax_id='180454' AND rna_accession != '-'
+ WHERE  tax_id='7165' AND rna_accession != '-'
  GROUP BY rna_accession
 UNION
  SELECT min(gene_id), protein_accession
  FROM genesrc.gene2refseq 
- WHERE tax_id='180454'  AND protein_accession != '-'
+ WHERE tax_id='7165'  AND protein_accession != '-'
  GROUP BY protein_accession;
 
 CREATE INDEX r1 ON refseq(accession);

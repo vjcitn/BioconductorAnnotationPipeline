@@ -21,11 +21,20 @@ speciesList = c("dmelanogaster_gene_ensembl"="fly_eg2uniprot",
 martList = c("ensembl","metazoa_mart_8")
 speciesFrame = data.frame(speciesList, martList, stringsAsFactors=FALSE)
 
+## function to harden attempts to connect
+getMart <- function(biomart, species) {
+    e <- simpleError("")
+    while(is(e, "simpleError")) {
+        e <- tryCatch(useEnsembl(biomart, species), error = function(x) x)
+    }
+    e
+}
 
 getData = function(species,mart){
     ##For now we only need flies...
     ##ensembl = useMart("ensembl",dataset="dmelanogaster_gene_ensembl")
-    ensembl = useMart(mart,dataset=species)
+    
+    ensembl = getMart(mart, species)
     
     ## listAttributes(ensembl)
     ## 51                             uniprot_sptrembl - maybe it.

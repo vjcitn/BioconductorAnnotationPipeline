@@ -6,11 +6,7 @@ fi
 
 ## unpack source data
 cd ../$YGSOURCEDATE
-if [ -f gene_association.sgd.gaf.gz ]; then
-    gunzip -c gene_association.sgd.gaf.gz > gene_association.sgd
-    sed -i -e "/^\!.*$/d" gene_association.sgd
-    sed -i -e 's/[ \t]*$//' gene_association.sgd ## removes trailing whitespace.
-fi
+zcat gene_association.sgd.gaf.gz | awk -F'\t' '!/\!/' > gene_association.sgd
 
 # split alias column by |
 rm -f gene2alias.tab
@@ -19,8 +15,8 @@ R --slave < ../script/parseAlias.R
 # a.orf_decisions.txt: first line is column name
 sed -e "1d" a.orf_decisions.txt > a.orf_decisions1.txt
 
-# domains.tab has various number of columns (some lines 13, others 14)
-awk '{print $1 "\t" $4 "\t" $5 "\t" $12}' domains.tab > domains1.tab
+# select correct columns from domains.tab
+zcat domains_201610.tab.gz | cut -f 1,4,5,12 - > domains1.tab
 
 ## remove old source sqlite db
 rm -f sgdsrc.sqlite

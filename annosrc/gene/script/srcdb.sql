@@ -97,7 +97,9 @@ CREATE TABLE gene_info (
         nomenclature_symbol TEXT,
         nomenclature_name TEXT,
         nomenclature_status TEXT,
-	other_designations TEXT
+	other_designations TEXT,
+	modification_date TEXT,
+	feature_type TEXT
 );
 .import gene_info gene_info
 CREATE INDEX gi1 on gene_info(gene_id);

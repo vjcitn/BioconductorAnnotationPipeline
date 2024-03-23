@@ -10,7 +10,7 @@
 library(biomaRt)
 library(DBI)
 library(RSQLite)
-
+options(timeout = 1e5)
 ## -----------------------------------------------------------------------
 ## helpers
 
@@ -119,35 +119,67 @@ dataset <- c("hsapiens_gene_ensembl", "rnorvegicus_gene_ensembl",
              "agambiae_eg_gene")
 sqlitetable <- c(head(dataset, n=-1), "agambiae_gene_ensembl") 
 mart <-  c(rep("ENSEMBL_MART_ENSEMBL", length(dataset) - 1L), "metazoa_mart")
-host <-  c(rep("www.ensembl.org", length(dataset) - 1L), "metazoa.ensembl.org")
+host <-  c(rep("https://www.ensembl.org", length(dataset) - 1L), "https://metazoa.ensembl.org")
 speciesFrame <- data.frame(dataset=dataset, host=host, mart=mart,
                            sqlitetable=sqlitetable, stringsAsFactors=FALSE)
 
 ## Download from biomart and create *EnsEG.tab files:
 ## NOTE: This function previously (years ago?) created transdata 
 ##       (transcript IDs) and protdata (protein IDs) tables
-message("creating EnsEG.tab files ...")
-apply(speciesFrame, 1, 
-      function(x) {
-    tryCatch({
-	    if(x["host"] == "metazoa.ensembl.org")
-        egdata <- getBM(c("ensembl_gene_id", "entrezgene_id"),
-                        mart = useMart(x["mart"], x["dataset"], x["host"]))
-    else
-        egdata <- getBM(attributes=c("ensembl_gene_id", "entrezgene_id"), 
-                        mart=useEnsembl(biomart=x["mart"], dataset=x["dataset"]))
-    if (nrow(egdata) == 0L)
-        warning(paste0("no biomaRt data for ", x["dataset"]))
-    ## Remove rows with entrezgene=NA
-    egdata <- egdata[!is.na(egdata[, 2]), ]
-    write.table(egdata, 
-                file =paste(x["sqlitetable"], "EnsEG.tab", sep=""), 
-                quote=FALSE, sep="\t", row.names=FALSE, col.names=FALSE)
-   }, error = function(e) {
-    message(x["host"], " ", x["dataset"], " failed: ", conditionMessage(e))
+
+## The connection to Biomart can be fraught, so harden that step
+getMart <- function(biomart, host = "https://www.ensembl.org") {
+    e <- simpleError("")
+    while(is(e, "simpleError")) {
+        e <- tryCatch(useMart(biomart, host = host), error = function(x) x)
+        Sys.sleep(5)
     }
-    )
+    e
+}
+
+message("creating EnsEG.tab files ...")
+## apply(speciesFrame, 1, 
+##       function(x) {
+##     tryCatch({
+## 	    if(x["host"] == "metazoa.ensembl.org")
+##         egdata <- getBM(c("ensembl_gene_id", "entrezgene_id"),
+##                         mart = useMart(x["mart"], x["dataset"], x["host"]))
+##     else
+##         egdata <- getBM(attributes=c("ensembl_gene_id", "entrezgene_id"), 
+##                         mart=useEnsembl(biomart=x["mart"], dataset=x["dataset"]))
+##     if (nrow(egdata) == 0L)
+##         warning(paste0("no biomaRt data for ", x["dataset"]))
+##     ## Remove rows with entrezgene=NA
+##     egdata <- egdata[!is.na(egdata[, 2]), ]
+##     write.table(egdata, 
+##                 file =paste(x["sqlitetable"], "EnsEG.tab", sep=""), 
+##                 quote=FALSE, sep="\t", row.names=FALSE, col.names=FALSE)
+##    }, error = function(e) {
+##     message(x["host"], " ", x["dataset"], " failed: ", conditionMessage(e))
+##     }
+##     )
+## })
+
+## the connection seems to be the problem, so we make one mart object and
+## switch to different datasets. Except for the metazoa mart
+mart <- getMart("ensembl")
+
+apply(speciesFrame, 1, function(x) {
+    if(x["host"] == "https://metazoa.ensembl.org") {
+        mart2 <- getMart(x["mart"], x["host"])
+        mart2 <- useDataset(x["dataset"], mart2) 
+    } else {
+        mart2 <- useDataset(x["dataset"], mart)
+    }
+    cat(x["dataset"], "\n")
+    egdata <- getBM(attributes=c("ensembl_gene_id", "entrezgene_id"), mart = mart2)
+    if(nrow(egdata) == 0L) warning(paste("No biomaRt data for", x["dataset"]))
+    egdata <- subset(egdata, !is.na(entrezgene_id))
+    write.table(egdata, file = paste0(x["sqlitetable"], "EnsEG.tab"),
+                quote=FALSE, sep="\t", row.names=FALSE, col.names=FALSE)
 })
+
+    
 
 ## Call pop*Table for each species which adds org-specific tables to ensembl.sqlite 
 drv <- dbDriver("SQLite")

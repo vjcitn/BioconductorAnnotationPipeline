@@ -16,7 +16,7 @@ INSERT INTO metadata
  SELECT * FROM genesrc.metadata;
 
 INSERT INTO metadata (name,value) VALUES ('CENTRALID','EG');
-INSERT INTO metadata (name,value) VALUES ('TAXID','180454');
+INSERT INTO metadata (name,value) VALUES ('TAXID','7165');
 
 CREATE TABLE genes (
  _id INTEGER PRIMARY KEY,
@@ -26,7 +26,7 @@ CREATE TABLE genes (
 INSERT INTO genes (gene_id)
  SELECT DISTINCT gene_id
  FROM gene_info
- WHERE tax_id='180454'
+ WHERE tax_id='7165'
  ORDER BY gene_id;
 
 CREATE INDEX c1 ON genes(gene_id);
