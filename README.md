@@ -366,8 +366,31 @@ that have empty ('') values for all columns except for the primary key
 column. If any are found, it will print out the sqlite file name and
 the table name.
 
-At this point all code changes should be commit to git. No data files should be 
-added.
+At this point all code changes should be committed to git. No data files should be 
+added. The ubuntu user doesn't have access to the GitHub repo, so
+pushing commits is a roundabout process. Here's the high level
+version. *This assumes that you are a contributor on the Bioconductor
+GitHub repo. If not ask Lori Shepherd - Kern to add you.*
+
++ Fork [the
+Github](Githttps://github.com/Bioconductor/BioconductorAnnotationPipeline)
+to your own personal GitHub repo.
++ Generate a [classic authentication
+token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
+for your repo. On the page where it asks what level of control, click
+the first checkbox, for full repo control. The default lifetime for
+the token is 30 days, which could be set to something much
+shorter. Copy the token for the next step.
++ On AWS, add your personal repo using `git remote add temp https://<token
+goes here>@github.com/<your user
+name>/BioconductorAnnotationPipeline.git`
++ Push to your repo `git push temp master`
++ On your local repo (that has access to both the Bioconductor and
+your forked version of the repo), pull the commit that you just sent
+to your fork.
++ On that same local repo, push the changes up to the Bioconductor
+repo.
++ You could then also do `git remote rm temp` on AWS
 
 [Back to top](#top)
 
@@ -530,17 +553,20 @@ removed.
 
 **1. Identify which tracks should be updated**
 
-Information should be compared between what is currently available on 
-[Bioconductor](https://www.bioconductor.org/packages/release/BiocViews.html#___TxDb) 
- devel and what is currently available on the 
-[UCSC Genome Browser](https://genome.ucsc.edu/cgi-bin/hgGateway). For example, 
-for the package `TxDb.Hsapiens.UCSC.hg38.knownGene` on the UCSC Genome Browser 
-human should be selected, then under 'Human Assembly' the Dec. 2013 
-(GRCh38/hg38) option should be selected, then press 'Go'. Under 'Genes and Gene 
-Predictions' select 'GENCODE v32' (this is what is selected for known gene 
-information). The 'Date last updated' should be checked. If this date is newer 
-than the last release then this package needs to be updated. This should be 
-repeated for all of the packages available on Bioconductor. 
+Information should be compared between what is currently available on
+[Bioconductor](https://www.bioconductor.org/packages/release/BiocViews.html#___TxDb)
+devel and what is currently available on the [UCSC Genome
+Browser](https://genome.ucsc.edu/cgi-bin/hgGateway). For example, for
+the package `TxDb.Hsapiens.UCSC.hg38.knownGene`, go to the
+[hgTables](https://genome.ucsc.edu/cgi-bin/hgTables) page on the UCSC
+Genome Browser. Select Mammal for clade, Human for genome, and
+Dec.2013 (GRCh38/hg38) for the assembly. Then choose Genes and gene
+Predictions for group, and (usually) the first choice for track. As of
+2024, that would be GENCODE V44. Then click the 'data format
+description' button.  At the top of the next webpage, check the 'Date
+last updated'. If this date is newer than the last release then this
+package needs to be updated. This should be repeated for all of the
+packages available on Bioconductor.
 
 It is also important to identify tracks that may not be available yet on 
 Bioconductor because these may be new packages that can be added. 
