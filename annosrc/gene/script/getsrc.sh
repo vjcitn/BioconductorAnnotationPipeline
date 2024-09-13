@@ -25,7 +25,7 @@ cd ../$EGSOURCEDATE
 
 for f in gene2*gz; do
     out=${f/.gz/}
-    zcat $f | awk '!/#/' |
+    zcat $f | awk '!/^#/' |
 	awk 'BEGIN{
     	val[10090]	
     	val[10116]
@@ -50,7 +50,7 @@ for f in gene2*gz; do
 done
 
 echo "unpacking gene_info ..."
-zcat gene_info.gz | awk '!/#/' |
+zcat gene_info.gz | awk '!/^#/' |
     awk 'BEGIN{
         val[10090]
         val[10116]
@@ -77,9 +77,9 @@ zcat gene_info.gz | awk '!/#/' |
 ## Do the remaining files as normal
 
 echo "unpacking gene_refseq_uniprotkb_collab ..."
-zcat gene_refseq_uniprotkb_collab.gz | awk '!/#/' | cut -f 1-2 > gene_refseq_uniprotkb_collab
+zcat gene_refseq_uniprotkb_collab.gz | awk '!/^#/' | cut -f 1-2 > gene_refseq_uniprotkb_collab
 echo "unpacking gene_orthologs ..."
-zcat gene_orthologs.gz | awk '!/#/' | cut -f 1,2,4,5 > tmp
+zcat gene_orthologs.gz | awk '!/^#/' | cut -f 1,2,4,5 > tmp
 awk '{print $3"\t"$4"\t"$1"\t"$2}' tmp > tmp2
 cat tmp tmp2 > gene_orthologs
 rm tmp*
