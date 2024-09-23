@@ -167,7 +167,7 @@ words, it is possible to just run the `master.sh` script, or to run
 `src_downoad.sh`, but that does not usually work well, because the
 script runs for a while and then errors out, and then you must figure
 out where the error occurred in order to fix it. This is tedious and
-boring and unnecesary.
+boring and unnecessary.
 
 A smarter idea is to inspect the `src_download.sh` script, and run
 each step by hand, which is essentially cd'ing to each subdirectory
