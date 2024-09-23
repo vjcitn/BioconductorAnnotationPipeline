@@ -1,5 +1,5 @@
 .echo ON
-.separator \t
+.mode tabs
 .read ../script/term.sql
 .read ../script/term_synonym.sql
 .read ../script/term_definition.sql

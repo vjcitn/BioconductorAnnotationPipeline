@@ -1,5 +1,5 @@
 .echo ON
-.separator \t
+.mode tabs
 
 -- a single inparanoid DB with all needed tables inside...
 

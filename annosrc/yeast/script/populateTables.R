@@ -33,7 +33,7 @@ clnVals <- prepareData(file="gene_literature.tab", cols=c(1,2,5,6))
 sqlIns <- "INSERT into gene_literature
            (pubmed,citation,gene_name,orf,literature_topic,sgd)
            VALUES (?,?,?,?,?,?)"
-dbBeginTransaction(con)
+dbBegin(con)
 rset <- dbSendQuery(con, sqlIns, params=unclass(unname(clnVals)))
 dbClearResult(rset)
 dbCommit(con)
@@ -44,13 +44,32 @@ clnVals <- prepareData(file="SGD_features.tab", cols=c(1,2))
 #Col 4 must have a null value if there is an empty string so use the new func
 #clnVals <- setEmptyToNull(data=clnVals, cols=c(4,5), fileName="SGD_features.tab")
 clnVals <- setEmptyToNull(data=clnVals, cols=c(1,2,3,4,5,6,16), fileName="SGD_features.tab")
+## as of 2024/09, SGD_features has been collapsed to remove duplicated
+## SGD IDs as an example there used to be two entries for YAL069W with
+## two SGD numbers (here z is the download from the previous build):
+##
+## >  subset(z, V4 == "YAL069W" | V7 == "YAL069W")[,1:7]    
+##           V1  V2      V3      V4   V5   V6   V7
+## 1 S000002143 ORF Dubious YAL069W <NA> <NA>  chromosome 1
+## 2 S000031098 CDS    <NA>    <NA> <NA> <NA>  YAL069W
+
+## but now they have harmonized the SGD IDs:  
+## > subset(clnVals, V4 == "YAL069W" | V7 == "YAL069W")[,1:7]    
+##             V1  V2      V3      V4   V5   V6  V7
+## 692 S000002143 ORF Dubious YAL069W <NA> <NA> chromosome 1
+## 693 S000002143 CDS    <NA>    <NA> <NA> <NA> YAL069W
+##
+## It's not clear to me which we should take, so we'll just take the first
+clnVals <- clnVals[!duplicated(clnVals[,1]),]
+
+
 sqlIns <- "INSERT into sgd_features
            (sgd,feature_type,feature_qualifier,feature_name,standard_gene_name,
             alias,parent_feature_name,secondary_sgd,chromosome,
             start_coordinate,stop_coordinate,strand,genetic_position,
             coordinate_version,sequence_version,feature_description)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-dbBeginTransaction(con)
+dbBegin(con)
 rset <- dbSendQuery(con, sqlIns, params=unclass(unname(clnVals)))
 dbClearResult(rset)
 dbCommit(con)
@@ -63,7 +82,7 @@ dbCommit(con)
 ## sqlIns <- "INSERT into registry_genenames
 ##            (gene_name, alias, gene_description, gene_product, phenotype, orf_name, sgd)
 ##             VALUES (?,?,?,?,?,?,?)"
-## dbBeginTransaction(con)
+## dbBegin(con)
 ## rset <- dbSendQuery(con, sqlIns, params=unclass(unname(clnVals)))
 ## dbClearResult(rset)
 ## dbCommit(con)

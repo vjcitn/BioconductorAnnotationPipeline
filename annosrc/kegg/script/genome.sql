@@ -16,14 +16,14 @@ CREATE TEMP TABLE gene_hsa (
 ) ;
 .import hsa_ncbi-geneid.list gene_hsa
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_hsa (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import hsa_gene_map2.txt pathway_hsa
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_hsa (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -54,14 +54,14 @@ CREATE TEMP TABLE gene_mmu (
 ) ;
 .import mmu_ncbi-geneid.list gene_mmu
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_mmu (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import mmu_gene_map2.txt pathway_mmu
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_mmu (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -92,14 +92,14 @@ CREATE TEMP TABLE gene_rno (
 ) ;
 .import rno_ncbi-geneid.list gene_rno
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_rno (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import rno_gene_map2.txt pathway_rno
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_rno (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -130,14 +130,14 @@ CREATE TEMP TABLE gene_sce (
 ) ;
 .import sce_mips-sce.list gene_sce
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_sce (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import sce_gene_map2.txt pathway_sce
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_sce (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -170,14 +170,14 @@ CREATE TEMP TABLE gene_ath (
 ) ;
 .import ath_tigr-ath.list gene_ath
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_ath (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import ath_gene_map2.txt pathway_ath
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_ath (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -214,14 +214,14 @@ CREATE TEMP TABLE gene_ath (
 ) ;
 .import ath_ncbi-geneid.list gene_ath
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_ath (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import ath_gene_map2.txt pathway_ath
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_ath (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -259,14 +259,14 @@ CREATE TEMP TABLE gene_dme (
 ) ;
 .import dme_flybase-dme.list gene_dme
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_dme (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import dme_gene_map2.txt pathway_dme
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_dme (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -299,14 +299,14 @@ CREATE TEMP TABLE gene_pfa (
 ) ;
 .import pfa_plasmodb-pfa.list gene_pfa
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_pfa (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import pfa_gene_map2.txt pathway_pfa
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_pfa (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -339,14 +339,14 @@ CREATE TEMP TABLE gene_dre (
 ) ;
 .import dre_ncbi-geneid.list gene_dre
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_dre (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import dre_gene_map2.txt pathway_dre
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_dre (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -378,14 +378,14 @@ CREATE TEMP TABLE gene_eco (
 ) ;
 .import eco_ncbi-geneid.list gene_eco
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_eco (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import eco_gene_map2.txt pathway_eco
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_eco (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -418,14 +418,14 @@ CREATE TEMP TABLE gene_ecs (
 ) ;
 .import ecs_ncbi-geneid.list gene_ecs
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_ecs (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import ecs_gene_map2.txt pathway_ecs
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_ecs (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -457,14 +457,14 @@ CREATE TEMP TABLE gene_cfa (
 ) ;
 .import cfa_ncbi-geneid.list gene_cfa
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_cfa (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import cfa_gene_map2.txt pathway_cfa
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_cfa (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -496,14 +496,14 @@ CREATE TEMP TABLE gene_bta (
 ) ;
 .import bta_ncbi-geneid.list gene_bta
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_bta (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import bta_gene_map2.txt pathway_bta
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_bta (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -535,14 +535,14 @@ CREATE TEMP TABLE gene_cel (
 ) ;
 .import cel_ncbi-geneid.list gene_cel
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_cel (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import cel_gene_map2.txt pathway_cel
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_cel (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -575,14 +575,14 @@ CREATE TEMP TABLE gene_ssc (
 ) ;
 .import ssc_ncbi-geneid.list gene_ssc
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_ssc (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import ssc_gene_map2.txt pathway_ssc
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_ssc (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -615,14 +615,14 @@ CREATE TEMP TABLE gene_gga (
 ) ;
 .import gga_ncbi-geneid.list gene_gga
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_gga (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import gga_gene_map2.txt pathway_gga
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_gga (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -655,14 +655,14 @@ CREATE TEMP TABLE gene_mcc (
 ) ;
 .import mcc_ncbi-geneid.list gene_mcc
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_mcc (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import mcc_gene_map2.txt pathway_mcc
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_mcc (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -696,14 +696,14 @@ CREATE TEMP TABLE gene_xla (
 ) ;
 .import xla_ncbi-geneid.list gene_xla
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_xla (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import xla_gene_map2.txt pathway_xla
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_xla (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -738,14 +738,14 @@ CREATE TEMP TABLE gene_aga (
 ) ;
 .import aga_ncbi-geneid.list gene_aga
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_aga (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import aga_gene_map2.txt pathway_aga
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_aga (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL
@@ -781,14 +781,14 @@ CREATE TEMP TABLE gene_ptr (
 ) ;
 .import ptr_ncbi-geneid.list gene_ptr
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE pathway_ptr (
   kegg_id TEXT NOT NULL,
   pathway_id TEXT NOT NULL
 ) ;
 .import ptr_gene_map2.txt pathway_ptr
 
-.separator "\t"
+.mode tabs
 CREATE TEMP TABLE ec_ptr (
   kegg_id TEXT NOT NULL,
   ec_id TEXT NOT NULL

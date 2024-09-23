@@ -10,7 +10,8 @@ LATEST_DATE=`curl --fail -IL $BASE_URL/curation/literature/gene2pmid.tab | grep 
 ## InterPro ID
 ## for now we just get the last good one from them
 YG_URL=$BASE_URL/curation/calculated_protein_info/domains/archive
-REJECTORF_URL=https://compbio.mit.edu/4yeasts/S6.RFC_test/a.orf_decisions.txt
+REJECTORF_URL=ftp://ftp.broadinstitute.org/pub/annotation/fungi/comp_yeasts/S6.RFC_test/a.orf_decisions.txt
+## REJECTORF_URL=https://compbio.mit.edu/4yeasts/S6.RFC_test/a.orf_decisions.txt 
 
 if [ -z "$LATEST_DATE" ]; then
        echo "${LATEST_DATA}"

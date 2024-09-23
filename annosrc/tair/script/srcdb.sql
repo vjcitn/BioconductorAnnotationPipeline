@@ -1,5 +1,5 @@
 .echo ON
-.separator "\t"
+.mode tabs
 
 DROP TABLE IF EXISTS affy_AG;
 CREATE TABLE affy_AG(

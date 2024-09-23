@@ -10,6 +10,8 @@
 library("RSQLite")
 library("UniProt.ws")
 library("httr")
+## keep getting cURL errors intermittently, so try retry package
+library(retry)
 drv <- dbDriver("SQLite")
 
 ## Path to all the Db's.
@@ -63,7 +65,10 @@ getOneToMany <- function(taxId, type=c("pfam","prosite","smart")){
   #dat <- UniProt.ws:::.tryReadResult(fullUrl)
 
   temp <- tempfile()
-  with_verbose({resp <- GET(paste0("https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Cxref_",type,"&format=tsv&query=%28taxonomy_id%3A",taxId,"%29"), write_disk(temp))})
+  with_verbose({
+    resp <- retry(GET(paste0("https://rest.uniprot.org/uniprotkb/stream?compressed=true&fields=accession%2Cxref_",
+                             type,"&format=tsv&query=%28taxonomy_id%3A",taxId,"%29"), write_disk(temp, TRUE)),
+                  when = "INTERNAL_ERROR")})
   dat <- read.delim(temp)
 
   colnames(dat) <- c('ids', 'ids2')
@@ -209,6 +214,7 @@ require("RSQLite")
 
 for(species in speciesList){
   ## DB connection
+  browser()
   db <- dbConnect(drv,dbname=file.path(dir, species))
   
   message("Getting data for:",species)

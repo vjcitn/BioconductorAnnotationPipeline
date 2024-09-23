@@ -1,5 +1,5 @@
 .echo ON
-.separator \t
+.mode tabs
 
 CREATE TABLE genes (
        taxid INTEGER NOT NULL,

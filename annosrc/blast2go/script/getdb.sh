@@ -2,8 +2,12 @@
 set -e
 
 ## Download and parse the idmapping file first
+## switched this from
+# url=https://ftp.expasy.org/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz
+## because expasy appears to be super slow. cURL might be slow as well, so might need to switch to wget in future if
+## it keeps being that way
 
-url=https://ftp.expasy.org/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz
+url=https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/idmapping_selected.tab.gz
 curl --fail --disable-epsv -O $url
 
 zcat idmapping_selected.tab.gz |

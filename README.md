@@ -159,22 +159,67 @@ needed to create the packages. This can be done by running the command:
 sh src_download.sh
 ```
 
-There are data-specific directories that contain their own specific 
-`script/download.sh` scripts. These data-specific scripts are called by the 
-'master' `src_download.sh` script. The script can be run as a whole or it can 
-be run one data type at a time. The easiest thing to do is to look at
-the `src_download.sh` script, and run each command, by hand, in each
-directory. That way if there is a problem it is easy to track down.
+There are data-specific directories that contain their own specific
+`script/download.sh` scripts. These data-specific scripts are called
+by the 'master' `src_download.sh` script. While the script can be run
+as a whole, a better idea is to run one data type at a time. In other
+words, it is possible to just run the `master.sh` script, or to run
+`src_downoad.sh`, but that does not usually work well, because the
+script runs for a while and then errors out, and then you must figure
+out where the error occurred in order to fix it. This is tedious and
+boring and unnecesary.
 
-In order to monitor that the download script is running properly, it is good 
-practice to know which of the data-specific directories will get new data 
-downloaded to the them. This can be achieved by checking the timestamp on the 
-website against the `*SOURCEDATE` variable in the data-specific `env.sh` 
-script. If the website has a newer date than the `*SOURCEDATE`, new data will 
-be downloaded. Besides differences in dates, if any manual updates are made 
-to the data-specific `env.sh` script than new data will be downloaded. 
-Additional information for each of the data-specific directories, along with 
-the variable(s) that should be checked, are listed below.
+A smarter idea is to inspect the `src_download.sh` script, and run
+each step by hand, which is essentially cd'ing to each subdirectory
+(e.g., ~/BioconductorAnnotationPipeline/ensembl/script) and then doing
+`./download.sh`. When the inevitable error occurs you know which
+step failed and can then start to debug. Most of the download scripts
+assume something about the source of the data, such as the directory
+structure of an ftp resource, and if the provider has made any changes
+the script will no longer work correctly, and it is then a matter of
+figuring out what has changed in order to get the script to work.
+
+Most of the data directories include an `env.sh` script that queries
+the resource to infer if any changes have been made to the data. If
+not, the download will normally not occur. However, this is also a
+frailty in the system because the `env.sh` script assumes that there
+are files on the resource that can be queried to infer changes. If
+this is no longer the case, this script will fail as well.
+
+This `env.sh` script is also used to infer the date the data were
+generated, but is not always accurate. As an example, for UCSC the
+timestamp of the directory from which the data were retrieved was used
+to infer if the data had changed. However, there are hundreds of files
+in that directory and we only download four, so it is unlikely that a
+change in the directory timestamp tells us anything about changes in a
+small subset of the files. A better idea might be to simply report
+**when** the data were download rather than inferring the age of
+individual files. Since the `env.sh` script for UCSC did not check the
+file timestamp, we were downloading the same files repeatedly,
+thinking they had been updated. As of 2024-Sept, we now use rsync to
+download the files from UCSC, which will only download files that
+change. We do not try to infer the timestamp on these files, but
+instead simply report the date we ran the download script instead.
+
+Using rsync in this case is a consequence of UCSC redirecting the URI
+that we previously used to infer the timestamp. Previously we could
+use cURL to get the timestamps for all the species-level data
+directories, but now that URI redirects to an interactive page (e.g.,
+we used cURL to go to hgdownload.cse.ucsc.edu/goldenPath and get the
+directory timestamps, but now that redirects to an interactive HTML
+page so it no longer works).
+
+For everything but UCSC, the date in `env.sh` is incremented, and a
+new directory for the downloaded files is created (e.g.,
+~/BioconductorAnnotationPipeline/annnosrc/ensembl/ will have several
+date directories containing data). Unless/until we convert to using
+rsync to get data, all but the previous download dir should be
+deleted. It is nice to have the previous download in case you need to
+compare what you got last time to what you got this time. For UCSC,
+there are individual species subdirs, and in each of them there is
+just one called `current` from which rsync is called. The obvious
+downside of using rsync is that we will replace any changed file and
+will not have the files from last time to compare to.
 
 **Data-specific directories:**
 * go
@@ -292,11 +337,15 @@ will either
 * create databases to be used in the build step (e.g. `ensembl.sqlite`), or
 * produce the final database product (e.g. `PFAM.sqlite`). 
 
-Keep in mind that once this step has started no files should be removed from 
-`db/` since these products may be needed in a subsequent step and/or may be a 
-final product. The parsing step is quite simple but will take a long time to 
-run. See the [Troubleshooting](#troubleshooting) section of this README file for 
-advice if things happen to go wrong.
+As with the download step, it is much easier/better to simply inspect
+the `src_parse.sh` script and then run each step by hand (which is
+mostly cd'ing into each directory and then running
+`./getsrc.sh`). There are inevitably some changes to the files that
+will cause one or more scripts to break, and it is much easier to
+debug when you know exactly what script failed. The scripts can be run
+in any order, but for tracking progress it is much easier to simply
+follow the order in `src_parse.sh` and check them off as they are
+accomplished.
 
 The parsing step adds a lot of data to `BioconductorAnnotationPipeline/`. For 
 the Bioconductor 3.10 release, the parse step increased the data by 49G 
@@ -313,11 +362,18 @@ following command is run:
 src_build.sh
 ```
 
-The `src_build.sh` script calls data-specific `getdb.sh` and `temp_metadata.sql` 
-scripts. In the two previous scripts, the order that the data-specific scripts 
-did not matter because they were all independent of each other. For this build 
-script, **the order matters** since products of certain scripts are needed for 
-other scripts to work.
+Again, it is better to simply run each step separately. **Do note that
+the order matters for this step!** Some of the scripts rely on data
+generated by previous scripts and if you get out of order they will
+fail.
+
+As with the previous steps, this is mostly cd'ing into the 'scripts'
+dir in each subdirectory and running `./getdb.sh`. In the right
+order. This mostly runs sqlite3 using a set of .sql files, although
+some data are parsed using R scripts. There can be errors with both
+(due to changes in the expected format of the files that are read into
+a SQLite DB or connection errors when R is downloading data, etc).
+
 
 The products from the build step are the `chipsrc*.sqlite` and 
 `chipmapsrc*.sqlite` databases in `db/`.
@@ -360,11 +416,17 @@ there are records of data loss/gain over the releases. If
 using the map_counts data from the existing installed db0, GO.db, and
 KEGG.db packages.
 
-There is an additional test, which is to go through each of the tables in
+There is an additional test that can be run in the same directory:
+
+```r
+R --slave < testDbs.R
+```
+
+which will go through each of the tables in
 each of the sqlite files in the db/ subdirectory, looking for any rows
 that have empty ('') values for all columns except for the primary key
 column. If any are found, it will print out the sqlite file name and
-the table name.
+the table name. 
 
 At this point all code changes should be committed to git. No data files should be 
 added. The ubuntu user doesn't have access to the GitHub repo, so

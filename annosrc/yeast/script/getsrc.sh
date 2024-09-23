@@ -6,7 +6,7 @@ fi
 
 ## unpack source data
 cd ../$YGSOURCEDATE
-zcat gene_association.sgd.gaf.gz | awk -F'\t' '!/\!/' > gene_association.sgd
+zcat gene_association.sgd.gaf.gz | awk -F'\t' '!/!/' > gene_association.sgd
 
 # split alias column by |
 rm -f gene2alias.tab

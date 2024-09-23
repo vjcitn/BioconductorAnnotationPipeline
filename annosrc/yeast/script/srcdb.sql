@@ -4,7 +4,7 @@
 --and search for orf_geneontology.tab, gene_literature.tab and gene_association.sgd.gz 
 
 .echo ON
-.separator "\t"
+.mode tabs
 
 DROP TABLE IF EXISTS gene_literature;
 CREATE TABLE gene_literature(

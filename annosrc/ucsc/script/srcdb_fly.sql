@@ -1,5 +1,5 @@
 .echo ON
-.separator \t
+.mode tabs
 
 CREATE TABLE metadata (
  name TEXT,

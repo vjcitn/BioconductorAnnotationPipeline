@@ -26,15 +26,15 @@ fi
 if [ "$LATEST_DATE" != "$TAIRSOURCEDATE" ]; then
       mkdir -p ../$TAIRSOURCEDATE
       cd ../$TAIRSOURCEDATE
-      curl --fail --disable-epsv -O $TAIRGENEURL
-      curl --fail --disable-epsv -O $TAIRCHRURL
-      curl --fail --disable-epsv -O $TAIRATHURL
-      curl --fail --disable-epsv -O $TAIRAGURL
-      curl --fail --disable-epsv -O $TAIRGOURL
-      curl --fail --disable-epsv -O $TAIRSYMBOLURL 
-      curl --fail --disable-epsv -O $TAIRPATHURL
-      curl --fail --disable-epsv -O $TAIRPMIDURL
-      curl --fail --disable-epsv -O $TAIRGFF
+      curl --fail -L -o $TAIRGENEURLNAME $TAIRGENEURL
+      curl --fail -L -o $TAIRCHRURLNAME $TAIRCHRURL
+      curl --fail -L -o $TAIRATHURLNAME $TAIRATHURL
+      curl --fail -L -o $TAIRAGURLNAME  $TAIRAGURL
+      curl --fail -L -o $TAIRGOURLNAME $TAIRGOURL
+      curl --fail -L -o $TAIRSYMBOLURLNAME $TAIRSYMBOLURL
+      curl --fail -L -o $TAIRPATHURLNAME $TAIRPATHURL
+      curl --fail -L -o $TAIRPMIDURLNAME $TAIRPMIDURL
+      curl --fail -L -o $TAIRGFFURLNAME $TAIRGFF
       cd ../script  
       #TAIRATHURL=`echo $TAIRATHURL|sed -e 's/\//\\\\\//g'`
       #TAIRAGURL=`echo $TAIRAGURL|sed -e 's/\//\\\\\//g'`

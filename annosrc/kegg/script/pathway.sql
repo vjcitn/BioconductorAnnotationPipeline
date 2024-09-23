@@ -1,5 +1,5 @@
 .echo ON
---.separator "\t"
+--.mode tabs
 
 -- Metadata tables.
 CREATE TABLE metadata (
@@ -7,7 +7,7 @@ CREATE TABLE metadata (
   value VARCHAR(255)
 );
 
-.separator "\t"
+.mode tabs
 CREATE TABLE pathway2name (
   path_id CHAR(5) NOT NULL UNIQUE,              -- KEGG pathway short ID
   path_name VARCHAR(100) NOT NULL UNIQUE         -- KEGG pathway name

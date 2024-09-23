@@ -56,6 +56,7 @@ cd $SRC_BASE/ucsc/script; sh getsrc.sh worm
 cd $SRC_BASE/ucsc/script; sh getsrc.sh rhesus
 cd $SRC_BASE/ucsc/script; sh getsrc.sh anopheles
 cd $SRC_BASE/ucsc/script; sh getsrc.sh chimp
+cd $SRC_BASE/ucsc/script; sh getsrc.sh pig
 echo "finished parsing ucsc"
 
 ## yeast 

@@ -1,5 +1,5 @@
 .echo ON
-.separator \t
+.mode tabs
 
 --Need to import the tables for the mapping data here
 
