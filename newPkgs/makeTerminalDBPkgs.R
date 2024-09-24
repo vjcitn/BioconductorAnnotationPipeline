@@ -75,6 +75,7 @@ txdb = {
     ## -----------------------------------------------------------------------
     library(GenomicFeatures)
     library(GenomeInfoDb)
+    library(txdbmaker)
     maintainer <- "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
     author <- "Bioconductor Core Team"
     dateDir = wheretoput
@@ -85,7 +86,7 @@ txdb = {
     ##source(system.file("script","makeTxDbs.R", package="GenomicFeatures"))
     ## Do this here rather than some file in GenomicFeatures
     speciesList <- c("hg38", "mm39")
-    tableList <- c("refGene", "refGene")
+    tableList <- c("knownGene", "knownGene")
     circ_seqs <- sapply(speciesList, function(x) {
         tmp <- getChromInfoFromUCSC(x)
         tmp[is.na(tmp[,4]),4] <- FALSE
