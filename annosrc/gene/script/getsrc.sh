@@ -73,6 +73,12 @@ zcat gene_info.gz | awk '!/^#/' |
         }
         $1 in val' - > gene_info
 
+## There are 157 instances for mitochondrial genes
+## where the Symbol column doesn't match the HGNC symbol
+## and we fix that here
+
+awk -F'\t' 'BEGIN {OFS=FS} {if($3 != $11 && $11 != "-") $3 = $11; print $0}' gene_info > tmp
+mv tmp gene_info
 
 ## Do the remaining files as normal
 
