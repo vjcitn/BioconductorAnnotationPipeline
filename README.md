@@ -1,3 +1,15 @@
+# Fork concepts
+
+This is a fork of the BioconductorAnnotationPipeline script collection, made on 24 Feb 2025
+in anticipation of Bioc 3.21 release.
+
+A basic aim is to understand which components of the pipeline could benefit from analysis
+and evaluation and possible refactoring.  We also need to understand whether the documentation
+is up to date, and whether automated testing would help improve the system.
+
+We'll start by setting up a large Jetstream2 instance and carrying out some of the necessary
+downloads.
+
 # Bioconductor Annotation Pipeline <a name="top"/>
 
 The goal of the code in this package is to build the db0, OrgDb, PFAM, GO, 
