@@ -1,0 +1,5 @@
+library(AnnotationForge)
+    drv <- dbDriver("SQLite")
+    db <- dbConnect(drv,dbname="uniprot2go.sqlite")
+    options(download.file.method = "wget")
+    AnnotationForge:::.downloadAndPopulateAltGOData(db, ".", rebuildCache=FALSE)
