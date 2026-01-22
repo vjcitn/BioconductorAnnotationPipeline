@@ -1,0 +1,357 @@
+#!/bin/sh
+set -e
+
+SRC_BASE=`pwd`
+
+## download source data and parse them into sqlite db files
+## no dependencies between data sources, i.e. 
+## scripts can be executed in any order
+
+# DONE 22 Jan 2026 echo "downloading go"
+# DONE 22 Jan 2026 cd $SRC_BASE/go/script; sh download.sh
+# DONE 22 Jan 2026 echo "finished downloading go"
+
+echo "downloading gene"
+downloading gene
+
+# DONE 22 Jan 2026 cd $SRC_BASE/gene/script; sh download.sh  
+# DONE 22 Jan 2026 echo "finished downloading gene"
+
+# DONE 22 Jan 2026 ### NOTE: There has been a timeout when downloading data, do by hand
+# DONE 22 Jan 2026 #echo "downloading goext"
+# DONE 22 Jan 2026 #cd $SRC_BASE/goext/script; sh download.sh
+# DONE 22 Jan 2026 #echo "finished downloading goext"
+
+### NOTE: Update genome build versions in env.sh to most current.
+mkdir ucsc/anopheles/current
+mkdir ucsc/bovine/current
+mkdir ucsc/canine/current
+mkdir ucsc/chicken/current
+mkdir ucsc/chimp/current
+mkdir ucsc/fish/current
+mkdir ucsc/fly/current
+mkdir ucsc/human/current
+mkdir ucsc/mouse/current
+mkdir ucsc/pig/current
+mkdir ucsc/rat/current
+mkdir ucsc/rhesus/current
+mkdir ucsc/worm/current
+mkdir ucsc/yeast/current
+
+echo "downloading ucsc"
+downloading ucsc
+cd $SRC_BASE/ucsc/script; sh download.sh # FAILED ON FIRST ATTEMPT FOR LACK OF human/current -- so create the folders!
+Human
+receiving incremental file list
+knownToLocusLink.txt.gz
+              0   0%    0.00kB/s    0:00:00        2,170,081 100%    5.90MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 2,170,687 bytes  868,292.00 bytes/sec
+total size is 2,170,081  speedup is 1.00
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00        8,668,756 100%    9.56MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 8,670,833 bytes  5,780,584.00 bytes/sec
+total size is 8,668,756  speedup is 1.00
+receiving incremental file list
+cytoBand.txt.gz
+              0   0%    0.00kB/s    0:00:00           12,118 100%   11.56MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 12,235 bytes  24,556.00 bytes/sec
+total size is 12,118  speedup is 0.99
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00            6,159 100%    5.87MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 6,277 bytes  12,640.00 bytes/sec
+total size is 6,159  speedup is 0.97
+receiving incremental file list
+refLink.txt.gz
+              0   0%    0.00kB/s    0:00:00       12,387,598 100%   17.00MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 12,374,172 bytes  4,949,686.00 bytes/sec
+total size is 12,387,598  speedup is 1.00
+Mouse
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00        3,099,688 100%    7.25MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 3,100,499 bytes  2,067,028.00 bytes/sec
+total size is 3,099,688  speedup is 1.00
+receiving incremental file list
+cytoBandIdeo.txt.gz
+              0   0%    0.00kB/s    0:00:00              743 100%  725.59kB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 864 bytes  604.67 bytes/sec
+total size is 743  speedup is 0.82
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00              583 100%  569.34kB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 700 bytes  495.33 bytes/sec
+total size is 583  speedup is 0.78
+Rat
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00        1,856,617 100%    5.07MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 1,857,149 bytes  742,876.80 bytes/sec
+total size is 1,856,617  speedup is 1.00
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00            1,364 100%    1.30MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 1,482 bytes  1,016.67 bytes/sec
+total size is 1,364  speedup is 0.89
+Fly
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00        1,958,214 100%    7.98MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 1,956,689 bytes  1,304,488.00 bytes/sec
+total size is 1,958,214  speedup is 1.00
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00           10,602 100%   10.11MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 10,714 bytes  7,171.33 bytes/sec
+total size is 10,602  speedup is 0.99
+Fish
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00        1,947,654 100%    4.76MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 1,948,203 bytes  1,298,830.67 bytes/sec
+total size is 1,947,654  speedup is 1.00
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00           14,469 100%   13.80MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 14,581 bytes  9,749.33 bytes/sec
+total size is 14,469  speedup is 0.99
+Dog
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00          182,263 100%    1.00MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 182,415 bytes  72,983.20 bytes/sec
+total size is 182,263  speedup is 1.00
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00            1,096 100%    1.05MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 1,213 bytes  2,512.00 bytes/sec
+total size is 1,096  speedup is 0.87
+Cow
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00        1,516,568 100%    4.92MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 1,517,015 bytes  1,011,372.00 bytes/sec
+total size is 1,516,568  speedup is 1.00
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00           13,935 100%   13.29MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 14,047 bytes  9,393.33 bytes/sec
+total size is 13,935  speedup is 0.99
+Worm
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00        2,430,254 100%    6.58MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 2,397,539 bytes  1,598,388.00 bytes/sec
+total size is 2,430,254  speedup is 1.01
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00              124 100%  121.09kB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 236 bytes  186.00 bytes/sec
+total size is 124  speedup is 0.44
+Chicken
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00          703,071 100%    2.30MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 703,332 bytes  281,350.00 bytes/sec
+total size is 703,071  speedup is 1.00
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00            3,227 100%    3.08MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 3,339 bytes  6,764.00 bytes/sec
+total size is 3,227  speedup is 0.95
+Yeast
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00              193 100%  188.48kB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 305 bytes  696.00 bytes/sec
+total size is 193  speedup is 0.55
+Monkey
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00          565,663 100%    1.55MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 565,897 bytes  377,293.33 bytes/sec
+total size is 565,663  speedup is 1.00
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00           19,139 100%   18.25MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 19,253 bytes  12,864.00 bytes/sec
+total size is 19,139  speedup is 0.99
+Anopheles
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00           41,530 100%   39.61MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 41,646 bytes  27,792.67 bytes/sec
+total size is 41,530  speedup is 1.00
+Chimp
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00          223,143 100%  935.25kB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 223,298 bytes  148,894.00 bytes/sec
+total size is 223,143  speedup is 1.00
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00           25,722 100%   24.53MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 25,836 bytes  17,252.67 bytes/sec
+total size is 25,722  speedup is 0.99
+Pig
+receiving incremental file list
+refGene.txt.gz
+              0   0%    0.00kB/s    0:00:00          432,987 100%    1.78MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 433,196 bytes  288,826.00 bytes/sec
+total size is 432,987  speedup is 1.00
+receiving incremental file list
+chromInfo.txt.gz
+              0   0%    0.00kB/s    0:00:00            4,316 100%    4.12MB/s    0:00:00 (xfr#1, to-chk=0/1)
+
+sent 43 bytes  received 4,428 bytes  8,942.00 bytes/sec
+total size is 4,316  speedup is 0.97
+echo "finished downloading ucsc"
+finished downloading ucsc
+
+echo "downloading yeast"
+downloading yeast
+cd $SRC_BASE/yeast/script; sh download.sh
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0 6214k    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+update Yeast Genome data from 2024-Sep17 to 2026-Jan20
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  3 1395k    3 55848    0     0   136k      0  0:00:10 --:--:--  0:00:10  136k100 1395k  100 1395k    0     0  2083k      0 --:--:-- --:--:-- --:--:-- 2082k
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  1  108M    1 1783k    0     0  2538k      0  0:00:43 --:--:--  0:00:43 2536k 49  108M   49 54.1M    0     0  32.3M      0  0:00:03  0:00:01  0:00:02 32.3M 77  108M   77 83.8M    0     0  31.2M      0  0:00:03  0:00:02  0:00:01 31.2M100  108M  100  108M    0     0  31.4M      0  0:00:03  0:00:03 --:--:-- 31.4M
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0 3738k    0 12888    0     0  53444      0  0:01:11 --:--:--  0:01:11 53256100 3738k  100 3738k    0     0  4807k      0 --:--:-- --:--:-- --:--:-- 4805k
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  2 3295k    2 77032    0     0   167k      0  0:00:19 --:--:--  0:00:19  167k100 3295k  100 3295k    0     0  4182k      0 --:--:-- --:--:-- --:--:-- 4182k
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 55  356k   55  197k    0     0   318k      0  0:00:01 --:--:--  0:00:01  318k100  356k  100  356k    0     0   550k      0 --:--:-- --:--:-- --:--:--  550k
+echo "finished downloading yeast"
+finished downloading yeast
+
+echo "downloading ensembl"
+downloading ensembl
+cd $SRC_BASE/ensembl/script; sh download.sh
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0  6666    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
+update files in ./current_fasta from 2024-May14 to 2025-Sep03
+
+Redirecting output to ‘wget-log’.
+
+Redirecting output to ‘wget-log.1’.
+
+Redirecting output to ‘wget-log.2’.
+
+Redirecting output to ‘wget-log.3’.
+
+Redirecting output to ‘wget-log.4’.
+
+Redirecting output to ‘wget-log.5’.
+
+Redirecting output to ‘wget-log.6’.
+
+Redirecting output to ‘wget-log.7’.
+
+Redirecting output to ‘wget-log.8’.
+
+Redirecting output to ‘wget-log.9’.
+
+Redirecting output to ‘wget-log.10’.
+
+Redirecting output to ‘wget-log.11’.
+
+Redirecting output to ‘wget-log.12’.
+
+Redirecting output to ‘wget-log.13’.
+
+Redirecting output to ‘wget-log.14’.
+
+Redirecting output to ‘wget-log.15’.
+
+Redirecting output to ‘wget-log.16’.
+
+Redirecting output to ‘wget-log.17’.
+
+Redirecting output to ‘wget-log.18’.
+
+Redirecting output to ‘wget-log.19’.
+
+Redirecting output to ‘wget-log.20’.
+
+Redirecting output to ‘wget-log.21’.
+
+Redirecting output to ‘wget-log.22’.
+
+Redirecting output to ‘wget-log.23’.
+
+Redirecting output to ‘wget-log.24’.
+
+Redirecting output to ‘wget-log.25’.
+echo "finished downloading ensembl"
+finished downloading ensembl
+
+echo "downloading plasmoDB"
+downloading plasmoDB
+cd $SRC_BASE/plasmoDB/script; sh download.sh
+plasmosourcedate 23-Mar-2016
+latestdate 23-Mar-2016
+the latest data for PlasmoDB-28_Pfalciparum3D7Gene.txt is still 23-Mar-2016
+echo "finished downloading plasmoDB"
+finished downloading plasmoDB
+
+echo "downloading pfam"
+downloading pfam
+cd $SRC_BASE/pfam/script; sh download.sh
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0  0 22.0G    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
+update Pfam-A.full.gz from 2024-May28 to 2025-Jul02
+
+Redirecting output to ‘wget-log’.
+echo "finished downloading pfam"
+finished downloading pfam
+
+## NOTE: Only downloads the new flybase, not inparanoid.
+echo "downloading flybase"
+downloading flybase
+cd $SRC_BASE/inparanoid/script; sh download.sh
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:02 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:03 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:04 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:05 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:06 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:07 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:08 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:09 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:10 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:11 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:12 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:13 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:14 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:15 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:16 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:17 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:18 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:19 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:20 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:21 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:22 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:23 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:24 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:25 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:26 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:27 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:28 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:29 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:30 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:31 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:32 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:33 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:34 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:35 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:36 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:37 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:38 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:39 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:40 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:41 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:42 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:43 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:44 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:45 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:46 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:47 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:48 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:49 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:50 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:51 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:52 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:53 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:54 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:55 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:56 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:57 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:58 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:59 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:00 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:01 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:02 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:03 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:04 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:05 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:06 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:07 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:08 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:09 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:10 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:11 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:12 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:13 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:14 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:15 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:16 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:17 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:18 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:19 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:20 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:21 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:22 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:23 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:24 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:25 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:26 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:27 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:28 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:29 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:30 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:31 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:32 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:33 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:34 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:35 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:36 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:37 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:38 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:39 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:40 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:41 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:42 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:43 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:44 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:45 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:46 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:47 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:48 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:49 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:50 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:51 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:52 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:53 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:54 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:55 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:56 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:57 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:58 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:01:59 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:00 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:01 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:02 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:03 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:04 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:05 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:06 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:07 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:08 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:09 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:10 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:11 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:12 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:13 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:14 --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:02:15 --:--:--     0
+curl: (28) Failed to connect to ftp.flybase.net port 21 after 135149 ms: Couldn't connect to server
+download.sh: latest date from ftp://ftp.flybase.net/releases/current/precomputed_files/genes/ not found
