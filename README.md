@@ -44,6 +44,27 @@ We build R-devel with `make -j 6` and then run `make check` and `make install`.
 
 `R-devel-dist/bin/{R,Rscript}` are copied to `/usr/bin`.
 
+We now have R-devel capable of using BiocManager for Bioc 3.23.
+
+## "Downloading"
+
+The `annosrc/src_download.sh` includes some directives to "do something manually", specifically
+for goext and tair.  We will try to run the script and record the results with `sh -v src_download.sh > downlog.txt`
+in the annosrc folder.
+
+Immediately we hit
+```
+echo "downloading go"
+cd $SRC_BASE/go/script; sh download.sh
+basename: missing operand
+Try 'basename --help' for more information.
+```
+The problem is that GOSOURCEURL is out of date.  This was rectified.  "gene" seemed to
+download OK.
+
+The rest of the downloading took place with a mix of manual modifications which are
+logged in git.
+
 # Bioconductor Annotation Pipeline <a name="top"/>
 
 The goal of the code in this package is to build the db0, OrgDb, PFAM, GO, 
