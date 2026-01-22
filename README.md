@@ -65,6 +65,8 @@ download OK.
 The rest of the downloading took place with a mix of manual modifications which are
 logged in git.
 
+Download consumed 38GB or so.  We are down to 204GB free.
+
 # Bioconductor Annotation Pipeline <a name="top"/>
 
 The goal of the code in this package is to build the db0, OrgDb, PFAM, GO, 
