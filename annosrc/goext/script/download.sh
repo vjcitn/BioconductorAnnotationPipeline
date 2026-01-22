@@ -3,7 +3,8 @@ set -e
 . ./env.sh
 BASE_URL=$GOEXTSOURCEURL
 echo $BASE_URL
-LATEST_DATE=`curl --fail -IL $BASE_URL/ec2go | grep "Last-Modified" | awk '{print $5 "-" $4 $3}'`
+#LATEST_DATE=`curl --fail -IL $BASE_URL/ec2go | grep "data version" | awk -F"[/']" '{print $(NF-1)}'`
+LATEST_DATE=`curl https://current.geneontology.org/ontology/external2go/ec2go | head -5 | grep "data version" | awk -F"[/']" '{print $(NF-1)}'`
 
 
 if [ -z "$LATEST_DATE" ]; then
