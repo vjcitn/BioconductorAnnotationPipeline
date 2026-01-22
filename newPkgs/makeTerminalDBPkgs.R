@@ -87,7 +87,7 @@ txdb = {
     ## Do this here rather than some file in GenomicFeatures
     speciesList <- c("hg38", "mm39")
     tableList <- c("knownGene", "knownGene")
-    circ_seqs <- sapply(speciesList, function(x) {
+    circ_seqs <- lapply(speciesList, function(x) {
         tmp <- getChromInfoFromUCSC(x)
         tmp[is.na(tmp[,4]),4] <- FALSE
         return(tmp[tmp[,4],1])})
@@ -99,7 +99,7 @@ txdb = {
                                 destDir = txdbDir,
                                 genome = speciesList[i],
                                 tablename = tableList[i],
-                                circ_seqs = circ_seqs[i])
+                                circ_seqs = circ_seqs[[i]])
     }
     
     ## TxDbPackagesForRelease(version=version, 
