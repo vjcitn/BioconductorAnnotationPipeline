@@ -10,13 +10,39 @@ is up to date, and whether automated testing would help improve the system.
 We'll start by setting up a large Jetstream2 instance and carrying out some of the necessary
 downloads.
 
-NOTE THAT THIS README SHOULD BE REWRITTEN.  
+## NOTE THAT THIS README SHOULD BE REWRITTEN.  
+
+Here are the basic steps for environment construction.
 
 - Hardware
     - For January 2026 we will be using a Jetstream2 instance with 250GB disk (242GB free to start, 8 cores)
 - Software
     - We will establish the version of R-devel by using r2u to get the necessary runtimes for ubuntu 24.04,
 then building R-devel from source.
+
+## Specific steps
+
+```
+   24  git clone https://github.com/eddelbuettel/r2u.git
+   25  cd r2u/inst/scripts
+   27  sudo sh -v add_cranapt_noble.sh # it will fail at the end in relation to python-dbus, seems ignorable
+   28  sudo R
+# at this point we use install.packages("bspm"); bspm::enable(), install.packages("gee")
+# and witness that the binary is installed
+```
+In /home/exouser, we use `svn co https://svn.r-project.org/R/trunk R-devel-src` to check out
+current R-devel sources.  There we do the rsync-recommended in tools, and configure with
+```
+./configure --enable-R-shlib --prefix=/home/exouser/R-devel-dist
+```
+which complains about HTML and pdf versions of manuals, which we ignore.
+
+To avoid confusions, we renamed `/usr/bin/R` to `/usr/bin/Rrel`.
+
+We build R-devel with `make -j 6` and then run `make check` and `make install`.
+`install.packages("BiocManager")` succeeds along with `BiocManager::install("Biobase")`.
+
+`R-devel-dist/bin/{R,Rscript}` are copied to `/usr/bin`.
 
 # Bioconductor Annotation Pipeline <a name="top"/>
 
