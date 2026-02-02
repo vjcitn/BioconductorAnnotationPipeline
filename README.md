@@ -46,6 +46,9 @@ We build R-devel with `make -j 6` and then run `make check` and `make install`.
 
 We now have R-devel capable of using BiocManager for Bioc 3.23.
 
+It was observed in the step of 'parsing GO' with getsrc.sh, that GSEABase was
+needed.
+
 ## "Downloading"
 
 The `annosrc/src_download.sh` includes some directives to "do something manually", specifically
