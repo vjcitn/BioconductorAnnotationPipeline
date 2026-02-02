@@ -1,5 +1,5 @@
 
-.libPaths("~/R-libraries")
+#.libPaths("~/R-libraries")
 
 term_f <- "term.txt"
 term2term_f <- "term2term.txt"
