@@ -66,6 +66,14 @@ seems to have worked
 
 ## ucsc
 
+We quickly hit
+```
+parsing data for ucsc organism: mouse
+gzip: knownToLocusLink.txt.gz: No such file or directory
+```
+
+I thought I had collected such .gz files from a previous run.
+
 ```
 echo "parsing ucsc"
 cd $SRC_BASE/ucsc/script; sh getsrc.sh human
