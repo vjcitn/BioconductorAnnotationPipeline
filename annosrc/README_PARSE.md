@@ -42,27 +42,8 @@ We had to install sqlite3 and some R packages (see top level README) but then th
 drwxrwxr-x 2 exouser exouser     4096 Feb  2 20:28 goterm
 -rw-rw-r-- 1 exouser exouser 31417323 Jan 22 15:16 go-basic.obo
 ```
-We'll skip:
-```
-## unigene
-## no longer building UniGene since Bioc 3.13
-# echo "parsing unigene"
-# cd $SRC_BASE/unigene/script; sh getsrc.sh human 
-# cd $SRC_BASE/unigene/script; sh getsrc.sh mouse
-# cd $SRC_BASE/unigene/script; sh getsrc.sh rat
-# cd $SRC_BASE/unigene/script; sh getsrc.sh fly
-# cd $SRC_BASE/unigene/script; sh getsrc.sh fish
-# cd $SRC_BASE/unigene/script; sh getsrc.sh canine
-# cd $SRC_BASE/unigene/script; sh getsrc.sh bovine
-# cd $SRC_BASE/unigene/script; sh getsrc.sh worm
-# cd $SRC_BASE/unigene/script; sh getsrc.sh pig
-# cd $SRC_BASE/unigene/script; sh getsrc.sh chicken
-# cd $SRC_BASE/unigene/script; sh getsrc.sh rhesus
-# cd $SRC_BASE/unigene/script; sh getsrc.sh xenopus
-# cd $SRC_BASE/unigene/script; sh getsrc.sh arabidopsis
-# cd $SRC_BASE/unigene/script; sh getsrc.sh anopheles
-# echo "finished parsing unigene"
-```
+We'll skip unigene and delete the text from this readme segment.   Let's delete the folder some time.
+
 
 ## gene
 
@@ -72,13 +53,20 @@ What is "gene"?  NCBI?
 echo "parsing gene"
 cd $SRC_BASE/gene/script; sh getsrc.sh
 echo "finished parsing gene"
+```
+That ran fine.
 
 ## goext 
+```
 echo "parsing goext"
 cd $SRC_BASE/goext/script; sh getsrc.sh
 echo "finished parsing goext"
+```
+seems to have worked
 
 ## ucsc
+
+```
 echo "parsing ucsc"
 cd $SRC_BASE/ucsc/script; sh getsrc.sh human
 cd $SRC_BASE/ucsc/script; sh getsrc.sh mouse
