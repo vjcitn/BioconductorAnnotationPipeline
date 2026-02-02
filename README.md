@@ -19,6 +19,9 @@ Here are the basic steps for environment construction.
 - Software
     - We will establish the version of R-devel by using r2u to get the necessary runtimes for ubuntu 24.04,
 then building R-devel from source.
+	- libxml2-dev needs to be installed for GSEABase
+    - dplyr is needed! so is stringi, graph, RBGL, tidyr, all for getsrc.sh in go folder
+    - sqlite3 is needed
 
 ## Specific steps
 
@@ -46,6 +49,9 @@ We build R-devel with `make -j 6` and then run `make check` and `make install`.
 
 We now have R-devel capable of using BiocManager for Bioc 3.23.
 
+It was observed in the step of 'parsing GO' with getsrc.sh, that GSEABase was
+needed.
+
 ## "Downloading"
 
 The `annosrc/src_download.sh` includes some directives to "do something manually", specifically
@@ -66,6 +72,8 @@ The rest of the downloading took place with a mix of manual modifications which 
 logged in git.
 
 Download consumed 38GB or so.  We are down to 204GB free.
+
+At this point, see the [README under annosrc.](https://github.com/vjcitn/BioconductorAnnotationPipeline/blob/master/annosrc/README_PARSE.md)
 
 # Bioconductor Annotation Pipeline <a name="top"/>
 
