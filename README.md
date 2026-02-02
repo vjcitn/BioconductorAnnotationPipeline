@@ -19,6 +19,7 @@ Here are the basic steps for environment construction.
 - Software
     - We will establish the version of R-devel by using r2u to get the necessary runtimes for ubuntu 24.04,
 then building R-devel from source.
+	- libxml2-dev needs to be installed for GSEABase
 
 ## Specific steps
 
