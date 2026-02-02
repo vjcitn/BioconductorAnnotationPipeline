@@ -20,6 +20,8 @@ Here are the basic steps for environment construction.
     - We will establish the version of R-devel by using r2u to get the necessary runtimes for ubuntu 24.04,
 then building R-devel from source.
 	- libxml2-dev needs to be installed for GSEABase
+    - dplyr is needed! so is stringi, graph, RBGL, tidyr, all for getsrc.sh in go folder
+    - sqlite3 is needed
 
 ## Specific steps
 
