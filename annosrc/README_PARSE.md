@@ -34,7 +34,16 @@ Let's just try step by step.
 echo "parsing go"
 cd $SRC_BASE/go/script; sh getsrc.sh  
 echo "finished parsing go"
+```
 
+We had to install sqlite3 and some R packages (see top level README) but then the script completed.
+```
+-rw-r--r-- 1 exouser exouser 63537152 Feb  2 20:28 gosrcsrc.sqlite
+drwxrwxr-x 2 exouser exouser     4096 Feb  2 20:28 goterm
+-rw-rw-r-- 1 exouser exouser 31417323 Jan 22 15:16 go-basic.obo
+```
+We'll skip:
+```
 ## unigene
 ## no longer building UniGene since Bioc 3.13
 # echo "parsing unigene"
@@ -53,8 +62,13 @@ echo "finished parsing go"
 # cd $SRC_BASE/unigene/script; sh getsrc.sh arabidopsis
 # cd $SRC_BASE/unigene/script; sh getsrc.sh anopheles
 # echo "finished parsing unigene"
+```
 
-## gene 
+## gene
+
+What is "gene"?  NCBI?
+
+```
 echo "parsing gene"
 cd $SRC_BASE/gene/script; sh getsrc.sh
 echo "finished parsing gene"
