@@ -73,6 +73,8 @@ logged in git.
 
 Download consumed 38GB or so.  We are down to 204GB free.
 
+At this point, see the [README under annosrc.](https://github.com/vjcitn/BioconductorAnnotationPipeline/blob/master/annosrc/README_PARSE.md)
+
 # Bioconductor Annotation Pipeline <a name="top"/>
 
 The goal of the code in this package is to build the db0, OrgDb, PFAM, GO, 
