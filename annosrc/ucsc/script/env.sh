@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+#  set -e  -> this logs me out when minor errors occur
 
 export UCSCBASEURL="rsync://hgdownload.cse.ucsc.edu/goldenPath"
 export UCSCREFLINKURL="rsync://hgdownload.cse.ucsc.edu/goldenPath/hgFixed/database/refLink.txt.gz"

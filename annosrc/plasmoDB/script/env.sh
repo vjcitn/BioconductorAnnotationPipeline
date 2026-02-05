@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+#set -e
 export PLASMOSOURCEDATE=23-Mar-2016
 export PLASMOSOURCENAME="Plasmo DB"
 export PLASMOSOURCEURL="http://plasmodb.org/common/downloads/release-28/Pfalciparum3D7/txt"

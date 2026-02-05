@@ -5,9 +5,8 @@
 
 extractPlasmoDBtables <- function(
 #		srcFile="PfalciparumGene_plasmoDB-5.4.txt",
-                srcFile="../processedFiles/LatestPfalciparumGene_plasmoDB.txt",
+                srcFile="../23-Mar-2016/PlasmoDB-28_Pfalciparum3D7Gene.txt",
                 srcURL=NULL,
-#		srcURL="http://plasmodb.org/common/downloads/release-5.4/Pfalciparum/PfalciparumGene_plasmoDB-5.4.txt",
 		GOfile="../processedFiles/GOtable.txt",
 		ALIASfile="../processedFiles/ALIAStable.txt",
 		SYMBOLfile="../processedFiles/SYMBOLtable.txt",

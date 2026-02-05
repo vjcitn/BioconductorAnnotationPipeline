@@ -22,6 +22,7 @@ then building R-devel from source.
 	- libxml2-dev needs to be installed for GSEABase
     - dplyr is needed! so is stringi, graph, RBGL, tidyr, all for getsrc.sh in go folder
     - sqlite3 is needed
+    - biomaRt is needed for ensembl parsing
 
 ## Specific steps
 
