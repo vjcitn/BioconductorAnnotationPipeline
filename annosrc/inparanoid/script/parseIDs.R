@@ -1,4 +1,5 @@
-.libPaths("~/R-libraries")
+
+#libPaths("~/R-libraries")
 library("XML")
 
 splitStrUtil <- function(xmlfile) {

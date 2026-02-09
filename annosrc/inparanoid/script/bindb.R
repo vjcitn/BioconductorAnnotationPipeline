@@ -1,5 +1,5 @@
 
-.libPaths("~/R-libraries")
+#.libPaths("~/R-libraries")
 library(InparanoidBaseBuilder)
 debug(InparanoidBaseBuilder:::makeINP_DB)
 debug(InparanoidBaseBuilder:::popInpTab)

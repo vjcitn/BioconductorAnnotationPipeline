@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+#set -e
 #HVM is human vs mouse etc.
 export IPHVMSOURCEDATE=29-Apr-2008
 export IPSOURCENAME="Inparanoid Orthologs"

@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+#set -e
 # These are all direct links to HTML resources. The FTP equivalents seem old, and
 # trying to figure out how to automatically get these URLs seems... difficult. For now
 # just update the TAIRSOURCEDATE to today's date after checking by hand to see if the links still match what's

@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+#set -e
 if [ "$IPHVMSOURCEDATE" = "" ]; then
   . ./env.sh
 fi

@@ -1,4 +1,4 @@
-.libPaths("~/R-libraries")
+#.libPaths("~/R-libraries")
 library(InparanoidBaseBuilder)
 
 makeSrcDB(dataDir="./IPDATA/")

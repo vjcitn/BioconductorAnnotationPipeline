@@ -7,7 +7,7 @@ if [ -z "$IVECHECKEDIT" ]l; then
     exit
 fi
 
-set -e
+#set -e
 . ./env.sh
 
 BASE_URL=$TAIRSOURCEURL

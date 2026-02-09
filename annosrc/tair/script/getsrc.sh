@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+#set -e
 if [ "$TAIRSOURCEDATE" = "" ]; then
   . ./env.sh
 fi

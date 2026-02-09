@@ -137,11 +137,75 @@ echo "finished parsing plasmoDB"
 ```
 
 ## pfam 
+
+
+Saw
+```
+exouser@biocanno2025q1:~/BioconductorAnnotationPipeline/annosrc/pfam/script$ source getsrc.sh
+simplifyToIds ...
+Pfam-A.GF And Pfam-A.GS
+^Z
+[2]+  Stopped                 sh ../script/simplifyToIds.sh
+parseIDs ...
+parseID_ID step 
+Error in file(file, "rt") : cannot open the connection
+Calls: parseID_IDs -> read.delim -> read.table -> file
+In addition: Warning message:
+In file(file, "rt") :
+  cannot open file 'ID_IDs.txt': No such file or directory
+Execution halted
+create the db ...
+.mode tabs
+
+```
+
+```
+Error in file(file, "rt") : cannot open the connection
+Calls: parseID_IDs -> read.delim -> read.table -> file
+In addition: Warning message:
+In file(file, "rt") :
+  cannot open file 'ID_IDs.txt': No such file or directory
+Execution halted
+create the db ...
+.mode tabs
+
+CREATE TABLE metadata (
+ name TEXT,
+ value TEXT
+);
+
+
+CREATE TEMP TABLE tcazy (
+ ac VARCHAR(12)  NOT NULL,		--AC ID
+ cazy VARCHAR(6) NOT NULL               --CAZY ID
+);
+.import CAZYs.tab tcazy
+Error: cannot open "CAZYs.tab"
+record download dates ...
+```
+
+
+Saw
+```
+INSERT INTO map_counts
+ SELECT 'CAZY', COUNT(DISTINCT ac)
+ FROM cazy;
+Parse error near line 325: no such table: cazy
+done!
+```
+
+
+```
 echo "parsing pfam"
 cd $SRC_BASE/pfam/script; sh getsrc.sh
 echo "finished parsing pfam"
 
-## inparanoid:
+```
+It finished.  28 GB.
+
+## inparanoid
+
+```
 ## The inparanoid data are old but flybase and GO are current.
 ## The parse/build scripts update flybase and GO mappings in 
 ## inparanoid.sqlite and chip_fly.sqlite.
@@ -149,7 +213,16 @@ echo "parsing inparanoid"
 cd $SRC_BASE/inparanoid/script; sh getsrc.sh  
 echo "finished parsing inparanoid"
 
+```
+
+Ran fine.  Needed to install inparanoidBaseBuilder which is in script folder.
+
 ## tair 
+
+This needed rtracklayer.  The download was done and then getsrc.sh was run
+to completion.
+
+```
 ## NOTE: parse and build to incorporate current GO.
 echo "parsing tair"
 cd $SRC_BASE/tair/script; sh getsrc.sh 
