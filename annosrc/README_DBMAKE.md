@@ -307,4 +307,57 @@ We find these comments in
 --especially given that this is a many to many relationship...
 --THAT is the reason why I might not be able to do this.
 --it could create false negatives.
-````
+```
+
+This is obscure to me.  So I want to drill down.  I went to a VM with a previous
+build.
+```
+exouser@vinceannopipeline:~/BSAnnoPipe/CODE/BioconductorAnnotationPipeline/annosrc/db$ sqlite3 gpsrc.sqlite
+SQLite version 3.45.1 2024-01-30 16:01:20
+Enter ".help" for usage hints.
+sqlite> .tables
+chrlength_anopheles  chrloc_canine        metadata_bovine    
+chrlength_bovine     chrloc_chicken       metadata_canine    
+chrlength_canine     chrloc_chimp         metadata_chicken   
+chrlength_chicken    chrloc_fish          metadata_chimp     
+chrlength_chimp      chrloc_fly           metadata_fish      
+chrlength_fish       chrloc_human         metadata_fly       
+chrlength_fly        chrloc_mouse         metadata_human     
+chrlength_human      chrloc_rat           metadata_mouse     
+chrlength_mouse      chrloc_rhesus        metadata_rat       
+chrlength_rat        chrloc_worm          metadata_rhesus    
+chrlength_rhesus     cytoBand_fly         metadata_worm      
+chrlength_worm       cytoBand_human       metadata_yeast     
+chrlength_yeast      cytoBand_mouse       ucsc_gene_human    
+chrloc_bovine        metadata_anopheles 
+```
+
+```
+sqlite> select * from chrlength_human;
+chr1|248956422
+chr2|242193529
+chr3|198295559
+chr4|190214555
+chr5|181538259
+chr6|170805979
+chr7|159345973
+chrX|156040895
+chr8|145138636
+chr9|138394717
+```
+This legacy information agrees with hg38, which is good.
+
+Let's see what the very current build attempt has.
+
+```
+sqlite> select * from chrlength_human limit 10;
+chr1|248956422
+chr2|242193529
+chr3|198295559
+chr4|190214555
+chr5|181538259
+chr6|170805979
+chr7|159345973
+```
+
+Looks good.
