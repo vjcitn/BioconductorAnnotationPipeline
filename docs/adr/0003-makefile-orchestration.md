@@ -14,7 +14,7 @@ Expected target families include:
 - `model`
 - `package`
 - `clean`
-- package-specific targets for `go.db` and `org.hs.eg.db`
+- package-specific targets for `GO.db` and `org.Hs.eg.db`
 
 ## Consequences
 

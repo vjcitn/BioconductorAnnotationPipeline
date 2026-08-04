@@ -1,11 +1,11 @@
-.PHONY: help download model package clean go.db org.Hs.eg.db
+.PHONY: help download model package clean GO.db org.Hs.eg.db
 
 help:
 	@echo "Targets:"
 	@echo "  download   Fetch raw sources"
 	@echo "  model      Build reusable intermediates"
 	@echo "  package    Build package outputs"
-	@echo "  go.db      Build GO.db"
+	@echo "  GO.db      Build GO.db"
 	@echo "  org.Hs.eg.db Build org.Hs.eg.db"
 	@echo "  clean      Remove generated artifacts"
 	@echo ""
@@ -20,7 +20,7 @@ model:
 package:
 	@echo "Package stage not yet wired; see docs/adr/0001-build-boundaries.md"
 
-go.db:
+GO.db:
 	@echo "GO.db target not yet wired; see docs/adr/0002-annotationdbi-interface.md"
 
 org.Hs.eg.db:
