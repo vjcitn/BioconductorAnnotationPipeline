@@ -3,6 +3,10 @@
 This is a fork of the BioconductorAnnotationPipeline script collection, made on 24 Feb 2025
 in anticipation of Bioc 3.21 release, and updated in January 2026 for 3.23.
 
+The refactor now has a decision-record trail in `docs/adr/` covering the build boundaries,
+the `AnnotationDbi`-first package interface, Makefile orchestration, and the deprecation of
+legacy environment-based access.
+
 A basic aim is to understand which components of the pipeline could benefit from analysis
 and evaluation and possible refactoring.  We also need to understand whether the documentation
 is up to date, and whether automated testing would help improve the system.
