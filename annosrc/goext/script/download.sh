@@ -15,7 +15,7 @@ fi
 if [ "$LATEST_DATE" != "$GOEXTSOURCEDATE" ]; then
 	echo "update $GOEXTSOURCENAME from $GOEXT_DATE to $LATEST_DATE"
         sed -i -e "s/ GOEXTSOURCEDATE=.*$/ GOEXTSOURCEDATE=$LATEST_DATE/g" env.sh
-	mkdir ../$LATEST_DATE
+	mkdir -p ../$LATEST_DATE
 	cd ../$LATEST_DATE
 	curl --fail -O $BASE_URL/ec2go
 	cd ../script

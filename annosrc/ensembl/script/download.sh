@@ -17,7 +17,7 @@ fi
 if [ "$LATEST_EN_DATE" != "$ENSOURCEDATE" ]; then
         echo "update files in ./current_fasta from $ENSOURCEDATE to $LATEST_EN_DATE"
         sed -i -e "s/ ENSOURCEDATE=.*$/ ENSOURCEDATE=$LATEST_EN_DATE/g" env.sh
-        mkdir ../$LATEST_EN_DATE #
+        mkdir -p ../$LATEST_EN_DATE #
         cd ../$LATEST_EN_DATE
 
         #then get the mapping data for the ensembl maps (http://www.ensembl.org/info/data/download.html)

@@ -17,7 +17,7 @@ fi
 if [ "$LATEST_PFAM_DATE" != "$PFAMSOURCEDATE" ]; then
         echo "update $FILE from $PFAMSOURCEDATE to $LATEST_PFAM_DATE"
         sed -i -e "s/ PFAMSOURCEDATE=.*$/ PFAMSOURCEDATE=$LATEST_PFAM_DATE/g" env.sh
-        mkdir ../$LATEST_PFAM_DATE
+        mkdir -p ../$LATEST_PFAM_DATE
         cd ../$LATEST_PFAM_DATE
 	wget $BASE_URL/$FILE
 	## don't decompress

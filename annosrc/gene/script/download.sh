@@ -14,7 +14,7 @@ fi
 if [ "$LATEST_DATE" != "$EGSOURCEDATE" ]; then
 	echo "update crossreferences from $EGSOURCENAME to other databases from $EGSOURCEDATE to $LATEST_DATE"
         sed -i -e "s/ EGSOURCEDATE=.*$/ EGSOURCEDATE=$LATEST_DATE/g" env.sh
-	mkdir ../$LATEST_DATE
+	mkdir -p ../$LATEST_DATE
 	cd ../$LATEST_DATE
 	curl --fail --disable-epsv -O $BASE_URL/gene2go.gz
 	curl --fail --disable-epsv -O $BASE_URL/gene2pubmed.gz

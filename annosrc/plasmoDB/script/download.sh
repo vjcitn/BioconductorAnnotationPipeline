@@ -18,7 +18,7 @@ fi
 if [ "$LATEST_DATE" != "$PLASMOSOURCEDATE" ]; then
         echo "update $FILE from $PLASMOSOURCEDATE to $LATEST_DATE"
         sed -i -e "s/ PLASMOSOURCEDATE=.*$/ PLASMOSOURCEDATE=$LATEST_DATE/g" env.sh
-        mkdir ../$LATEST_DATE
+        mkdir -p ../$LATEST_DATE
         cd ../$LATEST_DATE
 
 	wget -e robots=off $BASE_URL/$FILE
