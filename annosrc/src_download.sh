@@ -34,10 +34,6 @@ echo "downloading yeast"
 cd $SRC_BASE/yeast/script; sh download.sh
 echo "finished downloading yeast"
 
-echo "downloading ensembl"
-cd $SRC_BASE/ensembl/script; sh download.sh
-echo "finished downloading ensembl"
-
 echo "downloading plasmoDB"
 cd $SRC_BASE/plasmoDB/script; sh download.sh
 echo "finished downloading plasmoDB"

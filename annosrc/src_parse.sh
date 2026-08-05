@@ -64,12 +64,6 @@ echo "parsing yeast"
 cd $SRC_BASE/yeast/script; sh getsrc.sh
 echo "finished parsing yeast"
 
-## ensembl
-## Builds ensembl.sqlite needed (by others) in build step 
-echo "parsing ensembl"
-cd $SRC_BASE/ensembl/script; sh getsrc.sh 
-echo "finished parsing ensembl"
-
 ## plasmoDB 
 echo "parsing plasmoDB"
 cd $SRC_BASE/plasmoDB/script; sh getsrc.sh

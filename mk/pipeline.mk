@@ -6,11 +6,11 @@ RSCRIPT_BIN ?= Rscript
 ANNOTATIONFORGE_INDEX ?= $(HOME)/R-libraries/AnnotationForge/extdata/GentlemanLab/ANNDBPKG-INDEX.TXT
 SANCTIONED_SQLITE_DIR ?= $(ROOT_DIR)/newPkgs/sanctionedSqlite
 PACKAGE_OUTPUT_DIR := $(ROOT_DIR)/newPkgs/$(PKG_DATE)_OrgDbs
-DOWNLOAD_SOURCES := go gene ucsc yeast ensembl plasmoDB pfam inparanoid tair
+DOWNLOAD_SOURCES := go gene ucsc yeast plasmoDB pfam inparanoid tair
 DOWNLOAD_STAMPS := $(addprefix $(STAMP_DIR)/download/,$(addsuffix .stamp,$(DOWNLOAD_SOURCES)))
-MODEL_PARSE_SOURCES := go gene goext ucsc yeast ensembl plasmoDB pfam inparanoid tair
+MODEL_PARSE_SOURCES := go gene goext ucsc yeast plasmoDB pfam inparanoid tair
 MODEL_PARSE_STAMPS := $(addprefix $(STAMP_DIR)/model/parse/,$(addsuffix .stamp,$(MODEL_PARSE_SOURCES)))
-MODEL_BUILD_SOURCES := chrlength gene blast2go go-db1 go-db2 kegg ucsc organism_annotation yeast plasmoDB inparanoid ensembl uniprot tair
+MODEL_BUILD_SOURCES := chrlength gene blast2go go-db1 go-db2 kegg ucsc organism_annotation yeast plasmoDB inparanoid uniprot tair
 MODEL_BUILD_STAMPS := $(addprefix $(STAMP_DIR)/model/build/,$(addsuffix .stamp,$(MODEL_BUILD_SOURCES)))
 
 .PHONY: help print-config download model package clean GO.db org.Hs.eg.db \

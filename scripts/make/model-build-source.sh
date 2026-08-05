@@ -54,10 +54,6 @@ case "$source_name" in
   work_dir="$ROOT_DIR/annosrc/inparanoid/script"
   cmd="sh getdb.sh"
  ;;
- ensembl)
-  work_dir="$ROOT_DIR/annosrc/ensembl/script"
-  cmd="sh getdb.sh"
- ;;
  uniprot)
   work_dir="$ROOT_DIR/annosrc/uniprot/script"
   cmd="sh getdb.sh"

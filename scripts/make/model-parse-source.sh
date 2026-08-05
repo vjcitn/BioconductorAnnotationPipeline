@@ -35,11 +35,6 @@ case "$source_name" in
   script_name="getsrc.sh"
   script_args=""
  ;;
- ensembl)
-  script_dir="$ROOT_DIR/annosrc/ensembl/script"
-  script_name="getsrc.sh"
-  script_args=""
- ;;
  plasmoDB)
   script_dir="$ROOT_DIR/annosrc/plasmoDB/script"
   script_name="getsrc.sh"
@@ -60,12 +55,7 @@ case "$source_name" in
   script_name="getsrc.sh"
   script_args=""
  ;;
- *)
-  echo "Unknown parse source: $source_name" >&2
-  exit 1
  ;;
-esac
-
 cd "$script_dir"
 
 if [ -z "$script_args" ]; then

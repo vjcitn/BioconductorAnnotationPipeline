@@ -92,10 +92,6 @@ echo "building inparanoid"
 cd $SRC_BASE/inparanoid/script; sh getdb.sh  
 echo "finished inparanoid"
 
-echo "building ensembl"
-cd $SRC_BASE/ensembl/script; sh getdb.sh  
-echo "finished ensembl"
-
 ## Inserts ipi identifiers in pfam and prosite tables of chipsrc_* sqlite dbs
 echo "building uniprot"
 cd $SRC_BASE/uniprot/script; sh getdb.sh

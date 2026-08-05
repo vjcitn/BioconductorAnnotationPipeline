@@ -10,7 +10,7 @@ if [ -z "$source_name" ]; then
 fi
 
 case "$source_name" in
- go|gene|ucsc|yeast|ensembl|plasmoDB|pfam|inparanoid|tair)
+ go|gene|ucsc|yeast|plasmoDB|pfam|inparanoid|tair)
  ;;
  *)
  echo "Unknown download source: $source_name" >&2

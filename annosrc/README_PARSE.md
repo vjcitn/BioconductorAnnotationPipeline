@@ -106,17 +106,6 @@ cd $SRC_BASE/yeast/script; sh getsrc.sh
 echo "finished parsing yeast"
 ```
 
-## ensembl
-
-Needed biomaRt and to comment out the .libPaths setting in script.
-
-```
-## Builds ensembl.sqlite needed (by others) in build step 
-echo "parsing ensembl"
-cd $SRC_BASE/ensembl/script; sh getsrc.sh 
-echo "finished parsing ensembl"
-```
-
 ## plasmoDB 
 
 Bad.  Needs dos2unix.  Can't use download script.

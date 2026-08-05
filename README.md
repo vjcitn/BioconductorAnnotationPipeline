@@ -62,7 +62,6 @@ The R installation needs Bioconductor packages required by the legacy parsing an
 - `AnnotationDbi`
 - `AnnotationForge`
 - `GSEABase`
-- `biomaRt`
 - `dplyr`
 - `stringi`
 - `graph`
