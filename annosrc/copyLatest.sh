@@ -1,27 +1,29 @@
 #!/bin/sh
-#set -e
+set -e
 
-## Copy select dbs to newPipe/ and insert schema version.
+## Copy select dbs into sanctionedSqlite and insert schema version metadata.
 
-BASEVERSION=2.1
+ROOT_DIR=${BIOCANNOPIPE_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
+BASEVERSION=${DBSCHEMAVERSION:-2.1}
+COPYFROM=${ANNOSRC_DB_DIR:-"$ROOT_DIR/annosrc/db"}
+COPYTO=${SANCTIONED_SQLITE_DIR:-"$ROOT_DIR/newPkgs/sanctionedSqlite"}
 
-COPYFROM=/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/
-COPYTO=/home/ubuntu/BioconductorAnnotationPipeline/newPkgs/sanctionedSqlite
+mkdir -p "$COPYTO"
 
-cp ${COPYFROM}GO.sqlite ${COPYTO}
-cp ${COPYFROM}PFAM.sqlite ${COPYTO}
-cp ${COPYFROM}KEGG.sqlite ${COPYTO}
-cp ${COPYFROM}YEAST.sqlite ${COPYTO}
-cp ${COPYFROM}Orthology.eg.sqlite ${COPYTO}
-
-cd ${COPYTO}
-
-## Remove org.*.sqlite files to avoid UNIQUE contstraint error.
-rm org.*
-
-for file in `ls *.sqlite`
+for db_name in GO.sqlite PFAM.sqlite KEGG.sqlite YEAST.sqlite Orthology.eg.sqlite
 do
- echo "INSERT INTO metadata VALUES('DBSCHEMAVERSION', '$BASEVERSION');" > temp_metadata.sql
- sqlite3 -bail $file < temp_metadata.sql
+ cp "$COPYFROM/$db_name" "$COPYTO/"
+done
+
+cd "$COPYTO"
+
+## Remove org.*.sqlite files to avoid UNIQUE constraint errors on rebuild.
+rm -f org.*.sqlite
+
+for file in *.sqlite
+do
+ [ "$file" = '*.sqlite' ] && break
+ printf "INSERT INTO metadata VALUES('DBSCHEMAVERSION', '%s');\n" "$BASEVERSION" > temp_metadata.sql
+ sqlite3 -bail "$file" < temp_metadata.sql
  rm -f temp_metadata.sql
 done

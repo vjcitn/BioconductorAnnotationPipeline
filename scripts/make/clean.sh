@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+STAMP_DIR=${STAMP_DIR:-}
+SANCTIONED_SQLITE_DIR=${SANCTIONED_SQLITE_DIR:-}
+PACKAGE_OUTPUT_DIR=${PACKAGE_OUTPUT_DIR:-}
+
+if [ -n "$STAMP_DIR" ]; then
+ rm -rf "$STAMP_DIR"
+fi
+
+if [ -n "$SANCTIONED_SQLITE_DIR" ]; then
+ rm -rf "$SANCTIONED_SQLITE_DIR"
+fi
+
+if [ -n "$PACKAGE_OUTPUT_DIR" ]; then
+ rm -rf "$PACKAGE_OUTPUT_DIR"
+fi

@@ -4,6 +4,17 @@
 ## Rscript makeTerminalDBPkgs.R <ARGS GO HERE>
 args <- commandArgs(trailingOnly = TRUE)
 
+rootDir <- Sys.getenv("BIOCANNOPIPE_ROOT", unset = "")
+if (rootDir == "") {
+    rootDir <- normalizePath(file.path(getwd(), ".."), winslash = "/", mustWork = TRUE)
+} else {
+    rootDir <- normalizePath(rootDir, winslash = "/", mustWork = TRUE)
+}
+
+dbBaseDir <- Sys.getenv("ANNOSRC_DB_DIR", unset = file.path(rootDir, "annosrc", "db"))
+outDir <- Sys.getenv("SANCTIONED_SQLITE_DIR", unset = file.path(rootDir, "newPkgs", "sanctionedSqlite"))
+packageBaseDir <- Sys.getenv("PACKAGE_OUTPUT_BASE_DIR", unset = getwd())
+
 if(length(args) == 0L)
     stop(paste("Usage: Rscript makeTerminalDBPkgs.R <OrgDb/TxDb> <dateDir> <version>\n",
                "\t\tARGUMENTS:\n",
@@ -44,10 +55,8 @@ switch(whattype, orgdb = {
     ## 1. run copyLatest.sh to move KEGG, GO, PFAM, and YEAST to sanctionedSqlite
     
     ## 2. Create *.sqlite files in 'sanctionedSqlite'
-    outDir <- "sanctionedSqlite"
     if (!file.exists(outDir))
-        dir.create(outDir)
-    dbBaseDir <- "/home/ubuntu/BioconductorAnnotationPipeline/annosrc/db/"
+        dir.create(outDir, recursive = TRUE)
     metaDataSrc <- paste0(dbBaseDir, "metadatasrc.sqlite")
     source("EGPkgs.R")
     
@@ -60,7 +69,7 @@ switch(whattype, orgdb = {
     
     ## Create packages in 'orgdbDir' from the *.sqlite files in 'sanctionedSqlite'
     dateDir = wheretoput
-    orgdbDir <- paste(dateDir,"_OrgDbs",sep="")
+    orgdbDir <- file.path(packageBaseDir, paste(dateDir,"_OrgDbs",sep=""))
     if (!file.exists(orgdbDir))
         dir.create(orgdbDir)
     sqlitefiles <- list.files(outDir, pattern="^org")
@@ -79,7 +88,7 @@ txdb = {
     maintainer <- "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
     author <- "Bioconductor Core Team"
     dateDir = wheretoput
-    txdbDir <- paste(dateDir,"_TxDbs",sep="")
+    txdbDir <- file.path(packageBaseDir, paste(dateDir,"_TxDbs",sep=""))
     if (!file.exists(txdbDir))
         dir.create(txdbDir)
     version <- theversion
