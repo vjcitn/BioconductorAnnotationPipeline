@@ -17,7 +17,12 @@ The top-level Makefile exposes the documented entry points:
 ```sh
 make help
 make download
+make download-ucsc
 make model
+make model-parse
+make model-build
+make model-parse-ucsc
+make model-build-go-db2
 make package PKG_DATE=20260805 PKG_VERSION=3.23.0
 make GO.db PKG_DATE=20260805 PKG_VERSION=3.23.0
 ```
@@ -25,6 +30,19 @@ make GO.db PKG_DATE=20260805 PKG_VERSION=3.23.0
 `make GO.db` is an alias for the current OrgDb-family packaging flow. That flow creates the `GO.db` package source tree together with the other OrgDb outputs emitted by `newPkgs/makeTerminalDBPkgs.R`.
 
 The target does not currently produce an installed package by itself. It stops after generating the package source directories under `newPkgs/<PKG_DATE>_OrgDbs/`. You still need to run `R CMD build`, `R CMD check`, and `R CMD INSTALL` on the generated `GO.db` package.
+
+The `download` stage is now stamped per source. If one upstream source fails, rerunning `make download` resumes at the first unfinished source instead of rerunning the entire download stage. You can also run a single source explicitly, for example:
+
+```sh
+make download-ucsc
+```
+
+The `model` stage is also stamped per source for both parse and build sub-stages. If one model source fails, rerunning `make model` resumes from the first unfinished source. You can run targeted model sources with:
+
+```sh
+make model-parse-ucsc
+make model-build-go-db2
+```
 
 ## Prerequisites
 
@@ -96,6 +114,8 @@ make model
 This drives the existing shell scripts in `annosrc/` and leaves the modeled SQLite outputs in `annosrc/db/`.
 
 If you want a single visible entry point for the packaging-oriented flow, `make GO.db` also depends on these stages and will run them automatically when their stage stamps are missing.
+
+If a download fails partway through, fix the source-specific problem and rerun either `make download` or the corresponding `make download-<source>` target. The same resume behavior applies to the model stage via `make model` and `make model-<substage>-<source>`.
 
 ### 3. Build the db0 prerequisite packages
 

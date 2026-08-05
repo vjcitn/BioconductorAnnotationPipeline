@@ -16,6 +16,11 @@ set -e
 ## the download dirs to species/current (as an example
 ## ../human/current
 
+for species in human mouse rat fly fish canine bovine worm chicken yeast rhesus anopheles chimp pig
+do
+ mkdir -p "../$species/current"
+done
+
 ## refLink is shared so just get it once in human
 
 cd ../human/current
