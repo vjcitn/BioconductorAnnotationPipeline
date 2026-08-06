@@ -96,6 +96,9 @@ $(RAWDIR)/%/gpsrc.sqlite: $(RAWDIR)/%/.download_done
 	        [ -f "$$f" ] && gunzip -kf "$$f" && echo "decompressed $$f" \
 	        || echo "WARNING: could not decompress $$f — skipping"; \
 	    done
+	[ -f "$(RAWDIR)/$(UNAME)/cytoBand.txt" ] || \
+	    { echo "WARNING: cytoBand.txt not available for $(SP) — creating empty file"; \
+	      touch "$(RAWDIR)/$(UNAME)/cytoBand.txt"; }
 	mkdir -p $(RAWDIR)/$(SP)
 	rm -f $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite
 	cd $(RAWDIR)/$(UNAME) && \
