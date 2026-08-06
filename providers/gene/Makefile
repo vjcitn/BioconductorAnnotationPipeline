@@ -16,7 +16,7 @@ CURL := curl --fail -C - --retry 3 --retry-delay 10
 # parseAlias.R uses only base R; this target confirms R itself is callable.
 .PHONY: check-r-deps
 check-r-deps:
-	@Rscript -e "cat('R', getRversion(), 'OK\n')" || \
+	@Rscript -e "cat(R.version.string, 'OK\n')" || \
 	    { echo "ERROR: Rscript not found or not working"; exit 1; }
 
 # Remove partial targets on recipe failure so the next make retries cleanly.
