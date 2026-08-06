@@ -1,11 +1,7 @@
 .echo ON
-ATTACH DATABASE 'metadatasrc.sqlite' AS metadatasrc;
-INSERT INTO metadata
- SELECT "DBSCHEMA", db_schema FROM metadatasrc.metadata WHERE package_name="GO"; 
-DETACH DATABASE metadatasrc;
+INSERT INTO metadata VALUES('DBSCHEMA','GOSCHEMA');
 
 ATTACH DATABASE 'genesrc.sqlite' AS genesrc;
-ATTACH DATABASE 'uniprot2go.sqlite' AS UPEG2GOsrc;
 
 DROP TABLE IF EXISTS go_bp_human;
 DROP TABLE IF EXISTS go_mf_human;
@@ -705,31 +701,29 @@ CREATE INDEX gd5 on go_cc_fly(_id);
 CREATE INDEX gd6 on go_cc_fly(gene_id);
 
 
---For Canine and Pigs we are assigning the evidence code of IEA
---because the way Uniprot gene to go did the match is inferred.
-INSERT INTO go_bp_canine 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Canis_familiaris_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_bp_canine
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=2
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9615' and go.ontology_id=2
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_mf_canine 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Canis_familiaris_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_mf_canine
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=3
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9615' and go.ontology_id=3
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_cc_canine 
- SELECT DISTINCT go._id, e.evidence_id, 
-  	g.eg_id
- FROM UPEG2GOsrc.Canis_familiaris_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_cc_canine
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=4
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9615' and go.ontology_id=4
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
 CREATE INDEX gcani1 on go_bp_canine(_id);
 CREATE INDEX gcani2 on go_bp_canine(gene_id);
@@ -770,31 +764,29 @@ CREATE INDEX gbovi4 on go_mf_bovine(gene_id);
 CREATE INDEX gbovi5 on go_cc_bovine(_id);
 CREATE INDEX gbovi6 on go_cc_bovine(gene_id);
 
---For Canine and Pigs we are assigning the evidence code of IEA
---because the way that uniprot gene to GO was inferred
-INSERT INTO go_bp_pig 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Sus_Scrofa_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_bp_pig
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=2
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9823' and go.ontology_id=2
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_mf_pig 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Sus_Scrofa_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_mf_pig
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=3
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9823' and go.ontology_id=3
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_cc_pig 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Sus_Scrofa_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_cc_pig
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=4
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9823' and go.ontology_id=4
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
 CREATE INDEX gpigi1 on go_bp_pig(_id);
 CREATE INDEX gpigi2 on go_bp_pig(gene_id);
@@ -836,29 +828,29 @@ CREATE INDEX gchicki5 on go_cc_chicken(_id);
 CREATE INDEX gchicki6 on go_cc_chicken(gene_id);
 
 
-INSERT INTO go_bp_rhesus 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Macaca_mulatta_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_bp_rhesus
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=2
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9544' and go.ontology_id=2
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_mf_rhesus 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Macaca_mulatta_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_mf_rhesus
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=3
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9544' and go.ontology_id=3
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_cc_rhesus 
- SELECT DISTINCT go._id, e.evidence_id, 
-  	g.eg_id
- FROM UPEG2GOsrc.Macaca_mulatta_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_cc_rhesus
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=4
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9544' and go.ontology_id=4
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
 
 CREATE INDEX grhesusi1 on go_bp_rhesus(_id);
@@ -869,29 +861,29 @@ CREATE INDEX grhesusi5 on go_cc_rhesus(_id);
 CREATE INDEX grhesusi6 on go_cc_rhesus(gene_id);
 
 
-INSERT INTO go_bp_xenopus 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Xenopus_laevis_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_bp_xenopus
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=2
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '8355' and go.ontology_id=2
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_mf_xenopus 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Xenopus_laevis_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_mf_xenopus
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=3
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '8355' and go.ontology_id=3
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_cc_xenopus 
- SELECT DISTINCT go._id, e.evidence_id, 
-  	g.eg_id
- FROM UPEG2GOsrc.Xenopus_laevis_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_cc_xenopus
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=4
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '8355' and go.ontology_id=4
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
 CREATE INDEX gxenopusi1 on go_bp_xenopus(_id);
 CREATE INDEX gxenopusi2 on go_bp_xenopus(gene_id);
@@ -934,29 +926,29 @@ CREATE INDEX garabidopsisi6 on go_cc_arabidopsis(gene_id);
 
 
 
-INSERT INTO go_bp_anopheles 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Anopheles_gambiae_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_bp_anopheles
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=2
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '7165' and go.ontology_id=2
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_mf_anopheles 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Anopheles_gambiae_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_mf_anopheles
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=3
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '7165' and go.ontology_id=3
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_cc_anopheles 
- SELECT DISTINCT go._id, e.evidence_id, 
-  	g.eg_id
- FROM UPEG2GOsrc.Anopheles_gambiae_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_cc_anopheles
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=4
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '7165' and go.ontology_id=4
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
 CREATE INDEX ganophelesi1 on go_bp_anopheles(_id);
 CREATE INDEX ganophelesi2 on go_bp_anopheles(gene_id);
@@ -967,29 +959,29 @@ CREATE INDEX ganophelesi6 on go_cc_anopheles(gene_id);
 
 
 
-INSERT INTO go_bp_chimp 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Pan_troglodytes_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_bp_chimp
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=2
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9598' and go.ontology_id=2
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_mf_chimp 
- SELECT DISTINCT go._id, e.evidence_id, 
- 	g.eg_id
- FROM UPEG2GOsrc.Pan_troglodytes_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_mf_chimp
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=3
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9598' and go.ontology_id=3
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
-INSERT INTO go_cc_chimp 
- SELECT DISTINCT go._id, e.evidence_id, 
-  	g.eg_id
- FROM UPEG2GOsrc.Pan_troglodytes_eg2go as g CROSS JOIN go_term as go 
+INSERT INTO go_cc_chimp
+ SELECT DISTINCT go._id, e.evidence_id, g.gene_id
+ FROM genesrc.gene2go as g CROSS JOIN go_term as go
 	CROSS JOIN gene2go_evidence as e
- WHERE go.ontology_id=4
-	and g.go_id=go.go_id and e.relationship_type = 'IEA';
+ WHERE g.tax_id = '9598' and go.ontology_id=4
+        AND g.go_qualifier NOT LIKE "NOT%"
+	and g.go_id=go.go_id and g.evidence=e.relationship_type;
 
 CREATE INDEX gchimpi1 on go_bp_chimp(_id);
 CREATE INDEX gchimpi2 on go_bp_chimp(gene_id);
