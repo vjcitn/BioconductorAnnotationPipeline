@@ -112,7 +112,7 @@ DETACH DATABASE flysrc;
 
 
 
-ATTACH DATABASE "fish/gpsrc.sqlite" AS fishsrc;
+ATTACH DATABASE "zebrafish/gpsrc.sqlite" AS fishsrc;
 
 CREATE TABLE chrloc_fish as
  SELECT gene_id, chrom, start, end FROM fishsrc.chrloc;

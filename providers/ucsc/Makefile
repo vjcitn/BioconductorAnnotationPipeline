@@ -48,7 +48,7 @@ $(RAWDIR)/%/.download_done: $(RAWDIR)/human/refLink.txt.gz
 	$(eval SP    := $(patsubst $(RAWDIR)/%/.download_done,%,$@))
 	$(eval BUILD := $(call ucsc_build,$(SP)))
 	$(eval UNAME := $(call ucsc_name,$(SP)))
-	mkdir -p $(RAWDIR)/$(UNAME)
+	mkdir -p $(RAWDIR)/$(UNAME) $(RAWDIR)/$(SP)
 	@case "$(SP)" in \
 	human) \
 	    rsync -avzP $(UCSCBASEURL)/$(BUILD)/database/refGene.txt.gz          $(RAWDIR)/$(UNAME)/; \
@@ -94,13 +94,14 @@ $(RAWDIR)/%/gpsrc.sqlite: $(RAWDIR)/%/.download_done
 	        [ -f "$$f" ] && gunzip -kf "$$f" && echo "decompressed $$f" \
 	        || echo "WARNING: could not decompress $$f — skipping"; \
 	    done
-	rm -f $@
+	mkdir -p $(RAWDIR)/$(SP)
+	rm -f $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite
 	cd $(RAWDIR)/$(UNAME) && \
-	    sqlite3 -bail $(RAWDIR_ABS)/$(UNAME)/gpsrc.sqlite \
+	    sqlite3 -bail $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite \
 	        < $(CURDIR)/script/srcdb_$(UNAME).sql
-	sqlite3 $@ "INSERT INTO metadata VALUES('GPSOURCENAME','$(GPNAME)');"
-	sqlite3 $@ "INSERT INTO metadata VALUES('GPSOURCEURL','$(GPURL)');"
-	sqlite3 $@ "INSERT INTO metadata VALUES('GPSOURCEDATE','$$(date +%Y-%b%d)');"
+	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite "INSERT INTO metadata VALUES('GPSOURCENAME','$(GPNAME)');"
+	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite "INSERT INTO metadata VALUES('GPSOURCEURL','$(GPURL)');"
+	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite "INSERT INTO metadata VALUES('GPSOURCEDATE','$$(date +%Y-%b%d)');"
 
 # ── db/gpsrc.sqlite (aggregated across all UCSC species) ─────────────────────
 # bindb.sql ATTACHes each species' gpsrc.sqlite by relative path.
