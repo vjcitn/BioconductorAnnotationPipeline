@@ -9,6 +9,12 @@ RAWDIR_ABS := $(abspath $(RAWDIR))
 GOSOURCEURL  := http://current.geneontology.org/ontology/go-basic.obo
 GOSOURCENAME := Gene Ontology
 
+CURL := curl --fail -C - --retry 3 --retry-delay 10
+
+# Remove partial targets on recipe failure so the next make retries cleanly.
+# .tmp download files are not targets and survive failures for curl to resume.
+.DELETE_ON_ERROR:
+
 # ── Download ──────────────────────────────────────────────────────────────────
 
 .PHONY: download
@@ -16,7 +22,8 @@ download: $(RAWDIR)/go-basic.obo
 
 $(RAWDIR)/go-basic.obo:
 	mkdir -p $(RAWDIR)
-	curl --fail -o $@ $(GOSOURCEURL)
+	$(CURL) -o $@.tmp $(GOSOURCEURL)
+	mv $@.tmp $@
 
 # ── Parse: OBO → 5 text tables ───────────────────────────────────────────────
 # parseOBO.R is run from raw/goterm/ so it writes its output files there.

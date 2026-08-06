@@ -10,6 +10,12 @@ TAXDUMP_URL := ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.t
 # Absolute path to db/ so sqlite3 can be invoked from $(RAWDIR)
 DBDIR_ABS := $(abspath $(DBDIR))
 
+CURL := curl --fail -C - --retry 3 --retry-delay 10
+
+# Remove partial targets on recipe failure so the next make retries cleanly.
+# .tmp download files are not targets and survive failures for curl to resume.
+.DELETE_ON_ERROR:
+
 # ── Download ──────────────────────────────────────────────────────────────────
 # All files are downloaded once and shared across all species; per-species
 # filtering happens in the parse step using taxids from config/species.tsv.
@@ -24,15 +30,18 @@ download: $(foreach f,$(GZ_DOWNLOADS),$(RAWDIR)/$(f).gz) \
 
 $(RAWDIR)/%.gz:
 	mkdir -p $(RAWDIR)
-	curl --fail --disable-epsv -o $@ $(EGSOURCEURL)/$(notdir $@)
+	$(CURL) --disable-epsv -o $@.tmp $(EGSOURCEURL)/$(notdir $@)
+	mv $@.tmp $@
 
 $(RAWDIR)/mim2gene_medgen.raw:
 	mkdir -p $(RAWDIR)
-	curl --fail --disable-epsv -o $@ $(EGSOURCEURL)/mim2gene_medgen
+	$(CURL) --disable-epsv -o $@.tmp $(EGSOURCEURL)/mim2gene_medgen
+	mv $@.tmp $@
 
 $(RAWDIR)/new_taxdump.tar.gz:
 	mkdir -p $(RAWDIR)
-	curl --fail --disable-epsv -o $@ $(TAXDUMP_URL)
+	$(CURL) --disable-epsv -o $@.tmp $(TAXDUMP_URL)
+	mv $@.tmp $@
 
 # ── Taxid filter ──────────────────────────────────────────────────────────────
 # Generates an awk script from species.tsv so taxids are never hard-coded here.
