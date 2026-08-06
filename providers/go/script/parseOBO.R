@@ -163,6 +163,10 @@ term_definition <- term_definition[c(1, 2, 4, 3, 5)]
 
 term_definition[is.na(term_definition)] <- "//N"   # Change any remaining NA's to mysql-friendly //N's
 
+# SQLite .import in tabs mode still treats " as a quoting character.
+# Double any " in text fields so they import as literal characters.
+term_definition$term_definition <- gsub('"', '""', term_definition$term_definition)
+term_definition$term_comment    <- gsub('"', '""', term_definition$term_comment)
 
 write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row.names=F, sep = "\t")
 ts(sprintf("term_definition.txt written (%d rows)", nrow(term_definition)))
