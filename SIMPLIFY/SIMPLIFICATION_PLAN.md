@@ -15,6 +15,7 @@ The existing system has **five implicit phases** driven by four different script
 - The **species list is duplicated** in at least 6 places: `gene/script/getsrc.sh`, `ucsc/script/download.sh`, `ucsc/script/getsrc.sh`, `organism_annotation/script/getdb.sh`, `EGPkgs.R`, and `src_parse.sh`
 - **Configuration (URLs, build versions) is scattered** across 10+ `env.sh` files
 - **Dead code is pervasive**: UniGene is commented out everywhere, KEGG is flagged as deprecated, inparanoid is kept only for one FlyBase mapping, ChipDb packages are entirely gone
+- **Ensembl FTP access is broken**: The Ensembl project has completely restructured their FTP site; all download and parse code in `annosrc/ensembl/` no longer works. Ensembl gene ID mappings (`ensembl` and `ncbi2ensembl` tables) are populated in 13 organism SQLite files via `ATTACH DATABASE 'ensembl.sqlite'` but these tables will be empty until the download is repaired. Ensembl mappings are available through other Bioconductor resources (e.g., AnnotationHub, `biomaRt`) and this pipeline should not attempt to replicate them.
 - **Hard-coded server paths** (`/home/ubuntu/...`) appear inside R scripts
 - There is no way to run a single species or re-run one failed provider without running everything
 
@@ -31,12 +32,12 @@ BioconductorAnnotationPipeline/
     gene/               # NCBI Gene (shared, tax-ID filtered per species)
     go/                 # Gene Ontology (shared)
     ucsc/               # UCSC genome builds (species-specific)
-    ensembl/            # Ensembl mappings (species-specific)
     yeast/              # SGD (yeast only)
     tair/               # TAIR (Arabidopsis only)
     plasmoDB/           # PlasmoDB (malaria only)
     pfam/               # PFAM (shared)
     flybase/            # FlyBase only (extracted from inparanoid, fly only)
+    # NOTE: ensembl/ provider removed — see Phase 4
   db/                   # intermediate SQLite files (gitignored)
   packages/             # output R packages (gitignored)
   Makefile              # top-level with download and package targets
@@ -53,29 +54,29 @@ BioconductorAnnotationPipeline/
 Create `config/species.tsv` — a single tab-separated file that is the **one source of truth** for all species metadata, replacing all the scattered `env.sh` files and hard-coded lists:
 
 ```
-name        taxid   ucsc_build  ensembl_name                pkg_prefix    pkg_template
-human       9606    hg38        homo_sapiens                org.Hs.eg     HUMAN_DB
-mouse       10090   mm39        mus_musculus                org.Mm.eg     MOUSE_DB
-rat         10116   rn7         rattus_norvegicus           org.Rn.eg     RAT_DB
-fly         7227    dm6         drosophila_melanogaster     org.Dm.eg     FLY_DB
-zebrafish   7955    danRer11    danio_rerio                 org.Dr.eg     ZEBRAFISH_DB
-yeast       559292  sacCer3     saccharomyces_cerevisiae    org.Sc.sgd    YEAST_DB
-worm        6239    ce11        caenorhabditis_elegans      org.Ce.eg     WORM_DB
-arabidopsis 3702    NA          arabidopsis_thaliana        org.At.tair   ARABIDOPSIS_DB
-bovine      9913    bosTau9     bos_taurus                  org.Bt.eg     BOVINE_DB
-canine      9615    canFam6     canis_lupus_familiaris      org.Cf.eg     CANINE_DB
-chicken     9031    galGal6     gallus_gallus               org.Gg.eg     CHICKEN_DB
-chimp       9598    panTro6     pan_troglodytes             org.Pt.eg     CHIMP_DB
-pig         9823    susScr11    sus_scrofa                  org.Ss.eg     PIG_DB
-rhesus      9544    rheMac10    macaca_mulatta              org.Mmu.eg    RHESUS_DB
-anopheles   7165    anoGam3     anopheles_gambiae           org.Ag.eg     ANOPHELES_DB
-xenopus     8355    NA          xenopus_laevis              org.Xl.eg     XENOPUS_DB
-malaria     5833    NA          plasmodium_falciparum       org.Pf.plasmo MALARIA_DB
-ecoliK12    511145  NA          NA                          org.EcK12.eg  ECOLI_DB
-ecoliSakai  386585  NA          NA                          org.EcSakai.eg ECOLI_DB
+name        taxid   ucsc_build  pkg_prefix     pkg_template
+human       9606    hg38        org.Hs.eg      HUMAN_DB
+mouse       10090   mm39        org.Mm.eg      MOUSE_DB
+rat         10116   rn7         org.Rn.eg      RAT_DB
+fly         7227    dm6         org.Dm.eg      FLY_DB
+zebrafish   7955    danRer11    org.Dr.eg      ZEBRAFISH_DB
+yeast       559292  sacCer3     org.Sc.sgd     YEAST_DB
+worm        6239    ce11        org.Ce.eg      WORM_DB
+arabidopsis 3702    NA          org.At.tair    ARABIDOPSIS_DB
+bovine      9913    bosTau9     org.Bt.eg      BOVINE_DB
+canine      9615    canFam6     org.Cf.eg      CANINE_DB
+chicken     9031    galGal6     org.Gg.eg      CHICKEN_DB
+chimp       9598    panTro6     org.Pt.eg      CHIMP_DB
+pig         9823    susScr11    org.Ss.eg      PIG_DB
+rhesus      9544    rheMac10    org.Mmu.eg     RHESUS_DB
+anopheles   7165    anoGam3     org.Ag.eg      ANOPHELES_DB
+xenopus     8355    NA          org.Xl.eg      XENOPUS_DB
+malaria     5833    NA          org.Pf.plasmo  MALARIA_DB
+ecoliK12    511145  NA          org.EcK12.eg   ECOLI_DB
+ecoliSakai  386585  NA          org.EcSakai.eg ECOLI_DB
 ```
 
-All Makefiles and R scripts read from this file. Adding a new organism means adding one row — nothing else changes.
+The `ensembl_name` column has been removed. Ensembl gene IDs are sourced from NCBI Gene's `dbXrefs` field for all organisms (subject to the yeast exception noted in Phase 4); no Ensembl FTP connection is needed. All Makefiles and R scripts read from this file. Adding a new organism means adding one row — nothing else changes.
 
 ---
 
@@ -177,6 +178,13 @@ Before or alongside the above, permanently remove:
 | `getAnnos.R` | `newPkgs/getAnnos.R` | References `AffyCompatible`/`NetAffxResource`, entirely deprecated |
 | Hard-coded `/home/ubuntu/` paths | `makeDbZeros.R`, `makeTerminalDBPkgs.R` | Replace with `DB_PATH` variable from `providers.mk` |
 | `goext/` download (commented out) | `src_download.sh` | Commented out since at least 2021 |
+| Ensembl provider directory | `annosrc/ensembl/` | Ensembl FTP has been restructured; all download/parse code is broken. See note below. |
+
+### Ensembl Removal: Impact Analysis
+
+Investigation of the `organism_annotation` SQL files reveals that the situation is better than it appears. For **12 of 13 organisms** with Ensembl tables, the `ATTACH DATABASE 'ensembl.sqlite'` block is already **commented out** in the assembly SQL. These species — human, mouse, rat, bovine, zebrafish, canine, chicken, chimp, rhesus, anopheles, pig, and worm — source their Ensembl gene IDs entirely from NCBI Gene's `dbXrefs` field, which `gene/script/parseAlias.R` extracts into the `gene_dbXref` table. This path goes through the NCBI Gene provider and is completely unaffected by the Ensembl FTP changes.
+
+**The one exception is yeast** (`organism_annotation/script/bindb_yeast.sql`). Yeast still has an active `ATTACH DATABASE 'ensembl.sqlite' AS ens` and queries `ens.scerevisiae_gene_ensembl` directly. The NCBI-sourced alternative code path is present in that file but commented out. This means that dropping the Ensembl provider will cause `org.Sc.sgd.db` to ship without an `ensembl` table unless the commented-out NCBI fallback in `bindb_yeast.sql` is un-commented and verified to produce correct results for yeast. This should be investigated before the Ensembl provider is removed.
 
 ---
 
@@ -223,3 +231,5 @@ Adding a new organism requires only: (1) one new row in `config/species.tsv`, (2
 4. **Parallelism**: Once providers are independent Makefile targets, `make -j` gives free parallelism for the download phase. Is this safe on the build machine (bandwidth and disk I/O)?
 
 5. **`config/species.tsv` ownership**: Who is responsible for updating genome build versions (the `ucsc_build` column) at each Bioconductor release? This was previously done by editing `ucsc/script/env.sh` by hand — the same manual step exists, just in one place now.
+
+6. **Yeast Ensembl IDs**: Before removing the Ensembl provider, the commented-out NCBI fallback in `organism_annotation/script/bindb_yeast.sql` should be tested. If NCBI Gene does not carry sufficient `Ensembl:` cross-references for yeast, `org.Sc.sgd.db` will lose its `ensembl` table. Confirm whether this is acceptable or whether an alternative source (e.g., SGD directly) should be used.
