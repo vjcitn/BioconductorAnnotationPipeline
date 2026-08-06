@@ -72,6 +72,8 @@ $(RAWDIR)/%/.download_done: $(RAWDIR)/human/refLink.txt.gz
 	    rsync -avzP $(UCSCBASEURL)/$(BUILD)/database/refGene.txt.gz           $(RAWDIR)/$(UNAME)/; \
 	    rsync -avzP $(UCSCBASEURL)/$(BUILD)/database/chromInfo.txt.gz         $(RAWDIR)/$(UNAME)/; \
 	    cp $(RAWDIR)/human/refLink.txt.gz                                      $(RAWDIR)/$(UNAME)/; \
+	    rsync -avzP $(UCSCBASEURL)/$(BUILD)/database/cytoBandIdeo.txt.gz      $(RAWDIR)/$(UNAME)/cytoBand.txt.gz || \
+	        echo "WARNING: cytoBandIdeo.txt.gz not available for $(SP) — skipping"; \
 	    ;; \
 	esac
 	touch $@
