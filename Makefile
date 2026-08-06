@@ -21,6 +21,9 @@ help:
 	@echo "  make download SPECIES=human  # download only what human needs"
 	@echo "  make package  SPECIES=human  # build org.Hs.eg.db (and human.db0)"
 	@echo "  make package               # build all OrgDb packages"
+	@echo "  make clean-raw             # remove downloaded files (preserves built SQLites)"
+	@echo "  make clean-db              # remove built SQLites (preserves downloads)"
+	@echo "  make clean                 # remove everything"
 	@echo ""
 	@echo "Species defined in $(CONFIG):"
 	@tail -n +2 $(CONFIG) | awk '{printf "  %-14s taxid=%-8s ucsc=%s\n", $$1, $$2, $$3}'
@@ -87,11 +90,20 @@ package: $(foreach sp,$(TARGET_SPECIES),db/chipsrc_$(sp).sqlite)
 	    --outdir  packages/orgdb/
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
-.PHONY: clean
-clean:
-	rm -f db/chipsrc_*.sqlite db/chipmapsrc_*.sqlite db/genesrc.sqlite \
-	      db/gosrc.sqlite db/gpsrc_*.sqlite
+.PHONY: clean clean-raw clean-db clean-packages
 
-.PHONY: clean-packages
+clean-raw:
+	@for p in providers/*/; do \
+	    [ -f $$p/Makefile ] && $(MAKE) -C $$p clean-raw || true; \
+	done
+
+clean-db:
+	rm -f db/*.sqlite
+	@for p in providers/*/; do \
+	    [ -f $$p/Makefile ] && $(MAKE) -C $$p clean-db || true; \
+	done
+
+clean: clean-raw clean-db
+
 clean-packages:
 	rm -rf packages/db0/ packages/orgdb/

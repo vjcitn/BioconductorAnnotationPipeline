@@ -105,7 +105,12 @@ $(DBDIR)/gosrc.sqlite: $(DBDIR)/GO_ORGANISM_SPEC.sqlite script/bindb3.sql
 	cd $(DBDIR_ABS) && sqlite3 -bail gosrc.sqlite < $(CURDIR)/script/bindb3.sql
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
-.PHONY: clean
-clean:
+.PHONY: clean clean-raw clean-db
+
+clean-raw:
 	rm -rf $(RAWDIR)
+
+clean-db:
 	rm -f $(DBDIR)/gosrc.sqlite $(DBDIR)/GO.sqlite $(DBDIR)/GO_ORGANISM_SPEC.sqlite
+
+clean: clean-raw clean-db

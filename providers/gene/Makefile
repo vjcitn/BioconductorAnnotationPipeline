@@ -142,7 +142,12 @@ $(DBDIR)/Orthology.eg.sqlite: $(RAWDIR)/gene_orthologs $(RAWDIR)/names.txt scrip
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCEURL','$(EGSOURCEURL)');"
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
-.PHONY: clean
-clean:
+.PHONY: clean clean-raw clean-db
+
+clean-raw:
 	rm -rf $(RAWDIR)
+
+clean-db:
 	rm -f $(DBDIR)/genesrc.sqlite $(DBDIR)/Orthology.eg.sqlite
+
+clean: clean-raw clean-db
