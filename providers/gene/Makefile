@@ -12,6 +12,13 @@ DBDIR_ABS := $(abspath $(DBDIR))
 
 CURL := curl --fail -C - --retry 3 --retry-delay 10
 
+# ── R dependency check ────────────────────────────────────────────────────────
+# parseAlias.R uses only base R; this target confirms R itself is callable.
+.PHONY: check-r-deps
+check-r-deps:
+	@Rscript -e "cat('R', getRversion(), 'OK\n')" || \
+	    { echo "ERROR: Rscript not found or not working"; exit 1; }
+
 # Remove partial targets on recipe failure so the next make retries cleanly.
 # .tmp download files are not targets and survive failures for curl to resume.
 .DELETE_ON_ERROR:
@@ -96,7 +103,7 @@ $(RAWDIR)/mim2gene_medgen: $(RAWDIR)/mim2gene_medgen.raw
 # gene_dbXrefs.tab. A stamp file records completion so Make doesn't re-run
 # the R script once for each output file.
 
-$(RAWDIR)/.alias_tabs_done: $(RAWDIR)/gene_info script/parseAlias.R
+$(RAWDIR)/.alias_tabs_done: $(RAWDIR)/gene_info script/parseAlias.R check-r-deps
 	cd $(RAWDIR) && Rscript ../script/parseAlias.R
 	touch $@
 

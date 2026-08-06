@@ -16,6 +16,7 @@ endif
 .PHONY: help
 help:
 	@echo "Usage:"
+	@echo "  make check-r-deps          # verify all required R packages are installed"
 	@echo "  make download              # download data for all species"
 	@echo "  make download SPECIES=human  # download only what human needs"
 	@echo "  make package  SPECIES=human  # build org.Hs.eg.db (and human.db0)"
@@ -23,6 +24,13 @@ help:
 	@echo ""
 	@echo "Species defined in $(CONFIG):"
 	@tail -n +2 $(CONFIG) | awk '{printf "  %-14s taxid=%-8s ucsc=%s\n", $$1, $$2, $$3}'
+
+# ── R dependency check ───────────────────────────────────────────────────────
+# Run before any build to verify all required R packages are present.
+.PHONY: check-r-deps
+check-r-deps:
+	$(MAKE) -C providers/gene check-r-deps
+	$(MAKE) -C providers/go   check-r-deps
 
 # ── Download ──────────────────────────────────────────────────────────────────
 # Shared providers always run; per-species and organism-specific providers

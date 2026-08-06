@@ -11,6 +11,23 @@ GOSOURCENAME := Gene Ontology
 
 CURL := curl --fail -C - --retry 3 --retry-delay 10
 
+# ── R dependency check ────────────────────────────────────────────────────────
+# parseOBO.R requires these packages; fail early with a clear message if any
+# are missing rather than discovering it mid-run.
+.PHONY: check-r-deps
+check-r-deps:
+	@Rscript -e "\
+	    pkgs <- c('GSEABase','dplyr','tidyr','stringi','graph','RBGL'); \
+	    missing <- pkgs[!sapply(pkgs, requireNamespace, quietly=TRUE)]; \
+	    if (length(missing)) { \
+	        cat('ERROR: missing R packages:', paste(missing, collapse=', '), '\n'); \
+	        cat('Install with: BiocManager::install(c(', \
+	            paste0('\"', missing, '\"', collapse=','), '))\n'); \
+	        quit(status=1) \
+	    } else { \
+	        cat('R packages OK:', paste(pkgs, collapse=', '), '\n') \
+	    }"
+
 # Remove partial targets on recipe failure so the next make retries cleanly.
 # .tmp download files are not targets and survive failures for curl to resume.
 .DELETE_ON_ERROR:
@@ -34,7 +51,7 @@ GOTERM_DIR := $(RAWDIR)/goterm
 GOTERM_TXT := $(addprefix $(GOTERM_DIR)/,\
     term.txt term2term.txt term_definition.txt term_synonym.txt graph_path.txt)
 
-$(RAWDIR)/.goterm_done: $(RAWDIR)/go-basic.obo script/parseOBO.R
+$(RAWDIR)/.goterm_done: $(RAWDIR)/go-basic.obo script/parseOBO.R check-r-deps
 	mkdir -p $(GOTERM_DIR)
 	cd $(GOTERM_DIR) && Rscript ../../script/parseOBO.R
 	touch $@
