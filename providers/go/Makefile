@@ -51,7 +51,8 @@ GOTERM_DIR := $(RAWDIR)/goterm
 GOTERM_TXT := $(addprefix $(GOTERM_DIR)/,\
     term.txt term2term.txt term_definition.txt term_synonym.txt graph_path.txt)
 
-$(RAWDIR)/.goterm_done: $(RAWDIR)/go-basic.obo script/parseOBO.R check-r-deps
+$(RAWDIR)/.goterm_done: $(RAWDIR)/go-basic.obo script/parseOBO.R
+	$(MAKE) check-r-deps
 	mkdir -p $(GOTERM_DIR)
 	cd $(GOTERM_DIR) && Rscript ../../script/parseOBO.R
 	touch $@

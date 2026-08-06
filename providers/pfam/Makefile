@@ -46,7 +46,8 @@ $(RAWDIR)/.simplify_done: $(RAWDIR)/Pfam-A.full.gz script/simplifyToIds.sh
 # parseIDs.R reads the text files and writes one .tab file per ID type.
 # Uses only base R; stamp file covers all outputs at once.
 
-$(RAWDIR)/.parseids_done: $(RAWDIR)/.simplify_done script/parseIDs.R check-r-deps
+$(RAWDIR)/.parseids_done: $(RAWDIR)/.simplify_done script/parseIDs.R
+	$(MAKE) check-r-deps
 	cd $(RAWDIR) && Rscript ../script/parseIDs.R
 	touch $@
 

@@ -103,7 +103,8 @@ $(RAWDIR)/mim2gene_medgen: $(RAWDIR)/mim2gene_medgen.raw
 # gene_dbXrefs.tab. A stamp file records completion so Make doesn't re-run
 # the R script once for each output file.
 
-$(RAWDIR)/.alias_tabs_done: $(RAWDIR)/gene_info script/parseAlias.R check-r-deps
+$(RAWDIR)/.alias_tabs_done: $(RAWDIR)/gene_info script/parseAlias.R
+	$(MAKE) check-r-deps
 	cd $(RAWDIR) && Rscript ../script/parseAlias.R
 	touch $@
 
