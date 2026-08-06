@@ -16,10 +16,5 @@ CREATE TABLE metadata (
  value TEXT
 );
 
--- FIXME: we should remove this update in the future.
--- It is necessary all because our current GO uses "isa" instead of "is_a"
-UPDATE term
-  SET name="isa"
-  WHERE id=1;
 ANALYZE;
 
