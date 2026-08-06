@@ -1,4 +1,5 @@
 
+ts <- function(msg) message(format(Sys.time(), "[%H:%M:%S]"), " ", msg)
 
 term_f <- "term.txt"
 term2term_f <- "term2term.txt"
@@ -6,10 +7,11 @@ term_definition_f <- "term_definition.txt"
 term_synonym_f <- "term_synonym.txt"
 graph_path_f <- "graph_path.txt"
 
-
+ts("Reading go-basic.obo...")
 obo <- GSEABase::getOBOCollection('../go-basic.obo')
 kv <- obo@.kv
 stanza <- obo@.stanza
+ts(sprintf("OBO loaded: %d terms", nrow(stanza) - 1L))
 
 synonym_type <- c('alt_id')
 synonym_scope <- c('exact', 'related', 'broad', 'narrow')
@@ -21,7 +23,7 @@ names <- c(names, synonym_type)    ## Add synonym_type
 names <- c(names, synonym_scope)    ## Add synonym_scope
 names <- c(names, universal)     ## Add universal 
 
-## Create term table
+ts("Building term table...")
 terms <- data.frame(id = seq_along(names),
                     name = names)
 
@@ -53,9 +55,9 @@ term[term$name %in% synonym_scope, 'term_type'] <- 'synonym_scope'
 term[term$name %in% universal, c('term_type','is_root')] <- c('universal',1)
 
 write.table(term, file = term_f, quote=F, col.names=F, row.names=F, sep = "\t")
+ts(sprintf("term.txt written (%d rows)", nrow(term)))
 
-
-## Create term2term table
+ts("Building term2term table...")
 
 is_a <- kv[kv$key == 'is_a',]
 colnames(is_a) <- c('term1_id', 'relationship_type_id', 'term2_id')
@@ -109,9 +111,9 @@ term2termlst <- lapply(list(bpids, mfids, ccids),
                        function(x) term2term[term2term$term1_id %in% x,])
 
 write.table(term2term, file = term2term_f, quote=F, col.names=F, row.names=F, sep = "\t")
+ts(sprintf("term2term.txt written (%d rows)", nrow(term2term)))
 
-
-## term_synonym.txt
+ts("Building term_synonym table...")
 
 alt_id <- kv[kv$key == 'alt_id',]
 colnames(alt_id) <- c('term_id', 'synonym_type_id', 'term_synonym')
@@ -139,9 +141,9 @@ term_synonym$synonym_type_id <- match(term_synonym$synonym_type_id, names)
 term_synonym <- term_synonym[c(1, 3, 4, 2, 5)]
     
 write.table(term_synonym, file = term_synonym_f, quote=F, col.names=F, row.names=F, sep = "\t")
+ts(sprintf("term_synonym.txt written (%d rows)", nrow(term_synonym)))
 
-
-## term_definition.txt
+ts("Building term_definition table...")
 
 def <-  kv[kv$key == 'def',][-2]
 colnames(def) <- c('term_id', 'term_definition')
@@ -163,9 +165,9 @@ term_definition[is.na(term_definition)] <- "//N"   # Change any remaining NA's t
 
 
 write.table(term_definition, file = term_definition_f, quote=F, col.names=F, row.names=F, sep = "\t")
+ts(sprintf("term_definition.txt written (%d rows)", nrow(term_definition)))
 
-
-## graph_path.txt
+ts("Computing transitive closure (slowest step, runs 3x for BP/MF/CC)...")
 
 ## NOTE: This section generalizes the file to only show generate edges in the transitive closure
 ## We assume that the shortest distances are not going to be needed, so those are set to one.
@@ -210,7 +212,12 @@ tt2graph_path <- function(term2termobj, namevec){
     graph_path
 }
 
-gplst <- lapply(term2termlst, tt2graph_path, namevec = names)
+onto_names <- c("BP", "MF", "CC")
+gplst <- lapply(seq_along(term2termlst), function(i) {
+    ts(sprintf("  transitive closure %s (%d direct edges)...",
+               onto_names[i], nrow(term2termlst[[i]])))
+    tt2graph_path(term2termlst[[i]], namevec = names)
+})
 
 ## the first column has to be 1:nrow the ending data.frame, so
 ## do the math first
@@ -220,4 +227,6 @@ gplst[[3]][,1] <- gplst[[3]][,1] + gplst[[2]][nrow(gplst[[2]]),1]
 graph_path <- do.call(rbind, gplst)
 
 write.table(graph_path, file = graph_path_f, quote=F, col.names=F, row.names=F, sep = "\t")
+ts(sprintf("graph_path.txt written (%d rows)", nrow(graph_path)))
+ts("parseOBO.R complete.")
 
