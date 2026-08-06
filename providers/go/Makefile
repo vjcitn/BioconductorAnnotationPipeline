@@ -9,7 +9,7 @@ RAWDIR_ABS := $(abspath $(RAWDIR))
 GOSOURCEURL  := http://current.geneontology.org/ontology/go-basic.obo
 GOSOURCENAME := Gene Ontology
 
-CURL := curl --fail -C - --retry 3 --retry-delay 10
+CURL := curl --fail -L -C - --retry 3 --retry-delay 10
 
 # ── R dependency check ────────────────────────────────────────────────────────
 # parseOBO.R requires these packages; fail early with a clear message if any
