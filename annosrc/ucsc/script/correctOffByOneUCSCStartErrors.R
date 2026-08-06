@@ -11,7 +11,6 @@
 ## time.
 
 ##load libs
-.libPaths("~/R-libraries")
 library("RSQLite")
 ##Connect to the DB
 drv <- dbDriver("SQLite")

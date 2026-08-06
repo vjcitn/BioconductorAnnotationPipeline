@@ -1,7 +1,6 @@
 ##Finally, I will also need to write a little utility to compare two dates
 ##(two most recent can be the default), and see if there are any major
 ##changes.  THEN I will be done with the 1st version of this task.
-.libPaths("~/R-libraries")
 library(DBI)
 library("RSQLite")
 drv <- dbDriver("SQLite")

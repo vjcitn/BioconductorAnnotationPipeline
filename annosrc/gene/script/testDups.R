@@ -1,6 +1,5 @@
 ## check for duplicate rows in chipmapsrc databases
 
-.libPaths("~/R-libraries")
 library(RSQLite)
 
 dbs <- dir(".", "^chipmapsrc")

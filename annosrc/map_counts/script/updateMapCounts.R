@@ -27,7 +27,6 @@ files <- files[-grep("NCBI.sqlite", files)]
 ##for the fields that you want.
 
 ## select map_name from map_counts;
-.libPaths("~/R-libraries")
 library(DBI)
 library("RSQLite")
 drv <- dbDriver("SQLite")

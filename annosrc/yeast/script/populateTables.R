@@ -1,4 +1,3 @@
-.libPaths("~/R-libraries")
 library("RSQLite")
 
 source("../../prepareData.R")

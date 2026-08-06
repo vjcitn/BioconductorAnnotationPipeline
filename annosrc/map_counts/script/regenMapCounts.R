@@ -13,7 +13,6 @@ pkgnames <- c("GO.db","KEGG.db","PFAM.db","anopheles.db0", "arabidopsis.db0", "b
               "fly.db0", "human.db0", "malaria.db0", "mouse.db0", "pig.db0", "rat.db0",
               "rhesus.db0", "worm.db0", "xenopus.db0", "yeast.db0", "zebrafish.db0")
 
-.libPaths("~/R-libraries")
 library(DBI)
 library("RSQLite")
 

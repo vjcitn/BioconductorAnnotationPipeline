@@ -37,7 +37,6 @@ switch(whattype, orgdb = {
     ## -----------------------------------------------------------------------
     ## Make OrgDb:
     ## -----------------------------------------------------------------------
-    .libPaths("~/R-libraries")
     library(AnnotationForge)
     library(AnnotationDbi)
     

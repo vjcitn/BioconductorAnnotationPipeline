@@ -1,5 +1,4 @@
 ## db0 packages must be generated and installed before creating OrgDb, ChipDb, etc.
-.libPaths("~/R-libraries")
 library(AnnotationForge)
 outDir = "./20240923_DB0s"
 if (!file.exists(outDir)) 
