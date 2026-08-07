@@ -165,11 +165,14 @@ for (sp in species_list) {
                 tax_id     = as.character(row$taxid),
                 genus      = row$genus,
                 species    = row$species,
-                goTable    = NA,
-                dbname     = row$pkg_prefix
+                goTable    = NA
+                ## goTable=NA: GO.db is itself produced by this pipeline;
+                ## passing it as a build dependency would be circular.
+                ## dbname is NOT a parameter of makeOrgPackage; package name
+                ## is derived automatically from genus + species.
             )
         ))
-        cat("Built:", row$pkg_prefix, ".db\n")
+        cat("Built:", paste0(row$pkg_prefix, ".db"), "\n")
     }, error = function(e) {
         warning("makeOrgPackage failed for ", sp, ": ", conditionMessage(e),
                 call. = FALSE)
