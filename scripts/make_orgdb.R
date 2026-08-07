@@ -154,6 +154,9 @@ for (sp in species_list) {
     bioc_ver <- tryCatch(as.character(BiocManager::version()),
                          error = function(e) "3.20.0")
 
+    expected_pkg  <- paste0(row$pkg_prefix, ".db")
+    pre_dirs      <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
+
     tryCatch({
         do.call(makeOrgPackage, c(
             frames,
@@ -166,13 +169,52 @@ for (sp in species_list) {
                 genus      = row$genus,
                 species    = row$species,
                 goTable    = NA
-                ## goTable=NA: GO.db is itself produced by this pipeline;
-                ## passing it as a build dependency would be circular.
-                ## dbname is NOT a parameter of makeOrgPackage; package name
-                ## is derived automatically from genus + species.
+                ## goTable=NA: GO.db is itself produced by this pipeline.
+                ## dbname is not a parameter of makeOrgPackage; it derives the
+                ## package name from genus + species (e.g. org.Hsapiens.eg.db).
+                ## We rename to the canonical Bioconductor name below.
             )
         ))
-        cat("Built:", paste0(row$pkg_prefix, ".db"), "\n")
+
+        ## Detect the source directory makeOrgPackage created
+        post_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
+        new_dirs  <- setdiff(post_dirs, pre_dirs)
+
+        if (length(new_dirs) != 1L)
+            stop("Expected exactly one new package directory, got: ",
+                 paste(basename(new_dirs), collapse = ", "), call. = FALSE)
+
+        src_dir      <- new_dirs[1L]
+        expected_dir <- file.path(normalizePath(outdir), expected_pkg)
+
+        ## Rename to canonical name and fix DESCRIPTION if makeOrgPackage
+        ## used a different name (it uses genus-initial + full-species).
+        if (!identical(normalizePath(src_dir), normalizePath(expected_dir))) {
+            cat("Renaming", basename(src_dir), "->", expected_pkg, "\n")
+            desc_path <- file.path(src_dir, "DESCRIPTION")
+            desc      <- readLines(desc_path)
+            desc      <- sub("^Package:.*", paste0("Package: ", expected_pkg), desc)
+            desc      <- sub("^Title:.*",
+                             paste0("Title: Genome wide annotation for ",
+                                    row$genus, " ", row$species),
+                             desc)
+            writeLines(desc, desc_path)
+            file.rename(src_dir, expected_dir)
+        }
+
+        ## Build the tarball
+        cat("Running R CMD build for", expected_pkg, "\n")
+        old_wd <- getwd()
+        on.exit(setwd(old_wd), add = TRUE)
+        setwd(normalizePath(outdir))
+        rc <- system(paste("R CMD build --no-build-vignettes",
+                           shQuote(expected_pkg)))
+        setwd(old_wd)
+        if (rc != 0L)
+            warning("R CMD build failed for ", sp, call. = FALSE)
+        else
+            cat("Built:", expected_pkg, "\n")
+
     }, error = function(e) {
         warning("makeOrgPackage failed for ", sp, ": ", conditionMessage(e),
                 call. = FALSE)
@@ -180,9 +222,9 @@ for (sp in species_list) {
 }
 
 built <- list.files(outdir, pattern = "\\.tar\\.gz$")
-if (length(built) > 0) {
-    cat("\nOrgDb packages built:\n")
+if (length(built) > 0L) {
+    cat("\nOrgDb tarballs produced:\n")
     cat(paste(" ", built, collapse = "\n"), "\n")
 } else {
-    stop("No packages were produced.", call. = FALSE)
+    stop("No tarballs were produced.", call. = FALSE)
 }
