@@ -52,7 +52,7 @@ for (sp in species_list) {
         next
     }
 
-    cat("\n── Assembling", row$pkg_prefix, ".db (", row$genus, row$species, ") ──\n")
+    cat("\n--", paste0(row$pkg_prefix, ".db"), "(", row$genus, row$species, ") --\n")
 
     db <- dbConnect(SQLite(), chip)
 
@@ -119,14 +119,24 @@ for (sp in species_list) {
 
     dbDisconnect(db)
 
+    ## Deduplicate all frames (makeOrgPackage rejects duplicate rows)
+    gene_info <- unique(gene_info)
+    chrom     <- unique(chrom)
+    chrloc    <- unique(chrloc)
+    refseq    <- unique(refseq)
+    pubmed    <- unique(pubmed)
+    synonym   <- unique(synonym)
+    ensembl   <- unique(ensembl)
+    uniprot   <- unique(uniprot)
+
     ## Assemble named list; drop empty frames to avoid makeOrgPackage errors
     frames <- list(
-        gene_info = gene_info,
+        gene_info  = gene_info,
         chromosome = chrom,
-        chrloc = chrloc,
-        refseq = refseq,
-        pubmed = pubmed,
-        synonym = synonym
+        chrloc     = chrloc,
+        refseq     = refseq,
+        pubmed     = pubmed,
+        synonym    = synonym
     )
     if (nrow(ensembl) > 0)  frames$ensembl  <- ensembl
     if (nrow(uniprot) > 0)  frames$uniprot  <- uniprot
@@ -147,7 +157,7 @@ for (sp in species_list) {
                 genus      = row$genus,
                 species    = row$species,
                 goTable    = if (nrow(go_all) > 0) "go" else NA,
-                dbname     = paste0(row$pkg_prefix, ".eg")
+                dbname     = row$pkg_prefix
             )
         ))
         cat("Built:", row$pkg_prefix, ".db\n")
