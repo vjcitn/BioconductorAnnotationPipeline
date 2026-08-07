@@ -34,6 +34,17 @@ help:
 check-r-deps:
 	$(MAKE) -C providers/gene check-r-deps
 	$(MAKE) -C providers/go   check-r-deps
+	@Rscript -e "\
+	    pkgs <- c('AnnotationForge','AnnotationDbi','BiocManager'); \
+	    missing <- pkgs[!sapply(pkgs, requireNamespace, quietly=TRUE)]; \
+	    if (length(missing)) { \
+	        cat('ERROR: missing R packages:', paste(missing, collapse=', '), '\n'); \
+	        cat('Install with: BiocManager::install(c(', \
+	            paste0('\"', missing, '\"', collapse=','), '))\n'); \
+	        quit(status=1) \
+	    } else { \
+	        cat('R packages OK:', paste(pkgs, collapse=', '), '\n') \
+	    }"
 
 # ── Download ──────────────────────────────────────────────────────────────────
 # Shared providers always run; per-species and organism-specific providers
