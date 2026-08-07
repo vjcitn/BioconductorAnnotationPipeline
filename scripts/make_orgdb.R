@@ -243,10 +243,34 @@ for (sp in species_list) {
         Sys.chmod(sqlite_path, mode = "0644")
         conn <- dbConnect(SQLite(), sqlite_path)
 
-        ## Fix ORGANISM metadata
+        ## ── Fix metadata ──────────────────────────────────────────────────────
+        ## 1. Copy source provenance rows from chipsrc (EGSOURCE*, GOSOURCE*,
+        ##    KEGGSOURCE*, GPSOURCE*).  INSERT OR IGNORE skips any that already
+        ##    exist in the OrgDb metadata table.
         dbExecute(conn,
-            "UPDATE metadata SET value = ? WHERE name = 'ORGANISM'",
-            params = list(full_organism))
+            paste0("ATTACH DATABASE '", normalizePath(chip), "' AS chipmeta"))
+        dbExecute(conn,
+            "INSERT OR IGNORE INTO metadata
+             SELECT * FROM chipmeta.metadata
+             WHERE name LIKE '%SOURCE%' OR name = 'TAXID'")
+        dbExecute(conn, "DETACH DATABASE chipmeta")
+
+        ## 2. Correct the standard entries that makeOrgPackage set incorrectly
+        ##    because we passed abbreviated genus/species codes for naming, and
+        ##    because goTable=NA causes it to write NOSCHEMA_DB / GID defaults.
+        centralid   <- toupper(strsplit(row$pkg_prefix, "\\.")[[1L]][3L]) # "EG"
+        species_tag <- paste0(toupper(substr(row$name, 1L, 1L)),
+                              substr(row$name, 2L, nchar(row$name)))      # "Human"
+        for (md in list(
+            list("ORGANISM",  full_organism),
+            list("SPECIES",   species_tag),
+            list("DBSCHEMA",  row$pkg_template),
+            list("CENTRALID", centralid)
+        )) {
+            dbExecute(conn,
+                "UPDATE metadata SET value = ? WHERE name = ?",
+                params = list(md[[2L]], md[[1L]]))
+        }
 
         ## ── Populate GO tables directly from chipsrc ──────────────────────────
         ## go_bp/mf/cc     -> GO, EVIDENCE, ONTOLOGY
