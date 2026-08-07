@@ -3,8 +3,9 @@ ROOTDIR  := ../..
 DBDIR    := $(ROOTDIR)/db
 RAWDIR   := raw
 
-DBDIR_ABS  := $(abspath $(DBDIR))
-RAWDIR_ABS := $(abspath $(RAWDIR))
+DBDIR_ABS   := $(abspath $(DBDIR))
+RAWDIR_ABS  := $(abspath $(RAWDIR))
+SCRIPTDIR   := $(abspath script)
 
 PFAMSOURCEURL  := ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release
 PFAMSOURCENAME := PFAM IDs
@@ -42,7 +43,7 @@ $(RAWDIR)/Pfam-A.full.gz:
 # TP_IDs.txt, RM_IDs.txt, PDB_IDs.txt
 
 $(RAWDIR)/.simplify_done: $(RAWDIR)/Pfam-A.full.gz script/simplifyToIds.sh
-	cd $(RAWDIR) && bash ../script/simplifyToIds.sh
+	cd $(RAWDIR) && bash $(SCRIPTDIR)/simplifyToIds.sh
 	touch $@
 
 # ── Step 2: parse ID text files into .tab files (R) ──────────────────────────
@@ -51,7 +52,7 @@ $(RAWDIR)/.simplify_done: $(RAWDIR)/Pfam-A.full.gz script/simplifyToIds.sh
 
 $(RAWDIR)/.parseids_done: $(RAWDIR)/.simplify_done script/parseIDs.R
 	$(MAKE) check-r-deps
-	cd $(RAWDIR) && Rscript ../script/parseIDs.R
+	cd $(RAWDIR) && Rscript $(SCRIPTDIR)/parseIDs.R
 	touch $@
 
 # ── PFAM.sqlite ───────────────────────────────────────────────────────────────
@@ -61,7 +62,7 @@ $(RAWDIR)/.parseids_done: $(RAWDIR)/.simplify_done script/parseIDs.R
 $(DBDIR)/PFAM.sqlite: $(RAWDIR)/.parseids_done script/srcdb_pfam.sql
 	mkdir -p $(DBDIR_ABS)
 	rm -f $@
-	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/PFAM.sqlite < ../script/srcdb_pfam.sql
+	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/PFAM.sqlite < $(SCRIPTDIR)/srcdb_pfam.sql
 	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCENAME','$(PFAMSOURCENAME)');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCEURL','$(PFAMSOURCEURL)');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCEDATE','$$(date +%Y-%b%d)');"
