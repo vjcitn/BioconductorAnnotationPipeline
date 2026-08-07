@@ -249,28 +249,39 @@ for (sp in species_list) {
             params = list(full_organism))
 
         ## ── Populate GO tables directly from chipsrc ──────────────────────────
-        ## go_bp/mf/cc       -> GO, EVIDENCE, ONTOLOGY
-        ## go_bp/mf/cc_all   -> GOALL, EVIDENCEALL, ONTOLOGYALL
+        ## go_bp/mf/cc     -> GO, EVIDENCE, ONTOLOGY
+        ## go_bp/mf/cc_all -> GOALL, EVIDENCEALL, ONTOLOGYALL
         ##
-        ## Join via gene_id (not _id) because the OrgDb and chipsrc genes
-        ## tables assign their own independent _id sequences.
-        chip_abs <- normalizePath(chip)
-        dbExecute(conn, paste0("ATTACH DATABASE '", chip_abs, "' AS chip"))
+        ## The OrgDb genes table gene-ID column name varies by AnnotationForge
+        ## version. Discover it via PRAGMA, then use SQL ATTACH for the join
+        ## (fast, no R data frames, negligible RAM).
+
+        gp <- dbGetQuery(conn, "PRAGMA table_info(genes)")
+        gene_col <- gp$name[grepl("text|char", gp$type, ignore.case = TRUE)][1L]
+        if (is.na(gene_col))
+            gene_col <- gp$name[gp$name != "_id"][1L]
+        cat("  OrgDb genes gene-ID column:", gene_col, "\n")
+
+        dbExecute(conn,
+            paste0("ATTACH DATABASE '", normalizePath(chip), "' AS chip"))
 
         for (ont in c("bp", "mf", "cc")) {
-            for (suffix in c("", "_all")) {
-                tbl <- paste0("go_", ont, suffix)
+            for (sfx in c("", "_all")) {
+                tbl <- paste0("go_", ont, sfx)
                 dbExecute(conn, sprintf(
-                    "CREATE TABLE %s (_id INTEGER, go_id TEXT, evidence TEXT)", tbl))
+                    "CREATE TABLE %s (_id INTEGER, go_id TEXT, evidence TEXT)",
+                    tbl))
                 dbExecute(conn, sprintf(
-                    "INSERT INTO %s
-                     SELECT og._id, c.go_id, c.evidence
+                    'INSERT INTO %s
+                     SELECT og.rowid, c.go_id, c.evidence
                      FROM genes og
-                     JOIN chip.genes cg ON og.gene_id = cg.gene_id
-                     JOIN chip.%s c     ON cg._id = c._id", tbl, tbl))
+                     JOIN chip.genes cg ON og."%s" = cg.gene_id
+                     JOIN chip.%s c ON cg._id = c._id',
+                    tbl, gene_col, tbl))
                 dbExecute(conn, sprintf(
                     "CREATE INDEX %s__id ON %s(_id)", tbl, tbl))
-                nr <- dbGetQuery(conn, sprintf("SELECT count(*) FROM %s", tbl))[[1]]
+                nr <- dbGetQuery(conn,
+                    sprintf("SELECT count(*) FROM %s", tbl))[[1L]]
                 cat(sprintf("  %s: %d rows\n", tbl, nr))
             }
         }
