@@ -15,6 +15,9 @@ CURL := curl --fail -L -C - --retry 3 --retry-delay 10
 # .tmp download files are not targets and survive failures for curl to resume.
 .DELETE_ON_ERROR:
 
+.PHONY: all
+all: $(DBDIR)/PFAM.sqlite
+
 # ── R dependency check ────────────────────────────────────────────────────────
 # parseIDs.R uses only base R; this confirms Rscript is callable.
 .PHONY: check-r-deps
