@@ -190,15 +190,44 @@ for (sp in species_list) {
         ## Rename to canonical name and fix DESCRIPTION if makeOrgPackage
         ## used a different name (it uses genus-initial + full-species).
         if (basename(src_dir) != expected_pkg) {
-            cat("Renaming", basename(src_dir), "->", expected_pkg, "\n")
-            desc_path <- file.path(src_dir, "DESCRIPTION")
-            desc      <- readLines(desc_path)
-            desc      <- sub("^Package:.*", paste0("Package: ", expected_pkg), desc)
-            desc      <- sub("^Title:.*",
-                             paste0("Title: Genome wide annotation for ",
-                                    row$genus, " ", row$species),
-                             desc)
-            writeLines(desc, desc_path)
+            old_name <- basename(src_dir)
+            cat("Renaming", old_name, "->", expected_pkg, "\n")
+
+            ## Fix all text files that embed the old package name
+            txt_files <- list.files(src_dir, recursive = TRUE,
+                                    full.names = TRUE)
+            txt_files <- txt_files[!file.info(txt_files)$isdir]
+            ## Exclude binary files (sqlite); identify by extension
+            txt_ext <- c("R", "Rd", "DESCRIPTION", "NAMESPACE", "dcf",
+                         "html", "txt", "md")
+            for (f in txt_files) {
+                ext <- tools::file_ext(f)
+                nm  <- basename(f)
+                if (ext %in% txt_ext || nm %in% c("DESCRIPTION","NAMESPACE")) {
+                    lns <- tryCatch(readLines(f, warn = FALSE),
+                                   error = function(e) NULL)
+                    if (!is.null(lns) && any(grepl(old_name, lns, fixed=TRUE))) {
+                        writeLines(gsub(old_name, expected_pkg, lns, fixed=TRUE), f)
+                    }
+                }
+            }
+
+            ## Rename files whose names contain the old package name
+            named_files <- txt_files[grepl(old_name, basename(txt_files), fixed=TRUE)]
+            for (f in named_files) {
+                file.rename(f, file.path(dirname(f),
+                                         gsub(old_name, expected_pkg,
+                                              basename(f), fixed=TRUE)))
+            }
+
+            ## Rename the SQLite file (binary — content unchanged, name matters)
+            old_sqlite <- file.path(src_dir, "inst", "extdata",
+                                    paste0(old_name, ".sqlite"))
+            new_sqlite <- file.path(src_dir, "inst", "extdata",
+                                    paste0(expected_pkg, ".sqlite"))
+            if (file.exists(old_sqlite)) file.rename(old_sqlite, new_sqlite)
+
+            ## Rename the package directory last
             file.rename(src_dir, expected_dir)
         }
 
