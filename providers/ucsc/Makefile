@@ -100,13 +100,14 @@ $(RAWDIR)/%/gpsrc.sqlite: $(RAWDIR)/%/.download_done
 	    { echo "WARNING: cytoBand.txt not available for $(SP) — creating empty file"; \
 	      touch "$(RAWDIR)/$(UNAME)/cytoBand.txt"; }
 	mkdir -p $(RAWDIR)/$(SP)
-	rm -f $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite
+	rm -f $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp
 	cd $(RAWDIR)/$(UNAME) && \
-	    sqlite3 -bail $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite \
+	    sqlite3 -bail $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp \
 	        < $(CURDIR)/script/srcdb_$(UNAME).sql
-	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite "INSERT INTO metadata VALUES('GPSOURCENAME','$(GPNAME)');"
-	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite "INSERT INTO metadata VALUES('GPSOURCEURL','$(GPURL)');"
-	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite "INSERT INTO metadata VALUES('GPSOURCEDATE','$$(date +%Y-%b%d)');"
+	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp "INSERT INTO metadata VALUES('GPSOURCENAME','$(GPNAME)');"
+	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp "INSERT INTO metadata VALUES('GPSOURCEURL','$(GPURL)');"
+	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp "INSERT INTO metadata VALUES('GPSOURCEDATE','$$(date +%Y-%b%d)');"
+	mv $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite
 
 # ── db/gpsrc.sqlite (aggregated across all UCSC species) ─────────────────────
 # bindb.sql ATTACHes each species' gpsrc.sqlite by relative path.
