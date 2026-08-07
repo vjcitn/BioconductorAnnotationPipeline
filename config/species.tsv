@@ -1,20 +1,20 @@
-name	taxid	ucsc_build	pkg_prefix	pkg_template
-human	9606	hg38	org.Hs.eg	HUMAN_DB
-mouse	10090	mm39	org.Mm.eg	MOUSE_DB
-rat	10116	rn7	org.Rn.eg	RAT_DB
-fly	7227	dm6	org.Dm.eg	FLY_DB
-zebrafish	7955	danRer11	org.Dr.eg	ZEBRAFISH_DB
-yeast	559292	sacCer3	org.Sc.sgd	YEAST_DB
-worm	6239	ce11	org.Ce.eg	WORM_DB
-arabidopsis	3702	NA	org.At.tair	ARABIDOPSIS_DB
-bovine	9913	bosTau9	org.Bt.eg	BOVINE_DB
-canine	9615	canFam6	org.Cf.eg	CANINE_DB
-chicken	9031	galGal6	org.Gg.eg	CHICKEN_DB
-chimp	9598	panTro6	org.Pt.eg	CHIMP_DB
-pig	9823	susScr11	org.Ss.eg	PIG_DB
-rhesus	9544	rheMac10	org.Mmu.eg	RHESUS_DB
-anopheles	7165	anoGam3	org.Ag.eg	ANOPHELES_DB
-xenopus	8355	NA	org.Xl.eg	XENOPUS_DB
-malaria	5833	NA	org.Pf.plasmo	MALARIA_DB
-ecoliK12	511145	NA	org.EcK12.eg	ECOLI_DB
-ecoliSakai	386585	NA	org.EcSakai.eg	ECOLI_DB
+name	taxid	ucsc_build	pkg_prefix	pkg_template	genus	species
+human	9606	hg38	org.Hs.eg	HUMAN_DB	Homo	sapiens
+mouse	10090	mm39	org.Mm.eg	MOUSE_DB	Mus	musculus
+rat	10116	rn7	org.Rn.eg	RAT_DB	Rattus	norvegicus
+fly	7227	dm6	org.Dm.eg	FLY_DB	Drosophila	melanogaster
+zebrafish	7955	danRer11	org.Dr.eg	ZEBRAFISH_DB	Danio	rerio
+yeast	559292	sacCer3	org.Sc.sgd	YEAST_DB	Saccharomyces	cerevisiae
+worm	6239	ce11	org.Ce.eg	WORM_DB	Caenorhabditis	elegans
+arabidopsis	3702	NA	org.At.tair	ARABIDOPSIS_DB	Arabidopsis	thaliana
+bovine	9913	bosTau9	org.Bt.eg	BOVINE_DB	Bos	taurus
+canine	9615	canFam6	org.Cf.eg	CANINE_DB	Canis	familiaris
+chicken	9031	galGal6	org.Gg.eg	CHICKEN_DB	Gallus	gallus
+chimp	9598	panTro6	org.Pt.eg	CHIMP_DB	Pan	troglodytes
+pig	9823	susScr11	org.Ss.eg	PIG_DB	Sus	scrofa
+rhesus	9544	rheMac10	org.Mmu.eg	RHESUS_DB	Macaca	mulatta
+anopheles	7165	anoGam3	org.Ag.eg	ANOPHELES_DB	Anopheles	gambiae
+xenopus	8355	NA	org.Xl.eg	XENOPUS_DB	Xenopus	laevis
+malaria	5833	NA	org.Pf.plasmo	MALARIA_DB	Plasmodium	falciparum
+ecoliK12	511145	NA	org.EcK12.eg	ECOLI_DB	Escherichia	coli
+ecoliSakai	386585	NA	org.EcSakai.eg	ECOLI_DB	Escherichia	coli

@@ -83,21 +83,17 @@ db/chipsrc_%.sqlite: db/genesrc.sqlite db/gosrc.sqlite
 	bash scripts/assemble_species.sh $*
 
 # ── Package ───────────────────────────────────────────────────────────────────
-# Builds db0 packages, installs them, then builds final OrgDb packages.
-# Both R scripts read config/species.tsv; no species names are hard-coded.
+# Builds OrgDb packages directly via AnnotationForge::makeOrgPackage().
+# Reads genus/species/prefix from config/species.tsv; no hard-coded names.
+# No db0 intermediate step required.
 
 .PHONY: package
 package: $(foreach sp,$(TARGET_SPECIES),db/chipsrc_$(sp).sqlite)
-	@mkdir -p packages/db0 packages/orgdb
-	Rscript scripts/make_db0.R \
-	    --species "$(TARGET_SPECIES)" \
-	    --dbpath  db/ \
-	    --config  $(CONFIG) \
-	    --outdir  packages/db0/
+	@mkdir -p packages/orgdb
 	Rscript scripts/make_orgdb.R \
 	    --species "$(TARGET_SPECIES)" \
 	    --config  $(CONFIG) \
-	    --db0path packages/db0/ \
+	    --dbpath  db/ \
 	    --outdir  packages/orgdb/
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
@@ -117,4 +113,4 @@ clean-db:
 clean: clean-raw clean-db
 
 clean-packages:
-	rm -rf packages/db0/ packages/orgdb/
+	rm -rf packages/orgdb/
