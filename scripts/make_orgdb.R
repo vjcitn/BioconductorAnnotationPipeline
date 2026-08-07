@@ -84,10 +84,10 @@ for (sp in species_list) {
         "SELECT g.gene_id AS GID, c.chromosome AS CHROMOSOME
          FROM genes g JOIN chromosomes c ON g._id = c._id")
 
-    ## chromosome location (start/end encoded as ±integer per Bioc convention)
+    ## chromosome location: CHRLOC = signed start, CHRLOCEND = end
+    ## chromosome name lives in the separate 'chromosome' data frame
     chrloc <- dbGetQuery(db,
         "SELECT g.gene_id AS GID,
-                cl.chromosome     AS CHRLOC,
                 cl.start_location AS CHRLOC,
                 cl.end_location   AS CHRLOCEND
          FROM genes g JOIN chromosome_locations cl ON g._id = cl._id")
