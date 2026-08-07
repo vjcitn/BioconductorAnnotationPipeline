@@ -140,7 +140,10 @@ for (sp in species_list) {
     )
     if (nrow(ensembl) > 0)  frames$ensembl  <- ensembl
     if (nrow(uniprot) > 0)  frames$uniprot  <- uniprot
-    if (nrow(go_all)  > 0)  frames$go       <- go_all
+    ## Store GO as a plain mapping table. goTable=NA because the GO term
+    ## hierarchy (parents/offspring) lives in GO.db, which is a separate
+    ## package also produced by this pipeline and cannot be a build dep here.
+    if (nrow(go_all)  > 0)  frames$gene2go  <- go_all
 
     ## Diagnostic: report frame dimensions and first column name
     for (nm in names(frames)) {
@@ -162,7 +165,7 @@ for (sp in species_list) {
                 tax_id     = as.character(row$taxid),
                 genus      = row$genus,
                 species    = row$species,
-                goTable    = if (nrow(go_all) > 0) "go" else NA,
+                goTable    = NA,
                 dbname     = row$pkg_prefix
             )
         ))
