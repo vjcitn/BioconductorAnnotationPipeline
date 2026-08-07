@@ -113,7 +113,7 @@ $(RAWDIR)/%/gpsrc.sqlite: $(RAWDIR)/%/.download_done
 # Must run from raw/ so ATTACH paths like "human/gpsrc.sqlite" resolve.
 # Depends on all per-species SQLites.
 
-ALL_GPSRC := $(foreach sp,$(ALL_UCSC_SPECIES),$(RAWDIR)/$(call ucsc_name,$(sp))/gpsrc.sqlite)
+ALL_GPSRC := $(foreach sp,$(ALL_UCSC_SPECIES),$(RAWDIR)/$(sp)/gpsrc.sqlite)
 
 $(DBDIR)/gpsrc.sqlite: $(ALL_GPSRC) script/bindb.sql
 	mkdir -p $(DBDIR_ABS)
