@@ -170,7 +170,10 @@ parsePDB_IDs <- function(IDtype, fileName) { #data is formatted differently so n
     }
     #clean out the NAs
     out = out[!is.na(out[,1]),]
-    out = out[,!is.na(out[1,])]
+    if (nrow(out) == 0L)
+        warning(paste0("no data for ", IDtype))
+    else
+        out = out[,!is.na(out[1,])]
     write.table(out, file=paste(IDtype,"s.tab",sep=""), sep="\t", row.names=F, col.names=F, quote=F)
 }
 
