@@ -5,6 +5,11 @@
 ##
 ## Uses the public makeOrgPackage() API directly from chipsrc_<species>.sqlite.
 ## No db0 packages, no metadatasrc.sqlite, no internal AnnotationForge paths.
+##
+## GO tables (go_bp/mf/cc and go_bp/mf/cc_all) are NOT passed through
+## makeOrgPackage because GO.db is itself produced by this pipeline (circular).
+## Instead they are written directly into the OrgDb sqlite via ATTACH after
+## makeOrgPackage creates the package skeleton.
 
 suppressPackageStartupMessages({
     library(AnnotationForge)
@@ -38,6 +43,15 @@ cfg <- read.table(config, header = TRUE, sep = "\t", stringsAsFactors = FALSE,
 
 if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
 
+## ── Helper: run a query, warn on error, return empty frame ───────────────────
+safe_query <- function(db, sql, ...) {
+    tryCatch(dbGetQuery(db, sql, ...),
+             error = function(e) {
+                 warning("Query failed: ", conditionMessage(e), call. = FALSE)
+                 data.frame()
+             })
+}
+
 ## ── Per-species package build ─────────────────────────────────────────────────
 for (sp in species_list) {
     row <- cfg[cfg$name == sp, ]
@@ -56,80 +70,91 @@ for (sp in species_list) {
 
     db <- dbConnect(SQLite(), chip)
 
-    ## gene_info: GID, SYMBOL, GENENAME
-    gene_info <- dbGetQuery(db,
-        "SELECT g.gene_id AS GID,
-                i.symbol   AS SYMBOL,
-                i.gene_name AS GENENAME
-         FROM genes g
-         JOIN gene_info i ON g._id = i._id")
+    ## ── Extract frames from chipsrc ───────────────────────────────────────────
 
-    ## GO: combined BP/MF/CC with ONTOLOGY column (makeOrgPackage goTable format)
-    go_bp <- dbGetQuery(db,
-        "SELECT g.gene_id AS GID, b.go_id AS GO,
-                b.evidence AS EVIDENCE, 'BP' AS ONTOLOGY
-         FROM genes g JOIN go_bp b ON g._id = b._id")
-    go_mf <- dbGetQuery(db,
-        "SELECT g.gene_id AS GID, b.go_id AS GO,
-                b.evidence AS EVIDENCE, 'MF' AS ONTOLOGY
-         FROM genes g JOIN go_mf b ON g._id = b._id")
-    go_cc <- dbGetQuery(db,
-        "SELECT g.gene_id AS GID, b.go_id AS GO,
-                b.evidence AS EVIDENCE, 'CC' AS ONTOLOGY
-         FROM genes g JOIN go_cc b ON g._id = b._id")
-    go_all <- unique(rbind(go_bp, go_mf, go_cc))
+    gene_info <- safe_query(db,
+        "SELECT g.gene_id AS GID, i.symbol AS SYMBOL, i.gene_name AS GENENAME
+         FROM genes g JOIN gene_info i ON g._id = i._id")
 
-    ## chromosome
-    chrom <- dbGetQuery(db,
+    chrom <- safe_query(db,
         "SELECT g.gene_id AS GID, c.chromosome AS CHROMOSOME
          FROM genes g JOIN chromosomes c ON g._id = c._id")
 
-    ## chromosome location: CHRLOC = signed start, CHRLOCEND = end
-    ## chromosome name lives in the separate 'chromosome' data frame
-    chrloc <- dbGetQuery(db,
+    chrloc <- safe_query(db,
         "SELECT g.gene_id AS GID,
                 cl.start_location AS CHRLOC,
                 cl.end_location   AS CHRLOCEND
          FROM genes g JOIN chromosome_locations cl ON g._id = cl._id")
 
-    ## RefSeq accessions
-    refseq <- dbGetQuery(db,
+    map_loc <- safe_query(db,
+        "SELECT g.gene_id AS GID, m.cytogenetic_location AS MAP
+         FROM genes g JOIN cytogenetic_locations m ON g._id = m._id")
+
+    refseq <- safe_query(db,
         "SELECT g.gene_id AS GID, r.accession AS REFSEQ
          FROM genes g JOIN refseq r ON g._id = r._id")
 
-    ## Ensembl IDs
-    ensembl <- dbGetQuery(db,
-        "SELECT g.gene_id AS GID, e.ensid AS ENSEMBL
-         FROM genes g JOIN ensembl e ON g._id = e._id")
+    accnum <- safe_query(db,
+        "SELECT g.gene_id AS GID, a.accession AS ACCNUM
+         FROM genes g JOIN accessions a ON g._id = a._id")
 
-    ## PubMed IDs
-    pubmed <- dbGetQuery(db,
+    pubmed <- safe_query(db,
         "SELECT g.gene_id AS GID, p.pubmed_id AS PMID
          FROM genes g JOIN pubmed p ON g._id = p._id")
 
-    ## Gene synonyms
-    synonym <- dbGetQuery(db,
+    synonym <- safe_query(db,
         "SELECT g.gene_id AS GID, s.symbol AS ALIAS
          FROM genes g JOIN gene_synonyms s ON g._id = s._id")
 
-    ## UniProt (may be empty if provider not yet available)
-    uniprot <- dbGetQuery(db,
+    genetype <- safe_query(db,
+        "SELECT g.gene_id AS GID, t.gene_type AS GENETYPE
+         FROM genes g JOIN genetype t ON g._id = t._id")
+
+    omim <- safe_query(db,
+        "SELECT g.gene_id AS GID, o.omim_id AS OMIM
+         FROM genes g JOIN omim o ON g._id = o._id")
+
+    ensembl <- safe_query(db,
+        "SELECT g.gene_id AS GID, e.ensid AS ENSEMBL
+         FROM genes g JOIN ensembl e ON g._id = e._id")
+
+    uniprot <- safe_query(db,
         "SELECT g.gene_id AS GID, u.uniprot_id AS UNIPROT
          FROM genes g JOIN uniprot u ON g._id = u._id")
 
+    path <- safe_query(db,
+        "SELECT g.gene_id AS GID, k.path_id AS PATH
+         FROM genes g JOIN kegg k ON g._id = k._id")
+
+    enzyme <- safe_query(db,
+        "SELECT g.gene_id AS GID, e.ec_number AS ENZYME
+         FROM genes g JOIN ec e ON g._id = e._id")
+
+    ucsckg <- safe_query(db,
+        "SELECT g.gene_id AS GID, u.ucsc_id AS UCSCKG
+         FROM genes g JOIN ucsc u ON g._id = u._id")
+
     dbDisconnect(db)
 
-    ## Deduplicate all frames (makeOrgPackage rejects duplicate rows)
+    ## Deduplicate all frames
     gene_info <- unique(gene_info)
     chrom     <- unique(chrom)
     chrloc    <- unique(chrloc)
+    map_loc   <- unique(map_loc)
     refseq    <- unique(refseq)
+    accnum    <- unique(accnum)
     pubmed    <- unique(pubmed)
     synonym   <- unique(synonym)
+    genetype  <- unique(genetype)
+    omim      <- unique(omim)
     ensembl   <- unique(ensembl)
     uniprot   <- unique(uniprot)
+    path      <- unique(path)
+    enzyme    <- unique(enzyme)
+    ucsckg    <- unique(ucsckg)
 
-    ## Assemble named list; drop empty frames to avoid makeOrgPackage errors
+    ## Core frames (always passed — non-empty by construction for any species
+    ## with NCBI gene data)
     frames <- list(
         gene_info  = gene_info,
         chromosome = chrom,
@@ -138,18 +163,24 @@ for (sp in species_list) {
         pubmed     = pubmed,
         synonym    = synonym
     )
-    if (nrow(ensembl) > 0)  frames$ensembl  <- ensembl
-    if (nrow(uniprot) > 0)  frames$uniprot  <- uniprot
-    ## Store GO as a plain mapping table. goTable=NA because the GO term
-    ## hierarchy (parents/offspring) lives in GO.db, which is a separate
-    ## package also produced by this pipeline and cannot be a build dep here.
-    if (nrow(go_all)  > 0)  frames$gene2go  <- go_all
 
-    ## Diagnostic: report frame dimensions and first column name
-    for (nm in names(frames)) {
-        cat(sprintf("  frame %-12s  nrow=%-7d  col1=%s\n",
-                    nm, nrow(frames[[nm]]), names(frames[[nm]])[1]))
+    ## Optional frames: include only if non-empty
+    opt <- list(
+        map      = map_loc,
+        accnum   = accnum,
+        genetype = genetype,
+        omim     = omim,
+        ensembl  = ensembl,
+        uniprot  = uniprot,
+        path     = path,
+        enzyme   = enzyme,
+        ucsckg   = ucsckg
+    )
+    for (nm in names(opt)) {
+        if (nrow(opt[[nm]]) > 0L) frames[[nm]] <- opt[[nm]]
     }
+
+    ## GO is handled post-hoc via SQL ATTACH (see below); do not pass here.
 
     bioc_ver <- tryCatch(as.character(BiocManager::version()),
                          error = function(e) "3.20.0")
@@ -157,15 +188,15 @@ for (sp in species_list) {
     expected_pkg  <- paste0(row$pkg_prefix, ".db")
     full_organism <- paste(row$genus, row$species)
 
-    ## makeOrgPackage names the package as:
+    ## makeOrgPackage names the package:
     ##   paste0("org.", toupper(substr(genus,1,1)), tolower(species), ".eg.db")
-    ## Feed it the abbreviation from pkg_prefix so the output name is correct
-    ## without any post-hoc renaming.
+    ## Derive genus_code/species_code from pkg_prefix abbreviation so the
+    ## created package has the right canonical name from the start.
     ## "org.Hs.eg" -> abbrev "Hs" -> genus_code "H", species_code "s"
-    ## -> makeOrgPackage creates org.Hs.eg.db / inst/extdata/org.Hs.eg.sqlite
+    ## -> creates org.Hs.eg.db / inst/extdata/org.Hs.eg.sqlite  (no rename needed)
     abbrev       <- strsplit(row$pkg_prefix, "\\.")[[1L]][2L]
-    genus_code   <- substring(abbrev, 1L, 1L)   # "H"
-    species_code <- substring(abbrev, 2L)        # "s"
+    genus_code   <- substring(abbrev, 1L, 1L)
+    species_code <- substring(abbrev, 2L)
 
     pre_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
 
@@ -180,11 +211,11 @@ for (sp in species_list) {
                 tax_id     = as.character(row$taxid),
                 genus      = genus_code,
                 species    = species_code,
-                goTable    = NA   ## GO.db is itself built by this pipeline
+                goTable    = NA
             )
         ))
 
-        ## Detect what makeOrgPackage created
+        ## Detect the directory makeOrgPackage created
         post_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
         new_dirs  <- setdiff(post_dirs, pre_dirs)
         if (length(new_dirs) != 1L)
@@ -194,7 +225,7 @@ for (sp in species_list) {
         src_dir    <- new_dirs[1L]
         src_prefix <- sub("\\.db$", "", basename(src_dir))  # "org.Hs.eg"
 
-        ## Fix DESCRIPTION: Title/Description embedded the abbreviated codes
+        ## Fix DESCRIPTION (abbreviated codes were used for naming)
         desc_path <- file.path(src_dir, "DESCRIPTION")
         desc <- readLines(desc_path, warn = FALSE)
         desc <- sub("^Title:.*",
@@ -206,20 +237,48 @@ for (sp in species_list) {
                     desc)
         writeLines(desc, desc_path)
 
-        ## Fix ORGANISM in the sqlite metadata table.
-        ## makeOrgPackage creates the sqlite read-only (mode 0444); chmod first.
+        ## Open the OrgDb sqlite (chmod first — makeOrgPackage creates it 0444)
         sqlite_path <- file.path(src_dir, "inst", "extdata",
                                  paste0(src_prefix, ".sqlite"))
-        if (file.exists(sqlite_path)) {
-            Sys.chmod(sqlite_path, mode = "0644")
-            conn <- dbConnect(SQLite(), sqlite_path)
-            dbExecute(conn,
-                "UPDATE metadata SET value = ? WHERE name = 'ORGANISM'",
-                params = list(full_organism))
-            dbDisconnect(conn)
+        Sys.chmod(sqlite_path, mode = "0644")
+        conn <- dbConnect(SQLite(), sqlite_path)
+
+        ## Fix ORGANISM metadata
+        dbExecute(conn,
+            "UPDATE metadata SET value = ? WHERE name = 'ORGANISM'",
+            params = list(full_organism))
+
+        ## ── Populate GO tables directly from chipsrc ──────────────────────────
+        ## go_bp/mf/cc       -> GO, EVIDENCE, ONTOLOGY
+        ## go_bp/mf/cc_all   -> GOALL, EVIDENCEALL, ONTOLOGYALL
+        ##
+        ## Join via gene_id (not _id) because the OrgDb and chipsrc genes
+        ## tables assign their own independent _id sequences.
+        chip_abs <- normalizePath(chip)
+        dbExecute(conn, paste0("ATTACH DATABASE '", chip_abs, "' AS chip"))
+
+        for (ont in c("bp", "mf", "cc")) {
+            for (suffix in c("", "_all")) {
+                tbl <- paste0("go_", ont, suffix)
+                dbExecute(conn, sprintf(
+                    "CREATE TABLE %s (_id INTEGER, go_id TEXT, evidence TEXT)", tbl))
+                dbExecute(conn, sprintf(
+                    "INSERT INTO %s
+                     SELECT og._id, c.go_id, c.evidence
+                     FROM genes og
+                     JOIN chip.genes cg ON og.gene_id = cg.gene_id
+                     JOIN chip.%s c     ON cg._id = c._id", tbl, tbl))
+                dbExecute(conn, sprintf(
+                    "CREATE INDEX %s__id ON %s(_id)", tbl, tbl))
+                nr <- dbGetQuery(conn, sprintf("SELECT count(*) FROM %s", tbl))[[1]]
+                cat(sprintf("  %s: %d rows\n", tbl, nr))
+            }
         }
 
-        ## Build the tarball from outdir so it lands there
+        dbExecute(conn, "DETACH DATABASE chip")
+        dbDisconnect(conn)
+
+        ## Build the tarball
         cat("Running R CMD build for", expected_pkg, "\n")
         old_wd <- getwd()
         on.exit(setwd(old_wd), add = TRUE)
