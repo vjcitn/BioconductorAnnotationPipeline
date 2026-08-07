@@ -155,7 +155,19 @@ for (sp in species_list) {
                          error = function(e) "3.20.0")
 
     expected_pkg  <- paste0(row$pkg_prefix, ".db")
-    pre_dirs      <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
+    full_organism <- paste(row$genus, row$species)
+
+    ## makeOrgPackage names the package as:
+    ##   paste0("org.", toupper(substr(genus,1,1)), tolower(species), ".eg.db")
+    ## Feed it the abbreviation from pkg_prefix so the output name is correct
+    ## without any post-hoc renaming.
+    ## "org.Hs.eg" -> abbrev "Hs" -> genus_code "H", species_code "s"
+    ## -> makeOrgPackage creates org.Hs.eg.db / inst/extdata/org.Hs.eg.sqlite
+    abbrev       <- strsplit(row$pkg_prefix, "\\.")[[1L]][2L]
+    genus_code   <- substring(abbrev, 1L, 1L)   # "H"
+    species_code <- substring(abbrev, 2L)        # "s"
+
+    pre_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
 
     tryCatch({
         do.call(makeOrgPackage, c(
@@ -166,78 +178,52 @@ for (sp in species_list) {
                 author     = "Bioconductor Core Team",
                 outputDir  = outdir,
                 tax_id     = as.character(row$taxid),
-                genus      = row$genus,
-                species    = row$species,
-                goTable    = NA
-                ## goTable=NA: GO.db is itself produced by this pipeline.
-                ## dbname is not a parameter of makeOrgPackage; it derives the
-                ## package name from genus + species (e.g. org.Hsapiens.eg.db).
-                ## We rename to the canonical Bioconductor name below.
+                genus      = genus_code,
+                species    = species_code,
+                goTable    = NA   ## GO.db is itself built by this pipeline
             )
         ))
 
-        ## Detect the source directory makeOrgPackage created
+        ## Detect what makeOrgPackage created
         post_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
         new_dirs  <- setdiff(post_dirs, pre_dirs)
-
         if (length(new_dirs) != 1L)
-            stop("Expected exactly one new package directory, got: ",
+            stop("Expected one new package directory, got: ",
                  paste(basename(new_dirs), collapse = ", "), call. = FALSE)
 
-        src_dir      <- new_dirs[1L]
-        expected_dir <- file.path(normalizePath(outdir), expected_pkg)
+        src_dir    <- new_dirs[1L]
+        src_prefix <- sub("\\.db$", "", basename(src_dir))  # "org.Hs.eg"
 
-        ## Rename to canonical name and fix DESCRIPTION if makeOrgPackage
-        ## used a different name (it uses genus-initial + full-species).
-        if (basename(src_dir) != expected_pkg) {
-            old_name <- basename(src_dir)
-            cat("Renaming", old_name, "->", expected_pkg, "\n")
+        ## Fix DESCRIPTION: Title/Description embedded the abbreviated codes
+        desc_path <- file.path(src_dir, "DESCRIPTION")
+        desc <- readLines(desc_path, warn = FALSE)
+        desc <- sub("^Title:.*",
+                    paste0("Title: Genome wide annotation for ", full_organism),
+                    desc)
+        desc <- sub("^Description:.*",
+                    paste0("Description: Annotation maps for ", full_organism,
+                           ", assembled from public repositories."),
+                    desc)
+        writeLines(desc, desc_path)
 
-            ## Fix all text files that embed the old package name
-            txt_files <- list.files(src_dir, recursive = TRUE,
-                                    full.names = TRUE)
-            txt_files <- txt_files[!file.info(txt_files)$isdir]
-            ## Exclude binary files (sqlite); identify by extension
-            txt_ext <- c("R", "Rd", "DESCRIPTION", "NAMESPACE", "dcf",
-                         "html", "txt", "md")
-            for (f in txt_files) {
-                ext <- tools::file_ext(f)
-                nm  <- basename(f)
-                if (ext %in% txt_ext || nm %in% c("DESCRIPTION","NAMESPACE")) {
-                    lns <- tryCatch(readLines(f, warn = FALSE),
-                                   error = function(e) NULL)
-                    if (!is.null(lns) && any(grepl(old_name, lns, fixed=TRUE))) {
-                        writeLines(gsub(old_name, expected_pkg, lns, fixed=TRUE), f)
-                    }
-                }
-            }
-
-            ## Rename files whose names contain the old package name
-            named_files <- txt_files[grepl(old_name, basename(txt_files), fixed=TRUE)]
-            for (f in named_files) {
-                file.rename(f, file.path(dirname(f),
-                                         gsub(old_name, expected_pkg,
-                                              basename(f), fixed=TRUE)))
-            }
-
-            ## Rename the SQLite file (binary — content unchanged, name matters)
-            old_sqlite <- file.path(src_dir, "inst", "extdata",
-                                    paste0(old_name, ".sqlite"))
-            new_sqlite <- file.path(src_dir, "inst", "extdata",
-                                    paste0(expected_pkg, ".sqlite"))
-            if (file.exists(old_sqlite)) file.rename(old_sqlite, new_sqlite)
-
-            ## Rename the package directory last
-            file.rename(src_dir, expected_dir)
+        ## Fix ORGANISM in the sqlite metadata table
+        sqlite_path <- file.path(src_dir, "inst", "extdata",
+                                 paste0(src_prefix, ".sqlite"))
+        if (file.exists(sqlite_path)) {
+            conn <- dbConnect(SQLite(), sqlite_path)
+            dbExecute(conn,
+                "UPDATE metadata SET value = ? WHERE name = 'ORGANISM'",
+                params = list(full_organism))
+            dbDisconnect(conn)
         }
 
-        ## Build the tarball
+        ## Build the tarball from outdir so it lands there
         cat("Running R CMD build for", expected_pkg, "\n")
         old_wd <- getwd()
         on.exit(setwd(old_wd), add = TRUE)
         setwd(normalizePath(outdir))
         rc <- system(paste("R CMD build --no-build-vignettes",
-                           shQuote(expected_pkg)))
+                           shQuote(basename(src_dir))))
         setwd(old_wd)
         if (rc != 0L)
             warning("R CMD build failed for ", sp, call. = FALSE)
