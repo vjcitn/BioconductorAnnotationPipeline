@@ -189,7 +189,7 @@ for (sp in species_list) {
 
         ## Rename to canonical name and fix DESCRIPTION if makeOrgPackage
         ## used a different name (it uses genus-initial + full-species).
-        if (!identical(normalizePath(src_dir), normalizePath(expected_dir))) {
+        if (basename(src_dir) != expected_pkg) {
             cat("Renaming", basename(src_dir), "->", expected_pkg, "\n")
             desc_path <- file.path(src_dir, "DESCRIPTION")
             desc      <- readLines(desc_path)
