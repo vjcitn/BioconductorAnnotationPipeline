@@ -43,11 +43,19 @@ cfg <- read.table(config, header = TRUE, sep = "\t", stringsAsFactors = FALSE,
 
 if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
 
-## ── Helper: run a query, warn on error, return empty frame ───────────────────
-safe_query <- function(db, sql, ...) {
+## ── Helper: run a query, return empty frame on error ─────────────────────────
+## "no such table" is expected for species-specific tables (omim is human-only,
+## ucsc varies, etc.). Emit a Note: so the user knows it is not a real problem.
+## Genuine errors (wrong column name, syntax, corruption) still produce warning().
+safe_query <- function(db, sql, sp = NULL, ...) {
     tryCatch(dbGetQuery(db, sql, ...),
              error = function(e) {
-                 warning("Query failed: ", conditionMessage(e), call. = FALSE)
+                 msg <- conditionMessage(e)
+                 prefix <- if (!is.null(sp)) paste0("[", sp, "] ") else ""
+                 if (grepl("no such table", msg, ignore.case = TRUE))
+                     message("Note: ", prefix, msg, " -- skipped")
+                 else
+                     warning("Query failed: ", prefix, msg, call. = FALSE)
                  data.frame()
              })
 }
@@ -72,65 +80,65 @@ for (sp in species_list) {
 
     ## ── Extract frames from chipsrc ───────────────────────────────────────────
 
-    gene_info <- safe_query(db,
+    gene_info <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, i.symbol AS SYMBOL, i.gene_name AS GENENAME
          FROM genes g JOIN gene_info i ON g._id = i._id")
 
-    chrom <- safe_query(db,
+    chrom <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, c.chromosome AS CHROMOSOME
          FROM genes g JOIN chromosomes c ON g._id = c._id")
 
-    chrloc <- safe_query(db,
+    chrloc <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID,
                 cl.start_location AS CHRLOC,
                 cl.end_location   AS CHRLOCEND
          FROM genes g JOIN chromosome_locations cl ON g._id = cl._id")
 
-    map_loc <- safe_query(db,
+    map_loc <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, m.cytogenetic_location AS MAP
          FROM genes g JOIN cytogenetic_locations m ON g._id = m._id")
 
-    refseq <- safe_query(db,
+    refseq <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, r.accession AS REFSEQ
          FROM genes g JOIN refseq r ON g._id = r._id")
 
-    accnum <- safe_query(db,
+    accnum <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, a.accession AS ACCNUM
          FROM genes g JOIN accessions a ON g._id = a._id")
 
-    pubmed <- safe_query(db,
+    pubmed <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, p.pubmed_id AS PMID
          FROM genes g JOIN pubmed p ON g._id = p._id")
 
-    synonym <- safe_query(db,
+    synonym <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, s.symbol AS ALIAS
          FROM genes g JOIN gene_synonyms s ON g._id = s._id")
 
-    genetype <- safe_query(db,
+    genetype <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, t.gene_type AS GENETYPE
          FROM genes g JOIN genetype t ON g._id = t._id")
 
-    omim <- safe_query(db,
+    omim <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, o.omim_id AS OMIM
          FROM genes g JOIN omim o ON g._id = o._id")
 
-    ensembl <- safe_query(db,
+    ensembl <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, e.ensid AS ENSEMBL
          FROM genes g JOIN ensembl e ON g._id = e._id")
 
-    uniprot <- safe_query(db,
+    uniprot <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, u.uniprot_id AS UNIPROT
          FROM genes g JOIN uniprot u ON g._id = u._id")
 
-    path <- safe_query(db,
+    path <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, k.path_id AS PATH
          FROM genes g JOIN kegg k ON g._id = k._id")
 
-    enzyme <- safe_query(db,
+    enzyme <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, e.ec_number AS ENZYME
          FROM genes g JOIN ec e ON g._id = e._id")
 
-    ucsckg <- safe_query(db,
+    ucsckg <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, u.ucsc_id AS UCSCKG
          FROM genes g JOIN ucsc u ON g._id = u._id")
 
