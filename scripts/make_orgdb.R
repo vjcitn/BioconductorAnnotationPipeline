@@ -142,6 +142,12 @@ for (sp in species_list) {
     if (nrow(uniprot) > 0)  frames$uniprot  <- uniprot
     if (nrow(go_all)  > 0)  frames$go       <- go_all
 
+    ## Diagnostic: report frame dimensions and first column name
+    for (nm in names(frames)) {
+        cat(sprintf("  frame %-12s  nrow=%-7d  col1=%s\n",
+                    nm, nrow(frames[[nm]]), names(frames[[nm]])[1]))
+    }
+
     bioc_ver <- tryCatch(as.character(BiocManager::version()),
                          error = function(e) "3.20.0")
 
