@@ -206,10 +206,12 @@ for (sp in species_list) {
                     desc)
         writeLines(desc, desc_path)
 
-        ## Fix ORGANISM in the sqlite metadata table
+        ## Fix ORGANISM in the sqlite metadata table.
+        ## makeOrgPackage creates the sqlite read-only (mode 0444); chmod first.
         sqlite_path <- file.path(src_dir, "inst", "extdata",
                                  paste0(src_prefix, ".sqlite"))
         if (file.exists(sqlite_path)) {
+            Sys.chmod(sqlite_path, mode = "0644")
             conn <- dbConnect(SQLite(), sqlite_path)
             dbExecute(conn,
                 "UPDATE metadata SET value = ? WHERE name = 'ORGANISM'",
