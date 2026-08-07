@@ -17,10 +17,17 @@
 #echo "Pfam-A.part"
 #rm -f Pfam-A.part
 #grep "#=G[F,S]" Pfam-A.full  > Pfam-A.part
-echo "Pfam-A.GF And Pfam-A.GS"
+echo "Pfam-A.GF And Pfam-A.GS (streaming $(du -sh Pfam-A.full.gz | cut -f1) -- progress every 10M lines)"
 rm -f Pfam-A.GF
 rm -f Pfam-A.GS
-zcat Pfam-A.full.gz | awk '{if(/^#=GS/) print > "Pfam-A.GS"; else if(/^#=GF/) print > "Pfam-A.GF"}'
+zcat Pfam-A.full.gz | awk '
+    BEGIN { n = 0 }
+    { n++ }
+    n % 10000000 == 0 { print "  " n/1000000 " M lines processed" > "/dev/stderr" }
+    /^#=GS/ { print > "Pfam-A.GS"; next }
+    /^#=GF/ { print > "Pfam-A.GF" }
+    END { print "  Done: " n " lines total" > "/dev/stderr" }
+'
 #grep "#=GF" Pfam-A.full  > Pfam-A.GF
 # echo "Pfam-A.GS"
 # rm -f Pfam-A.GS
