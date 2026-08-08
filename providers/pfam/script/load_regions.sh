@@ -8,7 +8,9 @@ SQLITE="${1:?Usage: load_regions.sh <sqlite_path> <regions_gz_path>}"
 REGIONS="${2:?Usage: load_regions.sh <sqlite_path> <regions_gz_path>}"
 
 echo "Reading header from $(basename "$REGIONS") ..."
+set +o pipefail
 HEADER=$(zcat "$REGIONS" | head -1)
+set -o pipefail
 
 COL_UP=$(echo "$HEADER" | tr '\t' '\n' | grep -in "pfamseq_acc\|uniprot" | head -1 | cut -d: -f1)
 COL_PF=$(echo "$HEADER" | tr '\t' '\n' | grep -in "pfamA_acc\|pfam_acc" | head -1 | cut -d: -f1)
