@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Load Pfam-A.regions.uniprot.tsv.gz into PFAM.sqlite as the uniprot2pfam table.
+# Load Pfam-A.regions.tsv.gz into PFAM.sqlite as the uniprot2pfam table.
 # Detects column positions from the header so it is robust to column-order changes.
 # Usage: load_regions.sh <sqlite_path> <regions_gz_path>
 set -euo pipefail

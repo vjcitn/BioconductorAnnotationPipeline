@@ -68,20 +68,20 @@ $(DBDIR)/PFAM.sqlite: $(RAWDIR)/.parseids_done script/srcdb_pfam.sql
 	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCEDATE','$$(date +%Y-%b%d)');"
 
 # ── Regions TSV: UniProt → Pfam family mapping ───────────────────────────────
-# Pfam-A.regions.uniprot.tsv.gz is ~400 MB vs 24 GB for the full file and
+# Pfam-A.regions.tsv.gz is ~400 MB vs 24 GB for the full file and
 # directly provides the uniprot_id → pfam_id table needed for OrgDb assembly.
 
-$(RAWDIR)/Pfam-A.regions.uniprot.tsv.gz:
+$(RAWDIR)/Pfam-A.regions.tsv.gz:
 	mkdir -p $(RAWDIR)
-	$(CURL) --disable-epsv -o $@.tmp $(PFAMSOURCEURL)/Pfam-A.regions.uniprot.tsv.gz
+	$(CURL) --disable-epsv -o $@.tmp $(PFAMSOURCEURL)/Pfam-A.regions.tsv.gz
 	mv $@.tmp $@
 
-$(RAWDIR)/.regions_done: $(RAWDIR)/Pfam-A.regions.uniprot.tsv.gz \
+$(RAWDIR)/.regions_done: $(RAWDIR)/Pfam-A.regions.tsv.gz \
                           $(DBDIR)/PFAM.sqlite \
                           script/load_regions.sh
 	bash $(SCRIPTDIR)/load_regions.sh \
 	    $(DBDIR_ABS)/PFAM.sqlite \
-	    $(RAWDIR_ABS)/Pfam-A.regions.uniprot.tsv.gz
+	    $(RAWDIR_ABS)/Pfam-A.regions.tsv.gz
 	touch $@
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
