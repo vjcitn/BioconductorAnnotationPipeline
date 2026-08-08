@@ -142,5 +142,54 @@ case "$SPECIES" in
         ;;
 esac
 
+## ── UniProt enrichment (optional) ────────────────────────────────────────────
+## If db/uniprot.sqlite exists, replace the empty uniprot table (populated from
+## the refseq_uniprot stub) with direct gene→UniProt mappings, and add
+## ensembl_pro / ensembl_trs tables for ENSEMBLPROT / ENSEMBLTRANS columns.
+UNIPROTSRC="$DBDIR/uniprot.sqlite"
+if [ -f "$UNIPROTSRC" ]; then
+    echo "Enriching from uniprot.sqlite (taxid=$TAXID) ..."
+    sqlite3 -bail "$OUT_TMP" <<EOF
+ATTACH DATABASE '$UNIPROTSRC' AS up;
+
+-- Replace stub-populated uniprot table with direct gene→UniProt mapping
+DELETE FROM uniprot;
+INSERT OR IGNORE INTO uniprot (_id, uniprot_id)
+    SELECT DISTINCT g._id, u.uniprot_id
+    FROM genes g
+    JOIN up.gene2uniprot u ON g.gene_id = u.gene_id
+    WHERE u.taxon_id = '$TAXID';
+
+-- Ensembl protein IDs (via gene→UniProt→Ensembl_PRO)
+CREATE TABLE IF NOT EXISTS ensembl_pro (
+    _id    INTEGER REFERENCES genes(_id),
+    pro_id TEXT
+);
+INSERT OR IGNORE INTO ensembl_pro (_id, pro_id)
+    SELECT DISTINCT g._id, ep.ensembl_pro_id
+    FROM genes g
+    JOIN up.gene2uniprot u  ON g.gene_id = u.gene_id AND u.taxon_id = '$TAXID'
+    JOIN up.uniprot2ensembl_pro ep ON u.uniprot_id = ep.uniprot_id;
+CREATE INDEX IF NOT EXISTS ensembl_pro__id ON ensembl_pro(_id);
+
+-- Ensembl transcript IDs (via gene→UniProt→Ensembl_TRS)
+CREATE TABLE IF NOT EXISTS ensembl_trs (
+    _id    INTEGER REFERENCES genes(_id),
+    trs_id TEXT
+);
+INSERT OR IGNORE INTO ensembl_trs (_id, trs_id)
+    SELECT DISTINCT g._id, et.ensembl_trs_id
+    FROM genes g
+    JOIN up.gene2uniprot u  ON g.gene_id = u.gene_id AND u.taxon_id = '$TAXID'
+    JOIN up.uniprot2ensembl_trs et ON u.uniprot_id = et.uniprot_id;
+CREATE INDEX IF NOT EXISTS ensembl_trs__id ON ensembl_trs(_id);
+
+DETACH DATABASE up;
+EOF
+    echo "  uniprot rows:     $(sqlite3 "$OUT_TMP" 'SELECT count(*) FROM uniprot;')"
+    echo "  ensembl_pro rows: $(sqlite3 "$OUT_TMP" 'SELECT count(*) FROM ensembl_pro;')"
+    echo "  ensembl_trs rows: $(sqlite3 "$OUT_TMP" 'SELECT count(*) FROM ensembl_trs;')"
+fi
+
 mv "$OUT_TMP" "$OUT"
 echo "Done: $OUT ($(du -sh "$OUT" | cut -f1))"

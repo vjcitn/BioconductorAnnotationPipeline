@@ -56,9 +56,10 @@ download: _download_shared _download_ucsc _download_organism_specific
 
 .PHONY: _download_shared
 _download_shared:
-	$(MAKE) -C providers/gene download
-	$(MAKE) -C providers/go   download
-	$(MAKE) -C providers/pfam download
+	$(MAKE) -C providers/gene    download
+	$(MAKE) -C providers/go      download
+	$(MAKE) -C providers/pfam    download
+	$(MAKE) -C providers/uniprot download
 
 .PHONY: _download_ucsc
 _download_ucsc:
@@ -79,7 +80,11 @@ _download_organism_specific:
 # Builds db/chipsrc_<species>.sqlite from the provider SQLite files.
 # scripts/assemble_species.sh wraps the per-species SQL from organism_annotation/.
 
-db/chipsrc_%.sqlite: db/genesrc.sqlite db/gosrc.sqlite
+# uniprot.sqlite is optional; include as dependency only when it exists
+# so Make rebuilds chipsrc when the UniProt provider is first completed.
+UNIPROT_DEP := $(wildcard db/uniprot.sqlite)
+
+db/chipsrc_%.sqlite: db/genesrc.sqlite db/gosrc.sqlite $(UNIPROT_DEP)
 	@mkdir -p db
 	bash scripts/assemble_species.sh $*
 

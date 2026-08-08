@@ -148,6 +148,14 @@ for (sp in species_list) {
         "SELECT g.gene_id AS GID, e.ensid AS ENSEMBL
          FROM genes g JOIN ensembl e ON g._id = e._id")
 
+    ensembl_pro <- safe_query(db, sp = sp,
+        "SELECT g.gene_id AS GID, e.pro_id AS ENSEMBLPROT
+         FROM genes g JOIN ensembl_pro e ON g._id = e._id")
+
+    ensembl_trs <- safe_query(db, sp = sp,
+        "SELECT g.gene_id AS GID, e.trs_id AS ENSEMBLTRANS
+         FROM genes g JOIN ensembl_trs e ON g._id = e._id")
+
     uniprot <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, u.uniprot_id AS UNIPROT
          FROM genes g JOIN uniprot u ON g._id = u._id")
@@ -177,7 +185,9 @@ for (sp in species_list) {
     synonym   <- unique(synonym)
     genetype  <- unique(genetype)
     omim      <- unique(omim)
-    ensembl   <- unique(ensembl)
+    ensembl     <- unique(ensembl)
+    ensembl_pro <- unique(ensembl_pro)
+    ensembl_trs <- unique(ensembl_trs)
     uniprot   <- unique(uniprot)
     path      <- unique(path)
     enzyme    <- unique(enzyme)
@@ -196,15 +206,17 @@ for (sp in species_list) {
 
     ## Optional frames: include only if non-empty
     opt <- list(
-        map      = map_loc,
-        accnum   = accnum,
-        genetype = genetype,
-        omim     = omim,
-        ensembl  = ensembl,
-        uniprot  = uniprot,
-        path     = path,
-        enzyme   = enzyme,
-        ucsckg   = ucsckg
+        map         = map_loc,
+        accnum      = accnum,
+        genetype    = genetype,
+        omim        = omim,
+        ensembl     = ensembl,
+        ensembl_pro = ensembl_pro,
+        ensembl_trs = ensembl_trs,
+        uniprot     = uniprot,
+        path        = path,
+        enzyme      = enzyme,
+        ucsckg      = ucsckg
     )
     for (nm in names(opt)) {
         if (nrow(opt[[nm]]) > 0L) frames[[nm]] <- opt[[nm]]
