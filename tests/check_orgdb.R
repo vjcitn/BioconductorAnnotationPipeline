@@ -16,6 +16,7 @@
 ## Exit code 0 = all tests passed; non-zero = failures present.
 
 suppressPackageStartupMessages({
+    library(AnnotationDbi)
     library(DBI)
     library(RSQLite)
 })
@@ -146,30 +147,30 @@ n_chip_go <- dbGetQuery(chip,
 org_conn  <- tryCatch(AnnotationDbi::dbconn(org), error = function(e) NULL)
 
 cat("  querying package GO row count ...\n")
-n_pkg_go  <- if (!is.null(org_conn))
+n_pkg_go <- if (!is.null(org_conn)) {
     tryCatch(dbGetQuery(org_conn,
         "SELECT count(*) FROM (
            SELECT _id,go_id,evidence FROM go_bp
            UNION ALL SELECT _id,go_id,evidence FROM go_mf
            UNION ALL SELECT _id,go_id,evidence FROM go_cc)")[[1L]],
         error = function(e) -1L)
-else -1L
+} else { -1L }
 check_near("GO direct annotation rows match chipsrc", n_pkg_go, n_chip_go, tol = 0)
 
 cat("  querying GOALL row count ...\n")
-n_pkg_goall <- if (!is.null(org_conn))
+n_pkg_goall <- if (!is.null(org_conn)) {
     tryCatch(dbGetQuery(org_conn,
         "SELECT count(*) FROM (
            SELECT _id,go_id,evidence FROM go_bp_all
            UNION ALL SELECT _id,go_id,evidence FROM go_mf_all
            UNION ALL SELECT _id,go_id,evidence FROM go_cc_all)")[[1L]],
         error = function(e) 0L)
-else 0L
+} else { 0L }
 check("GOALL has more rows than GO (ancestors propagated)",
       n_pkg_goall > n_pkg_go)
 
 cat("  querying GO coverage ...\n")
-n_genes_with_go <- if (!is.null(org_conn))
+n_genes_with_go <- if (!is.null(org_conn)) {
     tryCatch({
         r <- dbGetQuery(org_conn,
             "SELECT count(DISTINCT _id) AS n FROM go_bp
@@ -177,7 +178,7 @@ n_genes_with_go <- if (!is.null(org_conn))
              UNION ALL SELECT count(DISTINCT _id) FROM go_cc")
         max(r$n)
     }, error = function(e) 0L)
-else 0L
+} else { 0L }
 pct_go <- round(100 * n_genes_with_go / max(n_pkg_genes, 1L))
 check(sprintf(">=20%% of genes have GO annotations (%d%%)", pct_go), pct_go >= 20L)
 
