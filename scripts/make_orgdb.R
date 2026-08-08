@@ -30,6 +30,7 @@ species_str <- get_arg("--species", args)
 config      <- get_arg("--config",  args, "config/species.tsv")
 dbpath      <- get_arg("--dbpath",  args, "db/")
 outdir      <- get_arg("--outdir",  args, "packages/orgdb/")
+cli_version <- get_arg("--version", args)
 
 if (is.null(species_str))
     stop("--species argument is required", call. = FALSE)
@@ -190,8 +191,9 @@ for (sp in species_list) {
 
     ## GO is handled post-hoc via SQL ATTACH (see below); do not pass here.
 
-    bioc_ver <- tryCatch(as.character(BiocManager::version()),
-                         error = function(e) "3.20.0")
+    if (is.null(cli_version))
+        stop("--version is required (e.g. --version 3.24.0)", call. = FALSE)
+    bioc_ver <- cli_version
 
     expected_pkg  <- paste0(row$pkg_prefix, ".db")
     full_organism <- paste(row$genus, row$species)

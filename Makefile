@@ -1,5 +1,6 @@
-SHELL   := /bin/bash
-CONFIG  := config/species.tsv
+SHELL        := /bin/bash
+CONFIG       := config/species.tsv
+BIOC_PKG_VERSION := 3.24.0
 
 # Set SPECIES=<name> to operate on one organism; default runs all 19.
 SPECIES ?= all
@@ -94,7 +95,8 @@ package: $(foreach sp,$(TARGET_SPECIES),db/chipsrc_$(sp).sqlite)
 	    --species "$(TARGET_SPECIES)" \
 	    --config  $(CONFIG) \
 	    --dbpath  db/ \
-	    --outdir  packages/orgdb/
+	    --outdir  packages/orgdb/ \
+	    --version $(BIOC_PKG_VERSION)
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
 .PHONY: clean clean-raw clean-db clean-packages
