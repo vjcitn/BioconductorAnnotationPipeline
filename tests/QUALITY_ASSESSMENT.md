@@ -1,0 +1,122 @@
+# Quality Assessment
+
+## How to run
+
+```sh
+make check SPECIES=human          # validate one species
+make check SPECIES="human mouse"  # validate several
+make check                        # validate all built species
+```
+
+The check target finds the most recent tarball in `packages/orgdb/` for each
+species, installs it to a temporary library, and runs `tests/check_orgdb.R`
+against it.
+
+---
+
+## What is tested
+
+### Layer 1 — Structural
+
+Verify the package loads and exposes the expected schema.
+
+| Check | What it catches |
+|---|---|
+| All required columns present in `columns()` | makeOrgPackage API change dropping a table; GO tables not injected |
+| `DBSCHEMA` is not `NOSCHEMA_DB` | metadata post-processing regression |
+| `CENTRALID` is `EG` (not `GID`) | metadata post-processing regression |
+| `EGSOURCEDATE` present | source provenance not copied from chipsrc |
+
+### Layer 2 — Count consistency (package vs chipsrc)
+
+The chipsrc SQLite is the ground truth — the package should faithfully represent
+it. These checks compare counts directly.
+
+| Check | Tolerance | What it catches |
+|---|---|---|
+| Gene count matches chipsrc exactly | 0 | Taxon filter failure; makeOrgPackage silently dropping genes |
+| GO direct annotation rows match chipsrc | 0 | GO injection failure; wrong chipsrc attached |
+| GOALL > GO row count | — | Ancestor propagation not run; go_bp_all tables empty |
+| ≥20% of genes have at least one GO annotation | — | GO provider failure; wrong taxid in assembly |
+
+### Layer 3 — Referential integrity
+
+Verify internal consistency of the chipsrc itself.
+
+| Check | What it catches |
+|---|---|
+| `go_bp`, `go_mf`, `go_cc`: no orphan `_id` values | Assembly SQL join failure introducing spurious gene IDs |
+| `chromosome_locations`: no orphan `_id` values | UCSC provider mismatch; wrong species data |
+| `uniprot`: no orphan `_id` values | UniProt enrichment step using wrong taxid |
+| `uniprot`: ≥30% of genes mapped (if non-empty) | Partial UniProt provider run; idmapping file truncated |
+| `TAXID` present in metadata | Assembly SQL misconfiguration |
+
+### Layer 4 — Spot checks (known landmark genes)
+
+A small set of well-characterised genes with known properties.
+Defined in `tests/known_genes.tsv`.
+
+| Check | What it catches |
+|---|---|
+| Symbol matches expected | Wrong organism data; gene ID mapping failure |
+| GENENAME contains expected substring | Gene info table corruption |
+| Expected UniProt accession present | UniProt provider producing wrong mappings |
+| Expected GO term present | GO annotation failure for specific gene |
+
+---
+
+## What is NOT tested
+
+| Gap | Reason | Possible future addition |
+|---|---|---|
+| **Currency of source data** | A 2-year-old cached download passes all tests | Compare EGSOURCEDATE in metadata to current NCBI date |
+| **Correctness of upstream data** | We trust NCBI, GO, UniProt | N/A — not our responsibility |
+| **Coverage gaps outside spot-checked genes** | We only verify ~3 genes per species | Random sample of 100 genes; compare symbol to genesrc |
+| **All 19 species** | Tests written for 9 species in known_genes.tsv | Add rows to known_genes.tsv as species are validated |
+| **Pfam/PROSITE columns** | Not yet populated; will test once assembly SQL is updated | Add spot checks for known domain-containing proteins |
+| **Chromosome-level correctness** | CHRLOC values not spot-checked | Verify TP53 location is on chromosome 17 |
+| **ENSEMBLPROT/ENSEMBLTRANS** | Depend on UniProt provider; not yet in known_genes.tsv | Add ENSP*/ENST* expected values for landmark genes |
+
+---
+
+## Results log
+
+Update this table after each build cycle.
+
+| Date | Species | BIOC_PKG_VERSION | Pass | Fail | Notes |
+|---|---|---|---|---|---|
+| — | — | — | — | — | No runs recorded yet |
+
+---
+
+## Adding new spot checks
+
+Edit `tests/known_genes.tsv`. Columns:
+
+| Column | Description |
+|---|---|
+| `species` | Must match `name` column in `config/species.tsv` |
+| `gene_id` | Entrez Gene ID |
+| `symbol` | Expected SYMBOL (exact match) |
+| `genename_contains` | Substring expected in GENENAME (case-insensitive) |
+| `uniprot` | Expected UniProt accession (checked if UNIPROT column present) |
+| `go_id` | GO term expected in GO column (e.g. `GO:0006915`) |
+
+Leave a field empty to skip that check for a gene.
+
+---
+
+## Known limitations and trade-offs
+
+**Count consistency at tolerance 0**: gene and GO row counts are checked for
+exact equality between the package and chipsrc. This is strict by design —
+any discrepancy indicates a real problem. If a future makeOrgPackage version
+deduplicates differently, this check will catch it and the tolerance may need
+adjustment with a documented reason.
+
+**20% GO coverage threshold**: chosen conservatively. Human is ~80%, even
+poorly-annotated organisms exceed 20%. If a species legitimately has low GO
+coverage (e.g. a novel organism), document the exception here.
+
+**30% UniProt coverage threshold**: human is ~90%, most model organisms >50%.
+Prokaryotes may fall below 30% — add species-specific overrides if needed.

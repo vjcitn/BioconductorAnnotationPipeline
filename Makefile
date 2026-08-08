@@ -103,6 +103,26 @@ package: $(foreach sp,$(TARGET_SPECIES),db/chipsrc_$(sp).sqlite)
 	    --outdir  packages/orgdb/ \
 	    --version $(BIOC_PKG_VERSION)
 
+# ── Check ─────────────────────────────────────────────────────────────────────
+# Validates a built OrgDb tarball against its chipsrc ground truth.
+# Requires SPECIES= and that the tarball already exists in packages/orgdb/.
+
+.PHONY: check
+check:
+	@for sp in $(TARGET_SPECIES); do \
+	    tarball=$$(ls packages/orgdb/$$(awk -v s=$$sp '$$1==s{print $$4}' $(CONFIG)).db_*.tar.gz 2>/dev/null | tail -1); \
+	    if [ -z "$$tarball" ]; then \
+	        echo "ERROR: no tarball found for $$sp — run 'make package SPECIES=$$sp' first"; \
+	        exit 1; \
+	    fi; \
+	    echo "Checking $$sp ($$tarball) ..."; \
+	    Rscript tests/check_orgdb.R \
+	        --species $$sp \
+	        --dbpath  db/ \
+	        --tarball $$tarball \
+	    || exit 1; \
+	done
+
 # ── Clean ─────────────────────────────────────────────────────────────────────
 .PHONY: clean clean-raw clean-db clean-packages
 
