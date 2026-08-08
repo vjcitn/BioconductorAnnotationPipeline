@@ -107,11 +107,22 @@ cat("\n--- 1. Structural checks ---\n")
 required_cols <- c("ENTREZID","SYMBOL","GENENAME","ALIAS","REFSEQ",
                    "GO","GOALL","EVIDENCE","EVIDENCEALL",
                    "ONTOLOGY","ONTOLOGYALL",
-                   "MAP","PMID","ACCNUM","GENETYPE")
+                   "PMID","ACCNUM","GENETYPE")
 pkg_cols <- tryCatch(columns(org), error = function(e) character(0))
 
 for (col in required_cols) {
     check(paste0("columns() contains ", col), col %in% pkg_cols)
+}
+
+## MAP (cytogenetic location) is species-specific — only check if chipsrc has it
+has_map <- tryCatch({
+    n <- dbGetQuery(chip, "SELECT count(*) FROM cytogenetic_locations")[[1L]]
+    n > 0L
+}, error = function(e) FALSE)
+if (has_map) {
+    check("columns() contains MAP", "MAP" %in% pkg_cols)
+} else {
+    cat("  NOTE  MAP skipped — no cytogenetic_locations in chipsrc for", sp, "\n")
 }
 
 ## Metadata
