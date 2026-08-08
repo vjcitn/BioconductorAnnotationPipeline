@@ -39,11 +39,31 @@ run_start    <- Sys.time()
 species_list <- strsplit(trimws(species_str), "\\s+")[[1]]
 cat("Building OrgDb packages for:", paste(species_list, collapse = ", "), "\n")
 
+## ── Pre-flight: check for output directory conflicts ──────────────────────────
+if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
+cfg_pre <- read.table(config, header = TRUE, sep = "\t",
+                      stringsAsFactors = FALSE, quote = "")
+conflicts <- vapply(species_list, function(sp) {
+    row <- cfg_pre[cfg_pre$name == sp, ]
+    if (nrow(row) == 0L) return("")
+    d <- file.path(normalizePath(outdir, mustWork = FALSE),
+                   paste0(row$pkg_prefix, ".db"))
+    if (dir.exists(d)) d else ""
+}, character(1))
+conflicts <- conflicts[nzchar(conflicts)]
+if (length(conflicts) > 0L) {
+    msg <- paste0(
+        "Package source director", if (length(conflicts) > 1) "ies" else "y",
+        " already exist. Remove before rebuilding:\n",
+        paste0("  rm -rf ", conflicts, collapse = "\n"), "\n",
+        paste0("  rm -f  ", conflicts, "_*.tar.gz", collapse = "\n")
+    )
+    stop(msg, call. = FALSE)
+}
+
 ## ── Read species config ───────────────────────────────────────────────────────
 cfg <- read.table(config, header = TRUE, sep = "\t", stringsAsFactors = FALSE,
                   quote = "")
-
-if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
 
 ## ── Helper: run a query, return empty frame on error ─────────────────────────
 ## "no such table" is expected for species-specific tables (omim is human-only,
@@ -208,16 +228,6 @@ for (sp in species_list) {
     abbrev       <- strsplit(row$pkg_prefix, "\\.")[[1L]][2L]
     genus_code   <- substring(abbrev, 1L, 1L)
     species_code <- substring(abbrev, 2L)
-
-    ## Refuse to overwrite an existing source directory — makeOrgPackage would
-    ## error anyway, and silent removal risks losing manual edits.
-    old_src <- file.path(normalizePath(outdir, mustWork = FALSE), expected_pkg)
-    if (dir.exists(old_src))
-        stop("Package source directory already exists: ", old_src,
-             "\nRemove it and its tarball before rebuilding:\n",
-             "  rm -rf ", old_src, "\n",
-             "  rm -f  ", old_src, "_*.tar.gz",
-             call. = FALSE)
 
     pre_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
 
