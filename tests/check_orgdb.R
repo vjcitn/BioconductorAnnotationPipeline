@@ -76,13 +76,15 @@ check_near <- function(label, got, expected, tol = 0.01) {
 }
 
 ## ── Install tarball to temp library ──────────────────────────────────────────
-cat("\n=== Installing", basename(tarball), "===\n")
+cat("\n=== Installing", basename(tarball), "(may take a minute for large SQLite) ===\n")
+t0 <- proc.time()
 tmp_lib <- tempfile("orgdb_check_lib")
 dir.create(tmp_lib)
 on.exit(unlink(tmp_lib, recursive = TRUE), add = TRUE)
 
 install.packages(tarball, lib = tmp_lib, repos = NULL, type = "source",
                  quiet = TRUE)
+cat(sprintf("  installed in %.0f s\n", (proc.time() - t0)[["elapsed"]]))
 
 pkg_name <- sub("_.*\\.tar\\.gz$", "", basename(tarball))
 suppressPackageStartupMessages(
@@ -92,6 +94,7 @@ org <- get(pkg_name)
 cat("Loaded:", pkg_name, "\n")
 
 ## ── Open chipsrc for ground-truth queries ─────────────────────────────────────
+cat("Opening chipsrc:", basename(chip_path), "\n")
 chip <- dbConnect(SQLite(), chip_path)
 on.exit(dbDisconnect(chip), add = TRUE)
 
@@ -127,19 +130,22 @@ check("EGSOURCEDATE is present",           nzchar(meta_val("EGSOURCEDATE") %||% 
 ## ── 2. COUNT CONSISTENCY ─────────────────────────────────────────────────────
 cat("\n--- 2. Count consistency (package vs chipsrc) ---\n")
 
-## Gene count
+cat("  querying chipsrc gene count ...\n")
 n_chip_genes <- dbGetQuery(chip, "SELECT count(*) FROM genes")[[1L]]
+cat("  querying package gene count ...\n")
 n_pkg_genes  <- tryCatch(length(keys(org, "ENTREZID")), error = function(e) -1L)
 check_near("gene count matches chipsrc", n_pkg_genes, n_chip_genes, tol = 0)
 
-## GO rows (direct annotations)
+cat("  querying chipsrc GO row count ...\n")
 n_chip_go <- dbGetQuery(chip,
     "SELECT count(*) FROM (
        SELECT _id,go_id,evidence FROM go_bp
        UNION ALL SELECT _id,go_id,evidence FROM go_mf
        UNION ALL SELECT _id,go_id,evidence FROM go_cc)")[[1L]]
-## GO rows in package sqlite
+
 org_conn  <- tryCatch(AnnotationDbi::dbconn(org), error = function(e) NULL)
+
+cat("  querying package GO row count ...\n")
 n_pkg_go  <- if (!is.null(org_conn))
     tryCatch(dbGetQuery(org_conn,
         "SELECT count(*) FROM (
@@ -150,7 +156,7 @@ n_pkg_go  <- if (!is.null(org_conn))
 else -1L
 check_near("GO direct annotation rows match chipsrc", n_pkg_go, n_chip_go, tol = 0)
 
-## GOALL should be larger than GO
+cat("  querying GOALL row count ...\n")
 n_pkg_goall <- if (!is.null(org_conn))
     tryCatch(dbGetQuery(org_conn,
         "SELECT count(*) FROM (
@@ -162,22 +168,22 @@ else 0L
 check("GOALL has more rows than GO (ancestors propagated)",
       n_pkg_goall > n_pkg_go)
 
-## Fraction of genes with at least one GO annotation
+cat("  querying GO coverage ...\n")
 n_genes_with_go <- if (!is.null(org_conn))
-    tryCatch(dbGetQuery(org_conn,
-        "SELECT count(DISTINCT _id) FROM go_bp
-         UNION SELECT count(DISTINCT _id) FROM go_mf
-         UNION SELECT count(DISTINCT _id) FROM go_cc") |>
-        max(),
-        error = function(e) 0L)
+    tryCatch({
+        r <- dbGetQuery(org_conn,
+            "SELECT count(DISTINCT _id) AS n FROM go_bp
+             UNION ALL SELECT count(DISTINCT _id) FROM go_mf
+             UNION ALL SELECT count(DISTINCT _id) FROM go_cc")
+        max(r$n)
+    }, error = function(e) 0L)
 else 0L
 pct_go <- round(100 * n_genes_with_go / max(n_pkg_genes, 1L))
 check(sprintf(">=20%% of genes have GO annotations (%d%%)", pct_go), pct_go >= 20L)
 
 ## ── 3. REFERENTIAL INTEGRITY ─────────────────────────────────────────────────
-cat("\n--- 3. Referential integrity ---\n")
-
-## Every _id in go_bp exists in genes
+cat("\n--- 3. Referential integrity (chipsrc) ---\n")
+cat("  checking go_bp orphans ...\n")
 orphan_go_bp <- tryCatch(
     dbGetQuery(chip,
         "SELECT count(*) FROM go_bp
