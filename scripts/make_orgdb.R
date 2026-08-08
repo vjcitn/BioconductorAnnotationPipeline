@@ -35,6 +35,7 @@ cli_version <- get_arg("--version", args)
 if (is.null(species_str))
     stop("--species argument is required", call. = FALSE)
 
+run_start    <- Sys.time()
 species_list <- strsplit(trimws(species_str), "\\s+")[[1]]
 cat("Building OrgDb packages for:", paste(species_list, collapse = ", "), "\n")
 
@@ -208,6 +209,16 @@ for (sp in species_list) {
     genus_code   <- substring(abbrev, 1L, 1L)
     species_code <- substring(abbrev, 2L)
 
+    ## Refuse to overwrite an existing source directory — makeOrgPackage would
+    ## error anyway, and silent removal risks losing manual edits.
+    old_src <- file.path(normalizePath(outdir, mustWork = FALSE), expected_pkg)
+    if (dir.exists(old_src))
+        stop("Package source directory already exists: ", old_src,
+             "\nRemove it and its tarball before rebuilding:\n",
+             "  rm -rf ", old_src, "\n",
+             "  rm -f  ", old_src, "_*.tar.gz",
+             call. = FALSE)
+
     pre_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
 
     tryCatch({
@@ -342,10 +353,12 @@ for (sp in species_list) {
     })
 }
 
-built <- list.files(outdir, pattern = "\\.tar\\.gz$")
+## Only report tarballs created during this run (not leftovers from prior builds)
+all_tarballs  <- list.files(outdir, pattern = "\\.tar\\.gz$", full.names = TRUE)
+built <- basename(all_tarballs[file.info(all_tarballs)$mtime >= run_start])
 if (length(built) > 0L) {
-    cat("\nOrgDb tarballs produced:\n")
+    cat("\nOrgDb tarballs produced this run:\n")
     cat(paste(" ", built, collapse = "\n"), "\n")
 } else {
-    stop("No tarballs were produced.", call. = FALSE)
+    stop("No tarballs were produced this run.", call. = FALSE)
 }
