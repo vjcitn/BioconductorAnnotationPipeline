@@ -17,7 +17,7 @@ CURL := curl --fail -L -C - --retry 3 --retry-delay 10
 .DELETE_ON_ERROR:
 
 .PHONY: all
-all: $(DBDIR)/PFAM.sqlite
+all: $(RAWDIR)/.regions_done
 
 # ── R dependency check ────────────────────────────────────────────────────────
 # parseIDs.R uses only base R; this confirms Rscript is callable.
@@ -66,6 +66,23 @@ $(DBDIR)/PFAM.sqlite: $(RAWDIR)/.parseids_done script/srcdb_pfam.sql
 	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCENAME','$(PFAMSOURCENAME)');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCEURL','$(PFAMSOURCEURL)');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCEDATE','$$(date +%Y-%b%d)');"
+
+# ── Regions TSV: UniProt → Pfam family mapping ───────────────────────────────
+# Pfam-A.regions.uniprot.tsv.gz is ~400 MB vs 24 GB for the full file and
+# directly provides the uniprot_id → pfam_id table needed for OrgDb assembly.
+
+$(RAWDIR)/Pfam-A.regions.uniprot.tsv.gz:
+	mkdir -p $(RAWDIR)
+	$(CURL) --disable-epsv -o $@.tmp $(PFAMSOURCEURL)/Pfam-A.regions.uniprot.tsv.gz
+	mv $@.tmp $@
+
+$(RAWDIR)/.regions_done: $(RAWDIR)/Pfam-A.regions.uniprot.tsv.gz \
+                          $(DBDIR)/PFAM.sqlite \
+                          script/load_regions.sh
+	bash $(SCRIPTDIR)/load_regions.sh \
+	    $(DBDIR_ABS)/PFAM.sqlite \
+	    $(RAWDIR_ABS)/Pfam-A.regions.uniprot.tsv.gz
+	touch $@
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
 .PHONY: clean clean-raw clean-db
