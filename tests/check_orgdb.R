@@ -141,6 +141,11 @@ if (is.null(org_conn))
     stop("Cannot open package sqlite connection — package did not load correctly",
          call. = FALSE)
 
+## Discover gene-ID column early so it's available for count and spot checks
+genes_pragma_early <- dbGetQuery(org_conn, "PRAGMA table_info(genes)")
+gene_id_col        <- genes_pragma_early$name[genes_pragma_early$name != "_id"][1L]
+cat("  package gene ID column:", gene_id_col, "\n")
+
 cat("  querying package gene count ...\n")
 n_pkg_genes <- tryCatch(
     dbGetQuery(org_conn, "SELECT count(*) FROM genes")[[1L]],
@@ -252,18 +257,7 @@ if (n_uniprot > 0L) {
 ## ── 4. SPOT CHECKS ───────────────────────────────────────────────────────────
 cat("\n--- 4. Spot checks (known landmark genes) ---\n")
 
-## Diagnostic: show actual table/column names in the package sqlite
-pkg_tables   <- dbListTables(org_conn)
-genes_pragma <- dbGetQuery(org_conn, "PRAGMA table_info(genes)")
-gi_pragma    <- dbGetQuery(org_conn, "PRAGMA table_info(gene_info)")
-cat("  pkg tables:", paste(head(sort(pkg_tables), 12), collapse=", "), "\n")
-cat("  genes cols:", paste(genes_pragma$name, collapse=", "), "\n")
-cat("  gene_info cols:", paste(gi_pragma$name, collapse=", "), "\n")
-## Probe gene 7157 directly
-probe <- tryCatch(
-    dbGetQuery(org_conn, "SELECT * FROM genes WHERE gene_id='7157' LIMIT 1"),
-    error = function(e) data.frame(result=conditionMessage(e)))
-cat("  genes probe for 7157:", paste(names(probe), unlist(probe[1,]), sep="=", collapse=" | "), "\n")
+cat("  using gene ID column:", gene_id_col, "\n")
 
 known_file <- "tests/known_genes.tsv"
 
@@ -282,18 +276,18 @@ if (file.exists(known_file)) {
 
             ## Symbol
             sym <- tryCatch(dbGetQuery(org_conn, sprintf(
-                "SELECT gi.symbol FROM genes g
+                "SELECT gi.SYMBOL FROM genes g
                  JOIN gene_info gi ON g._id = gi._id
-                 WHERE g.gene_id = '%s'", gid))[[1L]][1L],
+                 WHERE g.\"%s\" = '%s'", gene_id_col, gid))[[1L]][1L],
                 error = function(e) NA_character_)
             check(sprintf("gene %s SYMBOL == %s", gid, row$symbol),
                   isTRUE(sym == row$symbol))
 
             ## GENENAME contains expected substring
             gname <- tryCatch(dbGetQuery(org_conn, sprintf(
-                "SELECT gi.gene_name FROM genes g
+                "SELECT gi.GENENAME FROM genes g
                  JOIN gene_info gi ON g._id = gi._id
-                 WHERE g.gene_id = '%s'", gid))[[1L]][1L],
+                 WHERE g.\"%s\" = '%s'", gene_id_col, gid))[[1L]][1L],
                 error = function(e) NA_character_)
             check(sprintf("gene %s GENENAME contains '%s'", gid, row$genename_contains),
                   isTRUE(grepl(row$genename_contains, gname, ignore.case = TRUE)))
@@ -303,7 +297,7 @@ if (file.exists(known_file)) {
                 uni <- tryCatch(dbGetQuery(org_conn, sprintf(
                     "SELECT u.uniprot_id FROM genes g
                      JOIN uniprot u ON g._id = u._id
-                     WHERE g.gene_id = '%s'", gid))[[1L]],
+                     WHERE g.\"%s\" = '%s'", gene_id_col, gid))[[1L]],
                     error = function(e) character(0))
                 check(sprintf("gene %s has UniProt %s", gid, row$uniprot),
                       row$uniprot %in% uni)
@@ -311,19 +305,19 @@ if (file.exists(known_file)) {
 
             ## GO term present (check direct annotations only)
             if (nzchar(row$go_id %||% "")) {
+                id_sub <- sprintf(
+                    "(SELECT _id FROM genes WHERE \"%s\" = '%s')",
+                    gene_id_col, gid)
                 go_res <- tryCatch(dbGetQuery(org_conn, sprintf(
                     "SELECT go_id FROM go_bp
-                       WHERE _id = (SELECT _id FROM genes WHERE gene_id='%s')
-                         AND go_id = '%s'
+                       WHERE _id = %s AND go_id = '%s'
                      UNION
                      SELECT go_id FROM go_mf
-                       WHERE _id = (SELECT _id FROM genes WHERE gene_id='%s')
-                         AND go_id = '%s'
+                       WHERE _id = %s AND go_id = '%s'
                      UNION
                      SELECT go_id FROM go_cc
-                       WHERE _id = (SELECT _id FROM genes WHERE gene_id='%s')
-                         AND go_id = '%s'",
-                    gid, row$go_id, gid, row$go_id, gid, row$go_id))[[1L]],
+                       WHERE _id = %s AND go_id = '%s'",
+                    id_sub, row$go_id, id_sub, row$go_id, id_sub, row$go_id))[[1L]],
                     error = function(e) character(0))
                 check(sprintf("gene %s has GO term %s", gid, row$go_id),
                       row$go_id %in% go_res)
