@@ -295,7 +295,7 @@ if (file.exists(known_file)) {
             ## UniProt
             if (nzchar(row$uniprot %||% "")) {
                 uni <- tryCatch(dbGetQuery(org_conn, sprintf(
-                    "SELECT u.uniprot_id FROM genes g
+                    "SELECT u.UNIPROT FROM genes g
                      JOIN uniprot u ON g._id = u._id
                      WHERE g.\"%s\" = '%s'", gene_id_col, gid))[[1L]],
                     error = function(e) character(0))
