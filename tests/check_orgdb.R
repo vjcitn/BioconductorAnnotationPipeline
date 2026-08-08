@@ -98,11 +98,12 @@ on.exit(dbDisconnect(chip), add = TRUE)
 ## ── 1. STRUCTURAL CHECKS ─────────────────────────────────────────────────────
 cat("\n--- 1. Structural checks ---\n")
 
+## CHROMOSOME/CHRLOC/CHRLOCEND are in the package but not exposed via columns()
+## under the HUMAN_DB schema — they are accessed via eg.CHRLOC-style objects.
 required_cols <- c("ENTREZID","SYMBOL","GENENAME","ALIAS","REFSEQ",
                    "GO","GOALL","EVIDENCE","EVIDENCEALL",
                    "ONTOLOGY","ONTOLOGYALL",
-                   "CHROMOSOME","CHRLOC","CHRLOCEND","MAP",
-                   "PMID","ACCNUM","GENETYPE")
+                   "MAP","PMID","ACCNUM","GENETYPE")
 pkg_cols <- tryCatch(columns(org), error = function(e) character(0))
 
 for (col in required_cols) {
@@ -111,12 +112,12 @@ for (col in required_cols) {
 
 ## Metadata
 meta_val <- function(key) {
-    tryCatch(
-        AnnotationDbi::dbconn(org) |>
-            DBI::dbGetQuery(paste0("SELECT value FROM metadata WHERE name='", key, "'")) |>
-            `[[`(1L),
-        error = function(e) NA_character_
-    )
+    tryCatch({
+        conn <- AnnotationDbi::dbconn(org)
+        res  <- DBI::dbGetQuery(conn,
+            paste0("SELECT value FROM metadata WHERE name='", key, "'"))
+        res[[1L]]
+    }, error = function(e) NA_character_)
 }
 check("ORGANISM metadata is not empty",    nzchar(meta_val("ORGANISM") %||% ""))
 check("DBSCHEMA is not NOSCHEMA_DB",       meta_val("DBSCHEMA") != "NOSCHEMA_DB")
