@@ -286,6 +286,15 @@ for (sp in species_list) {
         Sys.chmod(sqlite_path, mode = "0644")
         conn <- dbConnect(SQLite(), sqlite_path)
 
+        ## makeOrgPackage stores the frame's first column name (GID) literally
+        ## in the genes table. AnnotationDbi's HUMAN_DB and related schemas
+        ## expect the column to be named gene_id for select()/keys() to work.
+        ## Rename immediately before any other operations touch the table.
+        gp <- dbGetQuery(conn, "PRAGMA table_info(genes)")
+        if ("GID" %in% gp$name) {
+            dbExecute(conn, "ALTER TABLE genes RENAME COLUMN GID TO gene_id")
+        }
+
         ## ── Fix metadata ──────────────────────────────────────────────────────
         ## 1. Copy source provenance rows from chipsrc (EGSOURCE*, GOSOURCE*,
         ##    KEGGSOURCE*, GPSOURCE*).  INSERT OR IGNORE skips any that already
