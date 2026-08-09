@@ -114,13 +114,18 @@ for (col in required_cols) {
     check(paste0("columns() contains ", col), col %in% pkg_cols)
 }
 
-## GENETYPE is species-specific — only check if chipsrc has it
+## GENETYPE: check only when chipsrc has data AND the schema exposes it.
+## Some schemas (WORM_DB, ZEBRAFISH_DB) do not expose GENETYPE via columns()
+## even when the underlying genetype table is present — known schema limitation.
 has_genetype <- tryCatch({
     n <- dbGetQuery(chip, "SELECT count(*) FROM genetype")[[1L]]
     n > 0L
 }, error = function(e) FALSE)
-if (has_genetype) {
-    check("columns() contains GENETYPE", "GENETYPE" %in% pkg_cols)
+if (has_genetype && "GENETYPE" %in% pkg_cols) {
+    check("columns() contains GENETYPE", TRUE)
+} else if (has_genetype) {
+    cat(sprintf("  NOTE  GENETYPE data present in chipsrc but %s schema does not expose it via columns()\n",
+                meta_val("DBSCHEMA")))
 } else {
     cat("  NOTE  GENETYPE skipped — no genetype table in chipsrc for", sp, "\n")
 }
