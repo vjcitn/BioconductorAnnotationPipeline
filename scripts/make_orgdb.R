@@ -217,16 +217,16 @@ for (sp in species_list) {
     ## with NCBI gene data)
     frames <- list(
         gene_info  = gene_info,
-        chromosome = chrom,
         refseq     = refseq,
         pubmed     = pubmed,
         synonym    = synonym
     )
 
     ## Optional frames: include only if non-empty.
-    ## chrloc comes from chromosome_locations (UCSC coordinates), which is not
-    ## assembled for all species — treat it as optional like the other UCSC data.
+    ## chromosome (CHR) and chrloc (CHRLOC) are absent for bacteria (ecoliK12,
+    ## ecoliSakai) and some non-model species — treat as optional.
     opt <- list(
+        chromosome  = chrom,
         chrloc      = chrloc,
         map         = map_loc,
         accnum      = accnum,
