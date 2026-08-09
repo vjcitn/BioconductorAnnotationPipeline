@@ -137,6 +137,8 @@ coverage (e.g. a novel organism), document the exception here.
 **30% UniProt coverage threshold**: human is ~90%, most model organisms >50%.
 Prokaryotes may fall below 30% — add species-specific overrides if needed.
 
+**GENETYPE column**: the `genetype` table is absent from some species chipsrc assemblies (e.g. zebrafish). Check is conditional on the table existing in chipsrc.
+
 **MAP column for mouse (and possibly other non-human species)**: The `map` table
 is present and populated in the mouse OrgDb sqlite (111,900 rows), but
 AnnotationDbi's `MOUSE_DB` schema does not expose it via `columns()`. Mouse
