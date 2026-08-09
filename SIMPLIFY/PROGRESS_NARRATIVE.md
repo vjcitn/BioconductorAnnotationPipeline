@@ -186,6 +186,16 @@ EBI Pfam FTP
 
 ---
 
+## CHR/CHRLOC/CHRLOCEND Deprecation (observed 2026-Aug)
+
+The previous `org.Hs.eg.db` distribution emits this warning when CHR/CHRLOC/CHRLOCEND are accessed:
+
+> Accessing gene location information via 'CHR','CHRLOC','CHRLOCEND' is deprecated. Please use a range based accessor like genes(), or select() with columns values like TXCHROM and TXSTART on a TxDb or OrganismDb object instead.
+
+This means the chromosome coordinate infrastructure in OrgDb (the `chromosomes` and `chromosome_locations` tables, the UCSC provider, and the NCBI gene2refseq workaround for pig/anopheles/xenopus) is legacy. The upstream recommendation is to use TxDb objects for all range-based queries. The columns are being kept in the current release for backwards compatibility but should not be treated as a high-value investment for future pipeline work. See `SIMPLIFICATION_PLAN.md` for fuller discussion.
+
+---
+
 ## UCSC Provider Gap Discovery (2026-Aug)
 
 While building packages for pig, anopheles, and xenopus, `makeOrgPackage` failed with "missing value where TRUE/FALSE needed". Root cause: the `chromosome_locations` table (CHRLOC/CHRLOCEND genomic coordinates) is absent from those species' chipsrc databases, even though the `chromosomes` table (chromosome names) is present.

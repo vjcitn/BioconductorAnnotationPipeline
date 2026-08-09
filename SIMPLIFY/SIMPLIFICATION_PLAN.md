@@ -222,6 +222,22 @@ Adding a new organism requires only: (1) one new row in `config/species.tsv`, (2
 
 ---
 
+## CHR/CHRLOC/CHRLOCEND Deprecation in AnnotationDbi
+
+As of current Bioconductor, the `CHR`, `CHRLOC`, and `CHRLOCEND` columns in OrgDb packages are deprecated:
+
+```
+Warning: Accessing gene location information via 'CHR','CHRLOC','CHRLOCEND' is
+  deprecated. Please use a range based accessor like genes(), or select() with
+  columns values like TXCHROM and TXSTART on a TxDb or OrganismDb object instead.
+```
+
+The replacement workflow uses **TxDb** (transcript database) objects, which provide range-based accessors (`genes()`, `transcripts()`, etc.) and are built from genome annotation files (GFF/GTF) independently of OrgDb. The pipeline currently produces OrgDb packages only; TxDb packages are out of scope (see Open Questions).
+
+**Implication for simplification**: The `chromosome_locations` table (CHRLOC/CHRLOCEND), the `chromosomes` table (CHR), and the associated UCSC provider infrastructure are all legacy. Downstream users should be migrated to TxDb. For the current release cycle, these columns are retained for backwards compatibility, but the UCSC provider complexity and the NCBI gene2refseq workaround for pig/anopheles/xenopus are solving a problem that is already scheduled for deprecation upstream. This should be weighed when deciding whether to invest further in UCSC provider reconstruction.
+
+---
+
 ## UCSC Provider Gap: Chromosome Coordinates for Pig, Anopheles, Xenopus
 
 ### What the UCSC provider does
