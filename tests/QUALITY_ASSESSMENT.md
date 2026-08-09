@@ -65,6 +65,21 @@ Defined in `tests/known_genes.tsv`.
 
 ---
 
+## Lessons learned during development
+
+| Issue | Root cause | Fix applied |
+|---|---|---|
+| `select()`/`keys()` failed with "no such column: gene_id" | makeOrgPackage stores the frame first column name (`GID`) literally in the genes table; AnnotationDbi HUMAN_DB schema expects `gene_id` | `make_orgdb.R` now renames `genes.GID → genes.gene_id` via `ALTER TABLE` immediately after opening the sqlite |
+| `columns()` shows `MAP` for human but not mouse | `cytogenetic_locations` table only populated for species that have cytogenetic band data (human yes, mouse no) | MAP check made conditional on `cytogenetic_locations` being non-empty in chipsrc |
+| UNIPROT spot check queried wrong column name (`uniprot_id`) | makeOrgPackage stores column names from frames as-is; frame column was `UNIPROT` not `uniprot_id` | Query updated to use `u.UNIPROT` |
+| GO coverage showed 1953100% | `keys()` was returning -1 (failure) so denominator became 1; fixed by querying package sqlite directly | Use `dbGetQuery(org_conn, "SELECT count(*) FROM genes")` instead of `keys()` |
+| TP53 GENENAME expected 'tumor suppressor' | Actual NCBI gene name is "tumor protein p53" | `known_genes.tsv` corrected to `tumor protein` |
+| `DBSCHEMA: NOSCHEMA_DB`, `CENTRALID: GID` in built packages | `goTable=NA` causes makeOrgPackage to write these defaults; abbreviated genus/species codes corrupt ORGANISM/SPECIES | `make_orgdb.R` post-processing corrects all four metadata entries |
+| UniProt coverage ~10% for human (not 30%) | Human NCBI gene set includes ~193k IDs (ncRNA, pseudogenes, etc.); only ~20k protein-coding genes have UniProt entries | Threshold lowered to 5%; 10% is correct and expected |
+| GO coverage threshold 20% too high | Same reason — many gene IDs are non-coding and have no GO annotations | Threshold lowered to 5% |
+
+---
+
 ## What is NOT tested
 
 | Gap | Reason | Possible future addition |
@@ -85,7 +100,8 @@ Update this table after each build cycle.
 
 | Date | Species | BIOC_PKG_VERSION | Pass | Fail | Notes |
 |---|---|---|---|---|---|
-| — | — | — | — | — | No runs recorded yet |
+| 2026-Aug-08 | human | 3.24.0 | 39 | 0 | First clean run after genes.GID→gene_id fix |
+| 2026-Aug-08 | mouse | 3.24.0 | 38 | 0 | MAP check skipped (no cytogenetic_locations for mouse) |
 
 ---
 
