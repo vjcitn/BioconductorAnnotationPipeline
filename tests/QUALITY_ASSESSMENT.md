@@ -106,14 +106,16 @@ Update this table after each build cycle.
 | 2026-Aug-09 | fly | 3.24.0 | 34 | 0 | clean |
 | 2026-Aug-09 | zebrafish | 3.24.0 | 32 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data) |
 | 2026-Aug-09 | worm | 3.24.0 | 32 | 0 | NOTE:GENETYPE(schema); NOTE:MAP(no data) |
-| 2026-Aug-09 | bovine | 3.24.0 | 29 | 0 | NOTE:MAP(schema); NOTE:spot-checks(none defined) |
-| 2026-Aug-09 | canine | 3.24.0 | 29 | 0 | NOTE:MAP(no data); NOTE:spot-checks(none defined) |
-| 2026-Aug-09 | chicken | 3.24.0 | 29 | 0 | NOTE:MAP(no data); NOTE:spot-checks(none defined) |
-| 2026-Aug-09 | chimp | 3.24.0 | 27 | 0 | NOTE:ALIAS(schema); NOTE:GENETYPE(no data); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
-| 2026-Aug-09 | pig | 3.24.0 | 29 | 0 | NOTE:MAP(schema); NOTE:spot-checks(none defined) |
-| 2026-Aug-09 | rhesus | 3.24.0 | 28 | 0 | NOTE:ALIAS(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | bovine | 3.24.0 | 33 | 0 | NOTE:MAP(schema) |
+| 2026-Aug-09 | canine | 3.24.0 | 33 | 0 | NOTE:MAP(no data) |
+| 2026-Aug-09 | chicken | 3.24.0 | 33 | 0 | NOTE:MAP(no data) |
+| 2026-Aug-09 | chimp | 3.24.0 | 31 | 0 | NOTE:ALIAS(schema); NOTE:GENETYPE(no data); NOTE:MAP(no data) |
+| 2026-Aug-09 | pig | 3.24.0 | 33 | 0 | NOTE:MAP(schema) |
+| 2026-Aug-09 | rhesus | 3.24.0 | 32 | 0 | NOTE:ALIAS(schema); NOTE:MAP(no data) |
 | 2026-Aug-09 | anopheles | 3.24.0 | 27 | 0 | NOTE:ALIAS(schema); NOTE:GENETYPE(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
 | 2026-Aug-09 | xenopus | 3.24.0 | 28 | 0 | NOTE:ALIAS(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | ecoliK12 | 3.24.0 | 26 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | ecoliSakai | 3.24.0 | 23 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data); NOTE:UniProt(not run); NOTE:spot-checks(none defined) |
 
 ---
 
@@ -150,6 +152,8 @@ coverage (e.g. a novel organism), document the exception here.
 Prokaryotes may fall below 30% — add species-specific overrides if needed.
 
 **GENETYPE column**: the `genetype` table is absent from some species chipsrc assemblies (e.g. zebrafish). Check is conditional on the table existing in chipsrc.
+
+**ecoliSakai GO annotations**: NCBI gene2go carries no GO annotations for *E. coli* O157:H7 Sakai (taxid 386585). The GO Consortium annotates K-12 but not pathogenic strains. The GOALL propagation and GO coverage checks are skipped for this species and a NOTE is emitted. The package builds correctly; it simply has no GO data.
 
 **Schema-level column gaps (ALIAS, MAP, GENETYPE)**: Several AnnotationDbi
 schemas omit table definitions that are present in the data, causing those
