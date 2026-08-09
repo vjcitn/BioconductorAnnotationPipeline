@@ -152,7 +152,13 @@ if [ -f "$UNIPROTSRC" ]; then
     sqlite3 -bail "$OUT_TMP" <<EOF
 ATTACH DATABASE '$UNIPROTSRC' AS up;
 
--- Replace stub-populated uniprot table with direct gene→UniProt mapping
+-- Replace stub-populated uniprot table with direct gene→UniProt mapping.
+-- Some species (e.g. ecoli) have no uniprot table in their assembly SQL;
+-- create it if absent so the enrichment step is safe for all species.
+CREATE TABLE IF NOT EXISTS uniprot (
+    _id       INTEGER REFERENCES genes(_id),
+    uniprot_id TEXT
+);
 DELETE FROM uniprot;
 INSERT OR IGNORE INTO uniprot (_id, uniprot_id)
     SELECT DISTINCT g._id, u.uniprot_id
