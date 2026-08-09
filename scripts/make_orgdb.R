@@ -192,10 +192,6 @@ for (sp in species_list) {
         "SELECT g.gene_id AS GID, u.ucsc_id AS UCSCKG
          FROM genes g JOIN ucsc u ON g._id = u._id")
 
-    pfam_annot <- safe_query(db, sp = sp,
-        "SELECT g.gene_id AS GID, p.pfam_id AS PFAM
-         FROM genes g JOIN pfam p ON g._id = p._id")
-
     dbDisconnect(db)
 
     ## Deduplicate all frames
@@ -216,7 +212,6 @@ for (sp in species_list) {
     path        <- unique(path)
     enzyme      <- unique(enzyme)
     ucsckg      <- unique(ucsckg)
-    pfam_annot  <- unique(pfam_annot)
 
     ## Core frames (always passed — non-empty by construction for any species
     ## with NCBI gene data)
@@ -243,8 +238,7 @@ for (sp in species_list) {
         uniprot     = uniprot,
         path        = path,
         enzyme      = enzyme,
-        ucsckg      = ucsckg,
-        pfam        = pfam_annot
+        ucsckg      = ucsckg
     )
     for (nm in names(opt)) {
         if (nrow(opt[[nm]]) > 0L) frames[[nm]] <- opt[[nm]]
@@ -387,6 +381,31 @@ for (sp in species_list) {
                 nr <- dbGetQuery(conn,
                     sprintf("SELECT count(*) FROM %s", tbl))[[1L]]
                 cat(sprintf("  %s: %d rows\n", tbl, nr))
+            }
+        }
+
+        ## ── Populate pfam table from chipsrc (if present) ─────────────────────
+        ## makeOrgPackage cannot create pfam correctly (schema expects _id +
+        ## pfam_id; HUMAN_DB schema requires that exact structure). Inject
+        ## post-hoc via ATTACH, same pattern as GO tables.
+        chip_tables <- dbGetQuery(conn,
+            "SELECT name FROM chip.sqlite_master WHERE type='table'")$name
+        if ("pfam" %in% chip_tables) {
+            n_pfam_src <- dbGetQuery(conn,
+                "SELECT count(*) FROM chip.pfam")[[1L]]
+            if (n_pfam_src > 0L) {
+                dbExecute(conn,
+                    "CREATE TABLE pfam (_id INTEGER, pfam_id TEXT)")
+                dbExecute(conn, sprintf(
+                    'INSERT INTO pfam
+                     SELECT og.rowid, c.pfam_id
+                     FROM genes og
+                     JOIN chip.genes cg ON og."%s" = cg.gene_id
+                     JOIN chip.pfam c ON cg._id = c._id',
+                    gene_col))
+                dbExecute(conn, "CREATE INDEX pfam__id ON pfam(_id)")
+                nr <- dbGetQuery(conn, "SELECT count(*) FROM pfam")[[1L]]
+                cat(sprintf("  pfam: %d rows\n", nr))
             }
         }
 
