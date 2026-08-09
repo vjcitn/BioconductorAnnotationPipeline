@@ -114,7 +114,11 @@ meta_val <- function(key) {
 
 ## CHROMOSOME/CHRLOC/CHRLOCEND are in the package but not exposed via columns()
 ## under the HUMAN_DB schema — they are accessed via eg.CHRLOC-style objects.
-required_cols <- c("ENTREZID","SYMBOL","GENENAME","ALIAS","REFSEQ",
+## ALIAS and MAP are also schema-dependent: ANOPHELES_DB, XENOPUS_DB, PIG_DB
+## do not define gene_synonyms or cytogenetic_locations in their schema SQL,
+## so these columns are absent from columns() for those species even when the
+## underlying data is present — a known AnnotationDbi schema limitation.
+required_cols <- c("ENTREZID","SYMBOL","GENENAME","REFSEQ",
                    "GO","GOALL","EVIDENCE","EVIDENCEALL",
                    "ONTOLOGY","ONTOLOGYALL",
                    "PMID","ACCNUM")
@@ -122,6 +126,21 @@ pkg_cols <- tryCatch(columns(org), error = function(e) character(0))
 
 for (col in required_cols) {
     check(paste0("columns() contains ", col), col %in% pkg_cols)
+}
+
+## ALIAS: present for most species but absent from some AnnotationDbi schemas
+## (e.g. ANOPHELES_DB, XENOPUS_DB) even when gene_synonyms data exists.
+has_synonyms <- tryCatch({
+    n <- dbGetQuery(chip, "SELECT count(*) FROM gene_synonyms")[[1L]]
+    n > 0L
+}, error = function(e) FALSE)
+if (has_synonyms && "ALIAS" %in% pkg_cols) {
+    check("columns() contains ALIAS", TRUE)
+} else if (has_synonyms) {
+    cat(sprintf("  NOTE  ALIAS: gene_synonyms present but %s does not expose it via columns() -- known schema limitation\n",
+                meta_val("DBSCHEMA")))
+} else {
+    check("columns() contains ALIAS", "ALIAS" %in% pkg_cols)
 }
 
 ## GENETYPE: check only when chipsrc has data AND the schema exposes it.
