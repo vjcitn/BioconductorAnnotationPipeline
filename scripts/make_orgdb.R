@@ -390,6 +390,7 @@ for (sp in species_list) {
         ## post-hoc via ATTACH, same pattern as GO tables.
         chip_tables <- dbGetQuery(conn,
             "SELECT name FROM chip.sqlite_master WHERE type='table'")$name
+        cat("  chipsrc tables:", paste(sort(chip_tables), collapse=", "), "\n")
         if ("pfam" %in% chip_tables) {
             n_pfam_src <- dbGetQuery(conn,
                 "SELECT count(*) FROM chip.pfam")[[1L]]
