@@ -14,8 +14,7 @@ suppressPackageStartupMessages(library(RSQLite))
 
 args <- commandArgs(trailingOnly = TRUE)
 
-root   <- normalizePath(file.path(dirname(sys.frame(1)$ofile), ".."),
-                        mustWork = FALSE)
+root   <- normalizePath(".", mustWork = FALSE)
 config <- read.delim(file.path(root, "config", "species.tsv"),
                      stringsAsFactors = FALSE)
 
