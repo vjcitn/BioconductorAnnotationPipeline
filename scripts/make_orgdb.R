@@ -103,7 +103,9 @@ for (sp in species_list) {
     ## ── Extract frames from chipsrc ───────────────────────────────────────────
 
     gene_info <- safe_query(db, sp = sp,
-        "SELECT g.gene_id AS GID, i.symbol AS SYMBOL, i.gene_name AS GENENAME
+        "SELECT g.gene_id AS GID,
+                i.symbol   AS SYMBOL,
+                COALESCE(i.gene_name, i.symbol) AS GENENAME
          FROM genes g JOIN gene_info i ON g._id = i._id")
 
     chrom <- safe_query(db, sp = sp,
