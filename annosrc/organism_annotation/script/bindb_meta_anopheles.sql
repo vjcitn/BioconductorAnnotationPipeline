@@ -12,9 +12,9 @@ INSERT INTO map_counts
  SELECT 'ACCNUM', count(DISTINCT _id)
  FROM accessions;
 
--- INSERT INTO map_counts
---  SELECT 'CHRLOC', count(DISTINCT _id)
---  FROM chromosome_locations;
+INSERT INTO map_counts
+ SELECT 'CHRLOC', count(DISTINCT _id)
+ FROM chromosome_locations;
 
 INSERT INTO map_counts
  SELECT 'CHR', count(DISTINCT _id)
@@ -110,9 +110,9 @@ INSERT INTO map_counts
  SELECT 'UNIPROT', count(DISTINCT _id)
  FROM uniprot;
 
--- INSERT INTO map_counts
---  SELECT 'CHRLOCEND', count(DISTINCT _id)
---  FROM chromosome_locations;
+INSERT INTO map_counts
+ SELECT 'CHRLOCEND', count(DISTINCT _id)
+ FROM chromosome_locations;
 
 
 INSERT INTO map_counts
@@ -137,12 +137,10 @@ INSERT INTO map_metadata
         m2.name='EGSOURCEURL' AND
         m3.name='EGSOURCEDATE';
 
--- INSERT INTO map_metadata
---  SELECT 'CHRLOC', m1.value, m2.value, m3.value
---  FROM metadata AS m1, metadata AS m2, metadata AS m3
---  WHERE m1.name='GPSOURCENAME' AND
---         m2.name='GPSOURCEURL' AND
---         m3.name='GPSOURCEDATE';
+INSERT INTO map_metadata
+ SELECT 'CHRLOC', source_name, source_url, source_date
+ FROM map_metadata
+ WHERE map_name='ACCNUM';
 
 INSERT INTO map_metadata
  SELECT 'CHR', source_name, source_url, source_date

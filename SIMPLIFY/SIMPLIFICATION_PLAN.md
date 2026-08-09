@@ -220,6 +220,36 @@ Adding a new organism requires only: (1) one new row in `config/species.tsv`, (2
 
 ---
 
+---
+
+## UCSC Provider Gap: Chromosome Coordinates for Pig, Anopheles, Xenopus
+
+### What the UCSC provider does
+
+`annosrc/ucsc/script/download.sh` rsyncs per-species flat files from UCSC (`refGene.txt.gz`, `chromInfo.txt.gz`, etc.) into `annosrc/ucsc/<species>/current/`. `getsrc.sh` then runs a per-species `srcdb_<species>.sql` to parse those files into a `gpsrc.sqlite`. Finally `getdb.sh` runs `bindb.sql` to merge all per-species `gpsrc.sqlite` files into `db/gpsrc.sqlite`, which the organism-level assembly SQL attaches as `gp`.
+
+### What is missing from the repo
+
+The `srcdb_*.sql` files — the scripts that parse UCSC flat files into per-species `gpsrc.sqlite` — are **absent from the repository for all species**. They existed on the original GentlemanLab build machine but were never committed. Without them, `gpsrc.sqlite` cannot be rebuilt for any species.
+
+### Per-species status
+
+| Species | UCSC assembly | `download.sh` entry | `bindb.sql` block | `chrloc` in chipsrc |
+|---|---|---|---|---|
+| Pig | `susScr11` | Yes (refGene + chromInfo) | Commented out entirely | Never built |
+| Anopheles | `anoGam3` | Yes (chromInfo only — no refGene) | Attached; `chrloc_anopheles` commented out | Never built |
+| Xenopus | — | Absent | Absent | Never built |
+
+Anopheles is harder than pig: UCSC's `anoGam3` build does not carry a `refGene` track (no RefSeq→Entrez bridge), so even with `srcdb_anopheles.sql` the coordinate mapping would require a different join strategy. Xenopus has no UCSC provider infrastructure at all.
+
+### Resolution adopted (2026-Aug)
+
+Rather than reconstruct the missing `srcdb_*.sql` files and extend UCSC coverage to these three species, the pipeline switches to **NCBI Gene as the coordinate source** for all species. NCBI's `gene_info` table already contains `chromosome` and `map_location` columns, and a companion file (`gene2refseq` / NCBI gene coordinates) provides strand-aware start/end positions via RefSeq alignments. This is more self-contained (no separate UCSC provider needed) and consistent across all organisms including those UCSC does not cover.
+
+The `chrloc` frame in `make_orgdb.R` is moved from core to optional so that packages build correctly for any species where the `chromosome_locations` table is absent from the chipsrc. Once the NCBI coordinate source is wired into the assembly SQL for pig/anopheles/xenopus, their `chromosome_locations` tables will be populated and `chrloc` will be included automatically.
+
+---
+
 ## Open Questions for Team Discussion
 
 1. **Should db0 packages remain a separate artifact?** `AnnotationForge::wrapBaseDBPackages()` requires them to be installed before `makeAnnDbPkg()` can run. We could encode this as a two-step `package` target (`make db0` then `make orgdb`) or keep them as one `package` target with an intermediate install step.

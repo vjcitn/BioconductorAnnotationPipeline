@@ -218,14 +218,16 @@ for (sp in species_list) {
     frames <- list(
         gene_info  = gene_info,
         chromosome = chrom,
-        chrloc     = chrloc,
         refseq     = refseq,
         pubmed     = pubmed,
         synonym    = synonym
     )
 
-    ## Optional frames: include only if non-empty
+    ## Optional frames: include only if non-empty.
+    ## chrloc comes from chromosome_locations (UCSC coordinates), which is not
+    ## assembled for all species — treat it as optional like the other UCSC data.
     opt <- list(
+        chrloc      = chrloc,
         map         = map_loc,
         accnum      = accnum,
         genetype    = genetype,

@@ -186,6 +186,23 @@ EBI Pfam FTP
 
 ---
 
+## UCSC Provider Gap Discovery (2026-Aug)
+
+While building packages for pig, anopheles, and xenopus, `makeOrgPackage` failed with "missing value where TRUE/FALSE needed". Root cause: the `chromosome_locations` table (CHRLOC/CHRLOCEND genomic coordinates) is absent from those species' chipsrc databases, even though the `chromosomes` table (chromosome names) is present.
+
+Investigation of the UCSC provider revealed:
+
+- The `srcdb_*.sql` files that parse UCSC flat files into per-species `gpsrc.sqlite` are absent from the repository entirely — they existed on the original build machine but were never committed. Without them, no UCSC provider rebuild is possible for any species.
+- Pig: `env.sh` and `download.sh` already have the necessary entries (`susScr11`, refGene + chromInfo), but the `bindb.sql` pig block is fully commented out.
+- Anopheles: `download.sh` only fetches `chromInfo.txt.gz` (no refGene track in anoGam3), so even with `srcdb_anopheles.sql` the Entrez coordinate bridge would require a non-standard join strategy.
+- Xenopus: not present in `download.sh` or `bindb.sql` at all.
+
+**Decision**: switch to NCBI Gene as the coordinate source for these species. NCBI `gene_info` already carries chromosome and map_location; a companion NCBI file provides strand-aware coordinates via RefSeq alignments. This is consistent across all organisms regardless of UCSC coverage. The `chrloc` frame was moved from core to optional in `make_orgdb.R` as an interim fix so packages build while the NCBI coordinate assembly SQL is being added.
+
+See `SIMPLIFICATION_PLAN.md` for the full per-species status table.
+
+---
+
 ## What Remains
 
 1. **UniProt provider** — downloads `idmapping_selected.tab.gz`; produces

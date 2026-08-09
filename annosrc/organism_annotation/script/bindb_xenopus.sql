@@ -239,6 +239,31 @@ INSERT INTO genetype
 
 CREATE INDEX c10 ON genetype(_id);
 
+-- chromosome_locations from NCBI gene2refseq (NC_* primary chromosomes only)
+-- Replaces the former UCSC gpsrc approach; no separate gpsrc.sqlite needed.
+CREATE TABLE chromosome_locations (
+ _id INTEGER REFERENCES genes(_id),
+ chromosome TEXT,
+ start_location INTEGER,
+ end_location INTEGER
+);
+
+INSERT INTO chromosome_locations
+ SELECT DISTINCT g._id,
+        gc.chromosome,
+        CASE WHEN r.orientation='+' THEN r.genomic_start ELSE (0-r.genomic_start) END,
+        CASE WHEN r.orientation='+' THEN r.genomic_end   ELSE (0-r.genomic_end)   END
+ FROM genes g
+ JOIN genesrc.gene2refseq r ON g.gene_id=r.gene_id
+ JOIN genesrc.gene_chromosome gc ON g.gene_id=gc.gene_id
+ WHERE r.tax_id='8355'
+   AND r.genomic_start != -1
+   AND r.genomic_dna_accession LIKE 'NC_%'
+   AND gc.chromosome != '-'
+ ORDER BY g._id;
+
+CREATE INDEX c19 ON chromosome_locations(_id);
+
 DETACH DATABASE genesrc;
  
 
@@ -378,28 +403,7 @@ CREATE INDEX c18 ON ec(_id);
 
 DETACH DATABASE kegg;
 
--- INSERT INTO metadata
---  SELECT * FROM gp.metadata_xenopus;
-
--- CREATE TABLE chromosome_locations (
---  _id INTEGER REFERENCES genes(_id),
---  chromosome TEXT,
---  start_location INTEGER,
---  end_location INTEGER
--- );
-
--- INSERT INTO chromosome_locations 
---  SELECT DISTINCT genes._id as _id, 
--- 	g.chrom,
--- 	g.start,
--- 	g.end
---  FROM genes, gp.chrloc_xenopus as g
---  WHERE genes.gene_id=g.gene_id
---  ORDER BY _id;
-
--- CREATE INDEX c19 ON chromosome_locations(_id);
-
--- DETACH DATABASE gp; 
+-- chromosome_locations now populated before DETACH DATABASE genesrc above.
 -- ATTACH DATABASE 'ipisrc.sqlite' as ipi;
 
 -- INSERT INTO metadata
