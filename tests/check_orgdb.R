@@ -230,24 +230,31 @@ n_pkg_goall <- if (!is.null(org_conn)) {
            UNION ALL SELECT _id,go_id,evidence FROM go_cc_all)")[[1L]],
         error = function(e) 0L)
 } else { 0L }
-check("GOALL has more rows than GO (ancestors propagated)",
-      n_pkg_goall > n_pkg_go)
+## When chipsrc has 0 GO rows the species simply has no GO annotations in
+## NCBI gene2go (e.g. ecoliSakai) — skip propagation and coverage checks.
+if (n_chip_go == 0L) {
+    cat("  NOTE  GO annotations absent in chipsrc for", sp,
+        "— GOALL and coverage checks skipped\n")
+} else {
+    check("GOALL has more rows than GO (ancestors propagated)",
+          n_pkg_goall > n_pkg_go)
 
-cat("  querying GO coverage ...\n")
-n_genes_with_go <- if (!is.null(org_conn)) {
-    tryCatch({
-        r <- dbGetQuery(org_conn,
-            "SELECT count(DISTINCT _id) AS n FROM go_bp
-             UNION ALL SELECT count(DISTINCT _id) FROM go_mf
-             UNION ALL SELECT count(DISTINCT _id) FROM go_cc")
-        max(r$n)
-    }, error = function(e) 0L)
-} else { 0L }
-## Use chipsrc gene count as safe denominator (pkg count may be -1 on error)
-denom  <- if (n_pkg_genes > 0L) n_pkg_genes else n_chip_genes
-pct_go <- round(100 * n_genes_with_go / max(denom, 1L))
-## 20% is too high for databases including ncRNA/pseudogene IDs; use 5%
-check(sprintf(">=5%% of genes have GO annotations (%d%%)", pct_go), pct_go >= 5L)
+    cat("  querying GO coverage ...\n")
+    n_genes_with_go <- if (!is.null(org_conn)) {
+        tryCatch({
+            r <- dbGetQuery(org_conn,
+                "SELECT count(DISTINCT _id) AS n FROM go_bp
+                 UNION ALL SELECT count(DISTINCT _id) FROM go_mf
+                 UNION ALL SELECT count(DISTINCT _id) FROM go_cc")
+            max(r$n)
+        }, error = function(e) 0L)
+    } else { 0L }
+    ## Use chipsrc gene count as safe denominator (pkg count may be -1 on error)
+    denom  <- if (n_pkg_genes > 0L) n_pkg_genes else n_chip_genes
+    pct_go <- round(100 * n_genes_with_go / max(denom, 1L))
+    ## 20% is too high for databases including ncRNA/pseudogene IDs; use 5%
+    check(sprintf(">=5%% of genes have GO annotations (%d%%)", pct_go), pct_go >= 5L)
+}
 
 ## ── 3. REFERENTIAL INTEGRITY ─────────────────────────────────────────────────
 cat("\n--- 3. Referential integrity (chipsrc) ---\n")
