@@ -8,3 +8,9 @@ rat	24842	Tp53	tumor protein p53	P10361	GO:0006915
 fly	2768677	p53	p53	Q9N6D8	GO:0006915
 zebrafish	30590	tp53	tumor protein p53	P79734	GO:0006915
 worm	172616	cep-1	cep-1	Q20646	GO:0008630
+bovine	281542	TP53	tumor protein	P67939	GO:0006915
+canine	403869	TP53	tumor protein	A0A8I3Q4A6	GO:0006915
+chicken	396200	TP53	tumor protein	P10360	GO:0006915
+chimp	455214	TP53	tumor protein	K7B1Z3	GO:0006915
+pig	397276	TP53	tumor protein	Q9TUB2	GO:0006915
+rhesus	716170	TP53	tumor protein	P56424	GO:0006915
