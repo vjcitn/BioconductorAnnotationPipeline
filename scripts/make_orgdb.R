@@ -39,26 +39,44 @@ run_start    <- Sys.time()
 species_list <- strsplit(trimws(species_str), "\\s+")[[1]]
 cat("Building OrgDb packages for:", paste(species_list, collapse = ", "), "\n")
 
-## ── Pre-flight: check for output directory conflicts ──────────────────────────
+## ── Pre-flight: check for completed builds (tarball exists) ──────────────────
+## A source directory without a tarball is a failed/partial build and is
+## cleaned up automatically. Only block if a tarball already exists, which
+## means a prior successful build — require explicit removal to protect it.
 if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
 cfg_pre <- read.table(config, header = TRUE, sep = "\t",
                       stringsAsFactors = FALSE, quote = "")
 conflicts <- vapply(species_list, function(sp) {
     row <- cfg_pre[cfg_pre$name == sp, ]
     if (nrow(row) == 0L) return("")
-    d <- file.path(normalizePath(outdir, mustWork = FALSE),
-                   paste0(row$pkg_prefix, ".db"))
-    if (dir.exists(d)) d else ""
+    pkg  <- paste0(row$pkg_prefix, ".db")
+    tarballs <- list.files(normalizePath(outdir, mustWork = FALSE),
+                           pattern = paste0("^", gsub("\\.", "\\\\.", pkg),
+                                            "_.*\\.tar\\.gz$"))
+    if (length(tarballs) > 0L) pkg else ""
 }, character(1))
 conflicts <- conflicts[nzchar(conflicts)]
+out_abs   <- normalizePath(outdir, mustWork = FALSE)
 if (length(conflicts) > 0L) {
-    msg <- paste0(
-        "Package source director", if (length(conflicts) > 1) "ies" else "y",
-        " already exist. Remove before rebuilding:\n",
-        paste0("  rm -rf ", conflicts, collapse = "\n"), "\n",
-        paste0("  rm -f  ", conflicts, "_*.tar.gz", collapse = "\n")
-    )
-    stop(msg, call. = FALSE)
+    ## Use message() line-by-line to avoid stop() truncating long paths
+    message("Completed tarball(s) already exist. Remove before rebuilding:")
+    for (pkg in conflicts) {
+        message("  rm -rf ", file.path(out_abs, pkg))
+        message("  rm -f  ", file.path(out_abs, pkg), "_*.tar.gz")
+    }
+    quit(status = 1L, save = "no")
+}
+## Remove any stale source directories from prior failed builds
+for (sp in species_list) {
+    row <- cfg_pre[cfg_pre$name == sp, ]
+    if (nrow(row) == 0L) next
+    stale <- file.path(normalizePath(outdir, mustWork = FALSE),
+                       paste0(row$pkg_prefix, ".db"))
+    if (dir.exists(stale)) {
+        message("Removing stale source directory from prior failed build: ",
+                basename(stale))
+        unlink(stale, recursive = TRUE)
+    }
 }
 
 ## ── Read species config ───────────────────────────────────────────────────────
