@@ -101,7 +101,7 @@ Update this table after each build cycle.
 | Date | Species | BIOC_PKG_VERSION | Pass | Fail | Notes |
 |---|---|---|---|---|---|
 | 2026-Aug-08 | human | 3.24.0 | 39 | 0 | First clean run after genes.GID→gene_id fix |
-| 2026-Aug-08 | mouse | 3.24.0 | 38 | 0 | MAP check skipped (no cytogenetic_locations for mouse) |
+| 2026-Aug-08 | mouse | 3.24.0 | 37 | 1 | MAP fails: table present but MOUSE_DB schema does not expose it — known expected failure |
 
 ---
 
@@ -136,3 +136,12 @@ coverage (e.g. a novel organism), document the exception here.
 
 **30% UniProt coverage threshold**: human is ~90%, most model organisms >50%.
 Prokaryotes may fall below 30% — add species-specific overrides if needed.
+
+**MAP column for mouse (and possibly other non-human species)**: The `map` table
+is present and populated in the mouse OrgDb sqlite (111,900 rows), but
+AnnotationDbi's `MOUSE_DB` schema does not expose it via `columns()`. Mouse
+cytogenetic notation also differs from human (`6 F3`, `11 81.43 cM` vs
+`19q13.43`). The MAP check **fails** for mouse and this is a known expected
+failure at this stage — not a pipeline error. Future work: investigate whether
+MOUSE_DB schema can be made to expose MAP, and whether mouse cytogenetic notation
+needs normalisation to be useful to end users.
