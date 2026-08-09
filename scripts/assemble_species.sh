@@ -197,5 +197,37 @@ EOF
     echo "  ensembl_trs rows: $(sqlite3 "$OUT_TMP" 'SELECT count(*) FROM ensembl_trs;')"
 fi
 
+## ── Pfam enrichment (optional) ───────────────────────────────────────────────
+## If db/PFAM.sqlite exists and the uniprot table is non-empty, populate a
+## pfam table via gene→UniProt→Pfam. Runs after UniProt enrichment so the
+## uniprot table is already fully populated.
+PFAMSRC="$DBDIR/PFAM.sqlite"
+if [ -f "$PFAMSRC" ]; then
+    n_uni=$(sqlite3 "$OUT_TMP" 'SELECT count(*) FROM uniprot;' 2>/dev/null || echo 0)
+    if [ "$n_uni" -gt 0 ]; then
+        echo "Adding Pfam annotations from PFAM.sqlite (via UniProt bridge) ..."
+        sqlite3 -bail "$OUT_TMP" <<EOF
+ATTACH DATABASE '$PFAMSRC' AS pfsrc;
+
+CREATE TABLE IF NOT EXISTS pfam (
+    _id     INTEGER REFERENCES genes(_id),
+    pfam_id TEXT
+);
+
+INSERT OR IGNORE INTO pfam (_id, pfam_id)
+    SELECT DISTINCT u._id, p.pfam_id
+    FROM uniprot u
+    JOIN pfsrc.uniprot2pfam p ON u.uniprot_id = p.uniprot_id;
+
+CREATE INDEX IF NOT EXISTS pfam__id ON pfam(_id);
+
+DETACH DATABASE pfsrc;
+EOF
+        echo "  pfam rows: $(sqlite3 "$OUT_TMP" 'SELECT count(*) FROM pfam;')"
+    else
+        echo "Pfam skipped — uniprot table empty for taxid=$TAXID"
+    fi
+fi
+
 mv "$OUT_TMP" "$OUT"
 echo "Done: $OUT ($(du -sh "$OUT" | cut -f1))"

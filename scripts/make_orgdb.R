@@ -192,6 +192,10 @@ for (sp in species_list) {
         "SELECT g.gene_id AS GID, u.ucsc_id AS UCSCKG
          FROM genes g JOIN ucsc u ON g._id = u._id")
 
+    pfam_annot <- safe_query(db, sp = sp,
+        "SELECT g.gene_id AS GID, p.pfam_id AS PFAM
+         FROM genes g JOIN pfam p ON g._id = p._id")
+
     dbDisconnect(db)
 
     ## Deduplicate all frames
@@ -208,10 +212,11 @@ for (sp in species_list) {
     ensembl     <- unique(ensembl)
     ensembl_pro <- unique(ensembl_pro)
     ensembl_trs <- unique(ensembl_trs)
-    uniprot   <- unique(uniprot)
-    path      <- unique(path)
-    enzyme    <- unique(enzyme)
-    ucsckg    <- unique(ucsckg)
+    uniprot     <- unique(uniprot)
+    path        <- unique(path)
+    enzyme      <- unique(enzyme)
+    ucsckg      <- unique(ucsckg)
+    pfam_annot  <- unique(pfam_annot)
 
     ## Core frames (always passed — non-empty by construction for any species
     ## with NCBI gene data)
@@ -238,7 +243,8 @@ for (sp in species_list) {
         uniprot     = uniprot,
         path        = path,
         enzyme      = enzyme,
-        ucsckg      = ucsckg
+        ucsckg      = ucsckg,
+        pfam        = pfam_annot
     )
     for (nm in names(opt)) {
         if (nrow(opt[[nm]]) > 0L) frames[[nm]] <- opt[[nm]]
