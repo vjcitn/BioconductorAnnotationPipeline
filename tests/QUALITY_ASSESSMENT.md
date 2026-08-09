@@ -100,8 +100,20 @@ Update this table after each build cycle.
 
 | Date | Species | BIOC_PKG_VERSION | Pass | Fail | Notes |
 |---|---|---|---|---|---|
-| 2026-Aug-08 | human | 3.24.0 | 39 | 0 | First clean run after genes.GID→gene_id fix |
-| 2026-Aug-08 | mouse | 3.24.0 | 37 | 1 | MAP fails: table present but MOUSE_DB schema does not expose it — known expected failure |
+| 2026-Aug-09 | human | 3.24.0 | 42 | 0 | clean |
+| 2026-Aug-09 | mouse | 3.24.0 | 37 | 0 | NOTE:MAP(schema) |
+| 2026-Aug-09 | rat | 3.24.0 | 33 | 0 | NOTE:MAP(no data) |
+| 2026-Aug-09 | fly | 3.24.0 | 34 | 0 | clean |
+| 2026-Aug-09 | zebrafish | 3.24.0 | 32 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data) |
+| 2026-Aug-09 | worm | 3.24.0 | 32 | 0 | NOTE:GENETYPE(schema); NOTE:MAP(no data) |
+| 2026-Aug-09 | bovine | 3.24.0 | 29 | 0 | NOTE:MAP(schema); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | canine | 3.24.0 | 29 | 0 | NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | chicken | 3.24.0 | 29 | 0 | NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | chimp | 3.24.0 | 27 | 0 | NOTE:ALIAS(schema); NOTE:GENETYPE(no data); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | pig | 3.24.0 | 29 | 0 | NOTE:MAP(schema); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | rhesus | 3.24.0 | 28 | 0 | NOTE:ALIAS(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | anopheles | 3.24.0 | 27 | 0 | NOTE:ALIAS(schema); NOTE:GENETYPE(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-09 | xenopus | 3.24.0 | 28 | 0 | NOTE:ALIAS(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
 
 ---
 
@@ -139,11 +151,17 @@ Prokaryotes may fall below 30% — add species-specific overrides if needed.
 
 **GENETYPE column**: the `genetype` table is absent from some species chipsrc assemblies (e.g. zebrafish). Check is conditional on the table existing in chipsrc.
 
-**MAP column for mouse (and possibly other non-human species)**: The `map` table
-is present and populated in the mouse OrgDb sqlite (111,900 rows), but
-AnnotationDbi's `MOUSE_DB` schema does not expose it via `columns()`. Mouse
-cytogenetic notation also differs from human (`6 F3`, `11 81.43 cM` vs
-`19q13.43`). The MAP check **fails** for mouse and this is a known expected
-failure at this stage — not a pipeline error. Future work: investigate whether
-MOUSE_DB schema can be made to expose MAP, and whether mouse cytogenetic notation
-needs normalisation to be useful to end users.
+**Schema-level column gaps (ALIAS, MAP, GENETYPE)**: Several AnnotationDbi
+schemas omit table definitions that are present in the data, causing those
+columns to be absent from `columns()` even when the underlying chipsrc table
+is populated. The check emits a NOTE rather than failing in these cases.
+Known instances as of Bioc 3.24:
+
+| Column | Species with schema gap |
+|---|---|
+| MAP | mouse, bovine, pig (schema gap); rat, canine, chicken, zebrafish, worm, chimp, rhesus, anopheles, xenopus (no cytogenetic data) |
+| ALIAS | chimp, rhesus, anopheles, xenopus (schema gap) |
+| GENETYPE | worm, anopheles (schema gap); zebrafish, chimp (no genetype data) |
+
+Mouse cytogenetic notation (`6 F3`, `11 81.43 cM`) also differs from human
+(`19q13.43`) and would need normalisation to be useful to end users.
