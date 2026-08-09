@@ -54,8 +54,20 @@ for (sp in species_list) {
         if (!is.null(row) && nrow(row) > 0) break
     }
 
+    ## Fallback: search by gene_name containing 'p53'
     if (is.null(row) || nrow(row) == 0) {
-        message("# ", sp, ": no TP53 orthologue found by symbol — try manual lookup")
+        row <- tryCatch(dbGetQuery(con,
+            "SELECT g.gene_id, i.symbol, i.gene_name
+             FROM genes g JOIN gene_info i ON g._id = i._id
+             WHERE lower(i.gene_name) LIKE '%p53%'
+               AND lower(i.gene_name) NOT LIKE '%hsp%'
+             ORDER BY CAST(g.gene_id AS INTEGER)
+             LIMIT 1"),
+            error = function(e) NULL)
+    }
+
+    if (is.null(row) || nrow(row) == 0) {
+        message("# ", sp, ": no TP53 orthologue found — try manual lookup")
         next
     }
 
@@ -70,14 +82,14 @@ for (sp in species_list) {
         sub("\\s+\\S+$", "", s)
     } else symbol
 
-    ## UniProt
+    ## UniProt — chipsrc table uses column name 'uniprot_id'
     uniprot <- tryCatch({
         r <- dbGetQuery(con,
-            sprintf("SELECT u.UNIPROT FROM genes g
+            sprintf("SELECT u.uniprot_id FROM genes g
                      JOIN uniprot u ON g._id = u._id
                      WHERE g.gene_id = '%s'
                      LIMIT 1", gene_id))
-        if (nrow(r) > 0) r$UNIPROT[1] else NA_character_
+        if (nrow(r) > 0) r$uniprot_id[1] else NA_character_
     }, error = function(e) NA_character_)
 
     ## GO term — prefer GO:0006915 (apoptotic process) if present
