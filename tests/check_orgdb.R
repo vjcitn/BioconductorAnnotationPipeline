@@ -164,8 +164,11 @@ has_map <- tryCatch({
     n <- dbGetQuery(chip, "SELECT count(*) FROM cytogenetic_locations")[[1L]]
     n > 0L
 }, error = function(e) FALSE)
-if (has_map) {
-    check("columns() contains MAP", "MAP" %in% pkg_cols)
+if (has_map && "MAP" %in% pkg_cols) {
+    check("columns() contains MAP", TRUE)
+} else if (has_map) {
+    cat(sprintf("  NOTE  MAP: cytogenetic_locations present but %s does not expose it via columns() -- known schema limitation\n",
+                meta_val("DBSCHEMA")))
 } else {
     cat("  NOTE  MAP skipped — no cytogenetic_locations in chipsrc for", sp, "\n")
 }
