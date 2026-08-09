@@ -1,10 +1,14 @@
 .echo ON
 
---1st we need to add a bit to the metadata table
-ATTACH DATABASE 'uniprot2go.sqlite' AS BL2GOsrc;
-
-INSERT INTO metadata
- SELECT * FROM BL2GOsrc.metadata;
+-- BL2GO (Blast2GO) is obsolete; GO annotations now come from NCBI
+-- gene2go via gosrc.sqlite. Stub out the BL2GO metadata entries using
+-- the GOEGSOURCE values already inserted by the main bindb script.
+INSERT OR IGNORE INTO metadata
+ SELECT 'BL2GOSOURCENAME', value FROM metadata WHERE name='GOEGSOURCENAME';
+INSERT OR IGNORE INTO metadata
+ SELECT 'BL2GOSOURCEURL', value FROM metadata WHERE name='GOEGSOURCEURL';
+INSERT OR IGNORE INTO metadata
+ SELECT 'BL2GOSOURCEDATE', value FROM metadata WHERE name='GOEGSOURCEDATE';
 
 CREATE TABLE map_counts (
  map_name TEXT,
