@@ -196,6 +196,9 @@ for (sp in species_list) {
 
     ## Deduplicate all frames
     gene_info <- unique(gene_info)
+    ## Transliterate non-ASCII in GENENAME (Greek letters etc. in yeast/arabidopsis)
+    if ("GENENAME" %in% names(gene_info))
+        gene_info$GENENAME <- iconv(gene_info$GENENAME, to = "ASCII//TRANSLIT", sub = "")
     chrom     <- unique(chrom)
     chrloc    <- unique(chrloc)
     map_loc   <- unique(map_loc)
