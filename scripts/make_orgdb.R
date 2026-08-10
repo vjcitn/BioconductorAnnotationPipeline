@@ -307,18 +307,20 @@ for (sp in species_list) {
                                     paste0(canonical_prefix, ".sqlite"))
             file.rename(old_sqlite, new_sqlite)
 
-            ## 2. Patch all R source files: replace both the package name
-            ##    ("org.Sc.eg.db") and the bare prefix ("org.Sc.eg") which
-            ##    appears in hardcoded sqlite filenames like "org.Sc.eg.sqlite".
+            ## 2. Patch all text files in the package (R/, NAMESPACE, man/,
+            ##    DESCRIPTION) — replace both the package name ("org.Sc.eg.db")
+            ##    and the bare prefix ("org.Sc.eg", appears in sqlite filename,
+            ##    exported symbol names, man page aliases, etc.).
             ##    Replace longer string first to avoid partial substitution.
-            r_dir <- file.path(src_dir, "R")
-            if (dir.exists(r_dir)) {
-                for (rf in list.files(r_dir, full.names = TRUE)) {
-                    txt <- readLines(rf, warn = FALSE)
-                    txt <- gsub(old_pkg_name, new_pkg_name,   txt, fixed = TRUE)
-                    txt <- gsub(src_prefix,   canonical_prefix, txt, fixed = TRUE)
-                    writeLines(txt, rf)
-                }
+            all_pkg_files <- list.files(src_dir, recursive = TRUE,
+                                        full.names = TRUE)
+            for (pf in all_pkg_files) {
+                if (file.info(pf)$isdir) next
+                txt <- tryCatch(readLines(pf, warn = FALSE), error = function(e) NULL)
+                if (is.null(txt)) next
+                txt2 <- gsub(old_pkg_name,  new_pkg_name,    txt, fixed = TRUE)
+                txt2 <- gsub(src_prefix,    canonical_prefix, txt2, fixed = TRUE)
+                if (!identical(txt, txt2)) writeLines(txt2, pf)
             }
 
             ## 3. Rename the package directory itself
