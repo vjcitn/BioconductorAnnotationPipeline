@@ -196,9 +196,15 @@ for (sp in species_list) {
 
     ## Deduplicate all frames
     gene_info <- unique(gene_info)
-    ## Transliterate non-ASCII in GENENAME (Greek letters etc. in yeast/arabidopsis)
-    if ("GENENAME" %in% names(gene_info))
-        gene_info$GENENAME <- iconv(gene_info$GENENAME, to = "ASCII//TRANSLIT", sub = "")
+    ## Yeast and arabidopsis gene names/synonyms contain non-ASCII characters
+    ## (Greek letters: alpha, beta, etc.) that fail on C-locale build servers.
+    if (sp %in% c("yeast", "arabidopsis")) {
+        to_ascii <- function(x) iconv(x, from = "", to = "ASCII", sub = "")
+        for (col in names(gene_info)[sapply(gene_info, is.character)])
+            gene_info[[col]] <- to_ascii(gene_info[[col]])
+        for (col in names(synonym)[sapply(synonym, is.character)])
+            synonym[[col]] <- to_ascii(synonym[[col]])
+    }
     chrom     <- unique(chrom)
     chrloc    <- unique(chrloc)
     map_loc   <- unique(map_loc)
