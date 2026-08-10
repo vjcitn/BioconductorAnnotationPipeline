@@ -297,13 +297,29 @@ for (sp in species_list) {
         canonical_prefix <- row$pkg_prefix          # e.g. "org.Sc.sgd"
         canonical_dir    <- file.path(outdir, paste0(canonical_prefix, ".db"))
         if (src_prefix != canonical_prefix) {
-            ## Rename the sqlite inside inst/extdata first
+            old_pkg_name <- paste0(src_prefix, ".db")   # "org.Sc.eg.db"
+            new_pkg_name <- paste0(canonical_prefix, ".db") # "org.Sc.sgd.db"
+
+            ## 1. Rename the sqlite inside inst/extdata
             old_sqlite <- file.path(src_dir, "inst", "extdata",
                                     paste0(src_prefix, ".sqlite"))
             new_sqlite <- file.path(src_dir, "inst", "extdata",
                                     paste0(canonical_prefix, ".sqlite"))
             file.rename(old_sqlite, new_sqlite)
-            ## Rename the package directory itself
+
+            ## 2. Patch all R source files that reference the old package name
+            r_dir <- file.path(src_dir, "R")
+            if (dir.exists(r_dir)) {
+                for (rf in list.files(r_dir, full.names = TRUE)) {
+                    txt <- readLines(rf, warn = FALSE)
+                    if (any(grepl(old_pkg_name, txt, fixed = TRUE))) {
+                        txt <- gsub(old_pkg_name, new_pkg_name, txt, fixed = TRUE)
+                        writeLines(txt, rf)
+                    }
+                }
+            }
+
+            ## 3. Rename the package directory itself
             file.rename(src_dir, canonical_dir)
             src_dir    <- canonical_dir
             src_prefix <- canonical_prefix
