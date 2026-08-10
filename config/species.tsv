@@ -15,6 +15,5 @@ pig	9823	susScr11	org.Ss.eg	PIG_DB	Sus	scrofa
 rhesus	9544	rheMac10	org.Mmu.eg	RHESUS_DB	Macaca	mulatta
 anopheles	7165	anoGam3	org.Ag.eg	ANOPHELES_DB	Anopheles	gambiae
 xenopus	8355	NA	org.Xl.eg	XENOPUS_DB	Xenopus	laevis
-malaria	5833	NA	org.Pf.plasmo	MALARIA_DB	Plasmodium	falciparum
 ecoliK12	511145	NA	org.EcK12.eg	ECOLI_DB	Escherichia	coli
 ecoliSakai	386585	NA	org.EcSakai.eg	ECOLI_DB	Escherichia	coli
