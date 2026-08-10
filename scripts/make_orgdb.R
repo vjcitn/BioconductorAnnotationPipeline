@@ -290,9 +290,32 @@ for (sp in species_list) {
         src_dir    <- new_dirs[1L]
         src_prefix <- sub("\\.db$", "", basename(src_dir))  # "org.Hs.eg"
 
+        ## makeOrgPackage always produces an .eg. name. For species whose
+        ## pkg_prefix ends in something other than .eg (e.g. org.Sc.sgd,
+        ## org.At.tair), rename the directory, SQLite, and DESCRIPTION to
+        ## match the canonical pkg_prefix name.
+        canonical_prefix <- row$pkg_prefix          # e.g. "org.Sc.sgd"
+        canonical_dir    <- file.path(outdir, paste0(canonical_prefix, ".db"))
+        if (src_prefix != canonical_prefix) {
+            ## Rename the sqlite inside inst/extdata first
+            old_sqlite <- file.path(src_dir, "inst", "extdata",
+                                    paste0(src_prefix, ".sqlite"))
+            new_sqlite <- file.path(src_dir, "inst", "extdata",
+                                    paste0(canonical_prefix, ".sqlite"))
+            file.rename(old_sqlite, new_sqlite)
+            ## Rename the package directory itself
+            file.rename(src_dir, canonical_dir)
+            src_dir    <- canonical_dir
+            src_prefix <- canonical_prefix
+            cat("  Renamed package to", basename(src_dir), "\n")
+        }
+
         ## Fix DESCRIPTION (abbreviated codes were used for naming)
         desc_path <- file.path(src_dir, "DESCRIPTION")
         desc <- readLines(desc_path, warn = FALSE)
+        desc <- sub("^Package:.*",
+                    paste0("Package: ", canonical_prefix, ".db"),
+                    desc)
         desc <- sub("^Title:.*",
                     paste0("Title: Genome wide annotation for ", full_organism),
                     desc)
