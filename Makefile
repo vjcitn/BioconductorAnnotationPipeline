@@ -104,6 +104,18 @@ package: $(foreach sp,$(TARGET_SPECIES),db/chipsrc_$(sp).sqlite)
 	    --outdir  packages/orgdb/ \
 	    --version $(BIOC_PKG_VERSION)
 
+# ── GO.db package ─────────────────────────────────────────────────────────────
+# Builds GO.db from db/GO.sqlite (produced by providers/go/).
+# Run `cd providers/go && make` first if db/GO.sqlite does not exist.
+
+.PHONY: godb
+godb: db/GO.sqlite
+	@mkdir -p packages/godb
+	Rscript scripts/make_godb.R \
+	    --input   db/GO.sqlite \
+	    --outdir  packages/godb/ \
+	    --version $(BIOC_PKG_VERSION)
+
 # ── Check ─────────────────────────────────────────────────────────────────────
 # Validates a built OrgDb tarball against its chipsrc ground truth.
 # Requires SPECIES= and that the tarball already exists in packages/orgdb/.
