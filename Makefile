@@ -109,8 +109,9 @@ package: $(foreach sp,$(TARGET_SPECIES),db/chipsrc_$(sp).sqlite)
 # Run `cd providers/go && make` first if db/GO.sqlite does not exist.
 
 .PHONY: godb
-godb: db/GO.sqlite
+godb:
 	@mkdir -p packages/godb
+	$(MAKE) -C providers/go $(abspath db/GO.sqlite)
 	Rscript scripts/make_godb.R \
 	    --input   db/GO.sqlite \
 	    --outdir  packages/godb/ \
