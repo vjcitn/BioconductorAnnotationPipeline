@@ -1,7 +1,8 @@
 .echo ON
 
--- DBSCHEMA for GO.db is fixed; no need to read from metadatasrc.sqlite.
+-- DBSCHEMA and DBSCHEMAVERSION for GO.db are fixed values.
 INSERT OR IGNORE INTO metadata VALUES ('DBSCHEMA', 'GO_DB');
+INSERT OR IGNORE INTO metadata VALUES ('DBSCHEMAVERSION', '2.1');
 
 ATTACH DATABASE 'genesrc.sqlite' AS genesrc;
 -- DROP TABLE IF EXISTS go_gene;
