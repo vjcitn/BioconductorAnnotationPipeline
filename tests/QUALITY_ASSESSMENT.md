@@ -100,22 +100,22 @@ Update this table after each build cycle.
 
 | Date | Species | BIOC_PKG_VERSION | Pass | Fail | Notes |
 |---|---|---|---|---|---|
-| 2026-Aug-09 | human | 3.24.0 | 42 | 0 | clean |
-| 2026-Aug-09 | mouse | 3.24.0 | 37 | 0 | NOTE:MAP(schema) |
-| 2026-Aug-09 | rat | 3.24.0 | 33 | 0 | NOTE:MAP(no data) |
-| 2026-Aug-09 | fly | 3.24.0 | 34 | 0 | clean |
-| 2026-Aug-09 | zebrafish | 3.24.0 | 32 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data) |
-| 2026-Aug-09 | worm | 3.24.0 | 32 | 0 | NOTE:GENETYPE(schema); NOTE:MAP(no data) |
-| 2026-Aug-09 | bovine | 3.24.0 | 33 | 0 | NOTE:MAP(schema) |
-| 2026-Aug-09 | canine | 3.24.0 | 33 | 0 | NOTE:MAP(no data) |
-| 2026-Aug-09 | chicken | 3.24.0 | 33 | 0 | NOTE:MAP(no data) |
-| 2026-Aug-09 | chimp | 3.24.0 | 31 | 0 | NOTE:ALIAS(schema); NOTE:GENETYPE(no data); NOTE:MAP(no data) |
-| 2026-Aug-09 | pig | 3.24.0 | 33 | 0 | NOTE:MAP(schema) |
-| 2026-Aug-09 | rhesus | 3.24.0 | 32 | 0 | NOTE:ALIAS(schema); NOTE:MAP(no data) |
-| 2026-Aug-09 | anopheles | 3.24.0 | 27 | 0 | NOTE:ALIAS(schema); NOTE:GENETYPE(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
-| 2026-Aug-09 | xenopus | 3.24.0 | 28 | 0 | NOTE:ALIAS(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
-| 2026-Aug-09 | ecoliK12 | 3.24.0 | 26 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
-| 2026-Aug-09 | ecoliSakai | 3.24.0 | 23 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data); NOTE:UniProt(not run); NOTE:spot-checks(none defined) |
+| 2026-Aug-11 | human | 3.24.0 | 42 | 0 | clean |
+| 2026-Aug-11 | mouse | 3.24.0 | 37 | 0 | NOTE:MAP(schema) |
+| 2026-Aug-11 | rat | 3.24.0 | 33 | 0 | NOTE:MAP(no data) |
+| 2026-Aug-11 | fly | 3.24.0 | 34 | 0 | clean |
+| 2026-Aug-11 | zebrafish | 3.24.0 | 32 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data) |
+| 2026-Aug-11 | worm | 3.24.0 | 32 | 0 | NOTE:GENETYPE(schema); NOTE:MAP(no data) |
+| 2026-Aug-11 | bovine | 3.24.0 | 33 | 0 | NOTE:MAP(schema) |
+| 2026-Aug-11 | canine | 3.24.0 | 33 | 0 | NOTE:MAP(no data) |
+| 2026-Aug-11 | chicken | 3.24.0 | 33 | 0 | NOTE:MAP(no data) |
+| 2026-Aug-11 | chimp | 3.24.0 | 31 | 0 | NOTE:ALIAS(schema); NOTE:GENETYPE(no data); NOTE:MAP(no data) |
+| 2026-Aug-11 | pig | 3.24.0 | 33 | 0 | NOTE:MAP(schema) |
+| 2026-Aug-11 | rhesus | 3.24.0 | 32 | 0 | NOTE:ALIAS(schema); NOTE:MAP(no data) |
+| 2026-Aug-11 | anopheles | 3.24.0 | 27 | 0 | NOTE:ALIAS(schema); NOTE:GENETYPE(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-11 | xenopus | 3.24.0 | 28 | 0 | NOTE:ALIAS(schema); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-11 | ecoliK12 | 3.24.0 | 26 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data); NOTE:spot-checks(none defined) |
+| 2026-Aug-11 | ecoliSakai | 3.24.0 | 23 | 0 | NOTE:GENETYPE(no data); NOTE:MAP(no data); NOTE:UniProt(not run); NOTE:spot-checks(none defined) |
 
 ---
 
