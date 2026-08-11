@@ -111,7 +111,7 @@ package: $(foreach sp,$(TARGET_SPECIES),db/chipsrc_$(sp).sqlite)
 .PHONY: godb
 godb:
 	@mkdir -p packages/godb
-	$(MAKE) -C providers/go $(abspath db/GO.sqlite)
+	$(MAKE) -C providers/go go-sqlite
 	Rscript scripts/make_godb.R \
 	    --input   db/GO.sqlite \
 	    --outdir  packages/godb/ \

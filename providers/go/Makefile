@@ -110,6 +110,11 @@ $(DBDIR)/gosrc.sqlite: $(DBDIR)/GO_ORGANISM_SPEC.sqlite script/bindb3.sql
 	mv $@.tmp $@
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
+## Named convenience target so the top-level Makefile can call
+## $(MAKE) -C providers/go go-sqlite without needing to resolve paths.
+.PHONY: go-sqlite
+go-sqlite: $(DBDIR)/GO.sqlite
+
 .PHONY: clean clean-raw clean-db
 
 clean-raw:
