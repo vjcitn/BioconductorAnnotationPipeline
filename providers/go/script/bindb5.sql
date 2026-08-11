@@ -1,9 +1,7 @@
 .echo ON
 
-ATTACH DATABASE 'metadatasrc.sqlite' AS metadatasrc;
-INSERT INTO metadata
- SELECT "DBSCHEMA", db_schema FROM metadatasrc.metadata WHERE package_name="GO"; 
-DETACH DATABASE metadatasrc;
+-- DBSCHEMA for GO.db is fixed; no need to read from metadatasrc.sqlite.
+INSERT OR IGNORE INTO metadata VALUES ('DBSCHEMA', 'GO_DB');
 
 ATTACH DATABASE 'genesrc.sqlite' AS genesrc;
 -- DROP TABLE IF EXISTS go_gene;
