@@ -157,25 +157,78 @@ a synthetic `chipsrc_human.sqlite` (both the "enrichment ran" and
 yet run against a real build (no local `DATA_ROOT` data; needs validation
 on the build server next).
 
-### 2. Build a minimal "db0" wrapper
-Not a real intermediate R package — just the bare metadata `AnnDbPkgSeed`
-needs:
-```r
-seed <- new("AnnDbPkgSeed",
-  Package      = "org.Hs.eg.db",
-  Version      = bioc_ver,
-  Author       = ..., Maintainer = ...,
-  PkgTemplate  = "NCBIORG.DB",
-  DBschema     = "HUMAN_DB",
-  AnnObjPrefix = "org.Hs.eg",
-  organism     = "Homo sapiens",
-  species      = "Human",
-  biocViews    = "annotation")
-makeAnnDbPkg(seed, dbfile = "<path>/org.Hs.eg.sqlite", dest_dir = outdir)
-```
-`dbfile`'s basename **must** equal `<AnnObjPrefix>.sqlite` exactly
-(`makeAnnDbPkg` hard-stops otherwise) — need to rename/copy the conformant
-sqlite from Milestone 1 to match.
+### 2. Build a minimal "db0" wrapper — DONE (`scripts/make_db0_pkg.R`)
+New standalone script `scripts/make_db0_pkg.R --species human --config
+config/species.tsv --dbpath db/ --outdir packages/orgdb/ --version 3.24.0`
+stages a renamed copy of `db0_<species>.sqlite` (basename must equal
+`<AnnObjPrefix>.sqlite` exactly — `makeAnnDbPkg()` hard-stops otherwise)
+and calls `makeAnnDbPkg()` with an `AnnDbPkgSeed` pointed at the
+`NCBIORG.DB` template. Not yet wired into the Makefile's `package` target
+or `make_orgdb.R` (Milestone 3).
+
+Getting an actual package to build and load correctly surfaced several
+more undocumented requirements beyond what Milestone 1 anticipated — all
+now handled by `make_db0.sh`, since they're schema-level facts about the
+sqlite, not packaging-script details:
+- A `metadata` row `'Db type'` = `'OrgDb'` — `.makeAnnDbPkg()` reads this
+  directly (not via `initWithDbMetada()`) to decide whether to resolve a
+  ChipDb's org-package dependency; missing/empty crashes with "argument is
+  of length zero" before any other error reporting.
+- `map_metadata` rows for `ALIAS2EG`, `ENSEMBLPROT`, `ENSEMBLTRANS` — **a
+  real gap in `bindb_meta.sql`**, not a synthetic-test artifact: it
+  populates `ALIAS2GENE` (not `ALIAS2EG`) and never touches
+  `ENSEMBLPROT`/`ENSEMBLTRANS` at all, so man-page generation for the real
+  `chipsrc_human.sqlite` would hit the same `cpSubsCon` "UNRESOLVED
+  SYMBOLS: @ALIAS2EGSOURCE@" crash this plan's testing hit. Backfilled by
+  copying source provenance from `ACCNUM`/`ENSEMBL` respectively, the same
+  pattern `bindb_meta.sql` already uses for `OMIM`/`UCSCKG`.
+- `metadata` rows `DBSCHEMAVERSION` (`'2.1'`), `'Supporting package'`
+  (`'AnnotationDbi'`), and `TAXID` (from `config/species.tsv`) — not
+  checked by `makeAnnDbPkg()` itself but required by the *built package's*
+  `.onLoad()` (`dbmeta(dbconn, "DBSCHEMAVERSION")`), so their absence only
+  surfaces when `R CMD INSTALL`ing and loading the result, not at build
+  time.
+- `metadata` rows `ORGANISM`/`SPECIES`/`CENTRALID` — the single biggest
+  find. `AnnotationDbi::species()` reads `ORGANISM` straight from the
+  sqlite's `metadata` table at *query* time; `makeAnnDbPkg()` never writes
+  it there itself (the `AnnDbPkgSeed`'s `organism`/`species` slots only
+  drive man-page text). Without it, `species(x)` silently returns
+  `character(0)`, which starves `.definePossibleTables()`'s per-organism
+  exception block — every organism-specific keytype (`ENSEMBL`, `PFAM`,
+  `OMIM`, `UCSCKG`, ...) vanishes from `keytypes()`/`columns()` even though
+  the corresponding legacy Bimap objects exist and work fine. This is why
+  the "Why" table's per-keytype comparison must be re-validated against a
+  *loaded* package, not just a built one — the build step and the load
+  step check different, non-overlapping subsets of the metadata contract.
+  `AnnDbPkgSeed@species` must also match the sqlite's `SPECIES` value
+  exactly (`initWithDbMetada()` hard-stops on mismatch) — it wants the
+  capitalized common name (`"Human"`), not the binomial.
+- `go`/`go_all` views — resolves the "GO is special" open question
+  empirically (see below).
+
+End-to-end validated: built the synthetic `db0_human.sqlite` → package →
+`R CMD INSTALL` → `library(org.Hs.eg.db)` → confirmed both the legacy
+Bimap suite (`org.Hs.egSYMBOL`, `org.Hs.egALIAS2EG`, `org.Hs.egENSEMBL`,
+`org.Hs.egGO`, `org.Hs.egPFAM`, `org.Hs.egUCSCKG`, `org.Hs.egOMIM` all
+exist and query correctly) and the modern API
+(`keys(org.Hs.eg.db, keytype="ENSEMBL"/"PFAM"/"IPI"/"GOALL")` and
+`select(..., columns="ENSEMBL")` all succeed) — i.e. **both of the
+originally-diagnosed bugs are fixed**, against synthetic data. Real-data
+validation on the build server is the next step before calling Milestones
+1–2 fully proven.
+
+### GO is special — resolved empirically
+The modern bare-`OrgDb` dispatch for `GOALL` does fall through to the
+generic `.definePossibleTables()` literal-table lookup exactly as
+predicted: `keys(x, keytype="GOALL")` failed with `"no such table:
+go_all"` until `make_db0.sh` added `go`/`go_all` views (`UNION ALL` across
+the ontology-split tables, with a literal `ontology` column). Also
+confirmed: legacy `org.Hs.egGOALL` does **not** exist as a Bimap even
+after `makeAnnDbPkg()` runs — `NCBIORG.DB`'s template has no `GOALL.Rd`,
+matching production `org.*.eg.db` packages, where `GOALL` has always been
+select()-only. `GO` itself works via both paths without the view (Bimap
+first), but the view is harmless and was added for both names for
+consistency/future-proofing.
 
 ### 3. Rewrite `scripts/make_orgdb.R`'s packaging step
 Replace the `makeOrgPackage()` call (lines ~277-290) with: (a) the existing

@@ -21,6 +21,7 @@ SPECIES="${1:?Usage: make_db0.sh <species>}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATA_ROOT="${DATA_ROOT:-$ROOT/data}"
 DBDIR="$DATA_ROOT/db"
+CONFIG="${CONFIG:-$ROOT/config/species.tsv}"
 
 SRC="$DBDIR/chipsrc_${SPECIES}.sqlite"
 OUT="$DBDIR/db0_${SPECIES}.sqlite"
@@ -38,6 +39,12 @@ case "$SPECIES" in
         echo "       see PlanFor3.24.md Milestone 5" >&2
         exit 1 ;;
 esac
+
+TAXID="$(awk -F'\t' -v s="$SPECIES" 'NR==1{for(i=1;i<=NF;i++) if($i=="taxid") c=i} $1==s{print $c}' "$CONFIG")"
+GENUS="$(awk -F'\t' -v s="$SPECIES" 'NR==1{for(i=1;i<=NF;i++) if($i=="genus") c=i} $1==s{print $c}' "$CONFIG")"
+SPECIESEPITHET="$(awk -F'\t' -v s="$SPECIES" 'NR==1{for(i=1;i<=NF;i++) if($i=="species") c=i} $1==s{print $c}' "$CONFIG")"
+ORGANISM="$GENUS $SPECIESEPITHET"
+SPECIES_TAG="$(printf '%s' "$SPECIES" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
 
 rm -f "$OUT_TMP"
 cp "$SRC" "$OUT_TMP"
@@ -104,11 +111,106 @@ sqlite3 -bail "$OUT_TMP" \
 sqlite3 -bail "$OUT_TMP" \
     "CREATE TABLE IF NOT EXISTS unigene (_id INTEGER REFERENCES genes(_id), unigene_id TEXT);"
 
+# go / go_all views: resolves the "GO is special" open question from
+# PlanFor3.24.md empirically. The legacy GO Bimap (Go3AnnDbBimap) queries
+# go_bp/go_cc/go_mf directly and needs no schema change, and GOALL has
+# never had a legacy Bimap even in production org.*.eg.db packages — but
+# the *modern* bare-OrgDb keys()/select() dispatch for GOALL (and, if the
+# Bimap-aware path for GO were ever bypassed, GO too) falls through to the
+# generic .definePossibleTables() literal-table lookup, which expects
+# single tables named "go"/"go_all" with an "ontology" column. Confirmed
+# by empirical test: without this view, keys(x, keytype="GOALL") raised
+# "no such table: go_all".
+sqlite3 -bail "$OUT_TMP" \
+    "DROP VIEW IF EXISTS go;
+     CREATE VIEW go AS
+         SELECT _id, go_id, evidence, 'BP' AS ontology FROM go_bp
+         UNION ALL SELECT _id, go_id, evidence, 'CC' AS ontology FROM go_cc
+         UNION ALL SELECT _id, go_id, evidence, 'MF' AS ontology FROM go_mf;
+     DROP VIEW IF EXISTS go_all;
+     CREATE VIEW go_all AS
+         SELECT _id, go_id, evidence, 'BP' AS ontology FROM go_bp_all
+         UNION ALL SELECT _id, go_id, evidence, 'CC' AS ontology FROM go_cc_all
+         UNION ALL SELECT _id, go_id, evidence, 'MF' AS ontology FROM go_mf_all;"
+
 # DBSCHEMA metadata row: required by AnnotationForge::makeAnnDbPkg()'s
 # initWithDbMetada(), which hard-stops if it's absent (see Milestone 2/3).
 sqlite3 -bail "$OUT_TMP" \
     "DELETE FROM metadata WHERE name = 'DBSCHEMA';
      INSERT INTO metadata (name, value) VALUES ('DBSCHEMA', '$DBSCHEMA');"
+
+# "Db type" metadata row: .makeAnnDbPkg() reads this directly (not via
+# initWithDbMetada) to decide whether to resolve an org-package dependency
+# (ChipDb) or not (OrgDb); missing/empty value crashes with "argument is of
+# length zero" before any other error reporting.
+sqlite3 -bail "$OUT_TMP" \
+    "DELETE FROM metadata WHERE name = 'Db type';
+     INSERT INTO metadata (name, value) VALUES ('Db type', 'OrgDb');"
+
+# DBSCHEMAVERSION / "Supporting package": checked by the OrgDb/AnnotationDbi
+# package's .onLoad() (dbmeta(dbconn, "DBSCHEMAVERSION")), not by
+# makeAnnDbPkg() itself — their absence doesn't fail the build, only
+# loading the resulting package. "2.1" matches the schema version real
+# installed OrgDb packages (e.g. org.Hs.eg.db) carry as of AnnotationDbi's
+# current schema.
+sqlite3 -bail "$OUT_TMP" \
+    "DELETE FROM metadata WHERE name IN ('DBSCHEMAVERSION', 'Supporting package');
+     INSERT INTO metadata (name, value) VALUES
+         ('DBSCHEMAVERSION', '2.1'),
+         ('Supporting package', 'AnnotationDbi');"
+
+if [ -n "$TAXID" ]; then
+    sqlite3 -bail "$OUT_TMP" \
+        "DELETE FROM metadata WHERE name = 'TAXID';
+         INSERT INTO metadata (name, value) VALUES ('TAXID', '$TAXID');"
+fi
+
+# ORGANISM/SPECIES/CENTRALID: AnnotationDbi::species() (and from there
+# .definePossibleTables()'s per-organism exception blocks — e.g. Human
+# gets OMIM/UCSCKG added) reads the 'ORGANISM' metadata row directly from
+# the sqlite at query time. makeAnnDbPkg() never writes this itself — the
+# AnnDbPkgSeed's organism/species slots only drive man-page text, not the
+# database — so without this row species() silently returns character(0)
+# and every organism-specific keytype (ENSEMBL, PFAM, OMIM, UCSCKG, ...)
+# vanishes from keytypes()/columns() despite the Bimap objects existing.
+sqlite3 -bail "$OUT_TMP" \
+    "DELETE FROM metadata WHERE name IN ('ORGANISM', 'SPECIES', 'CENTRALID');
+     INSERT INTO metadata (name, value) VALUES
+         ('ORGANISM', '$ORGANISM'),
+         ('SPECIES', '$SPECIES_TAG'),
+         ('CENTRALID', 'EG');"
+
+# map_metadata gaps: makeAnnDbPkg()'s man-page generation needs a
+# map_metadata row for every map name HUMAN_DB's .definePossibleTables()
+# expects (22 total), used to fill in e.g. @ALIAS2EGSOURCE@ in the Rd
+# template. annosrc/organism_annotation/script/bindb_meta.sql populates
+# ACCNUM/CHR/CHRLOC/CHRLOCEND/ENZYME/GENENAME/GO/MAP/GENETYPE/PATH/PMID/
+# REFSEQ/SYMBOL/PFAM/PROSITE/ENSEMBL/UNIPROT, and bindb_OMIM.sql/
+# bindb_meta_ucsc.sql add OMIM/UCSCKG — but never ALIAS2EG (only the
+# differently-named ALIAS2GENE), ENSEMBLPROT, or ENSEMBLTRANS. Without
+# these three, makeAnnDbPkg() hard-fails with "UNRESOLVED SYMBOLS" while
+# building the man pages. Backfill them here, copying source provenance
+# from the nearest existing row (ACCNUM for ALIAS2EG, ENSEMBL for the
+# other two), matching the pattern bindb_meta.sql itself already uses
+# for OMIM/UCSCKG.
+if has_table map_metadata; then
+    sqlite3 -bail "$OUT_TMP" <<'SQL'
+INSERT INTO map_metadata
+ SELECT 'ALIAS2EG', source_name, source_url, source_date
+ FROM map_metadata WHERE map_name='ACCNUM'
+ AND NOT EXISTS (SELECT 1 FROM map_metadata WHERE map_name='ALIAS2EG');
+
+INSERT INTO map_metadata
+ SELECT 'ENSEMBLPROT', source_name, source_url, source_date
+ FROM map_metadata WHERE map_name='ENSEMBL'
+ AND NOT EXISTS (SELECT 1 FROM map_metadata WHERE map_name='ENSEMBLPROT');
+
+INSERT INTO map_metadata
+ SELECT 'ENSEMBLTRANS', source_name, source_url, source_date
+ FROM map_metadata WHERE map_name='ENSEMBL'
+ AND NOT EXISTS (SELECT 1 FROM map_metadata WHERE map_name='ENSEMBLTRANS');
+SQL
+fi
 
 mv "$OUT_TMP" "$OUT"
 echo "Done: $OUT ($(du -sh "$OUT" | cut -f1))"
