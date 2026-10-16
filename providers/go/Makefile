@@ -37,6 +37,9 @@ check-r-deps:
 # .tmp download files are not targets and survive failures for curl to resume.
 .DELETE_ON_ERROR:
 
+.PHONY: all
+all: $(DBDIR)/gosrc.sqlite $(DBDIR)/GO.sqlite
+
 # ── Download ──────────────────────────────────────────────────────────────────
 
 .PHONY: download

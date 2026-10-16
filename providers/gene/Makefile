@@ -28,6 +28,9 @@ check-r-deps:
 # .tmp download files are not targets and survive failures for curl to resume.
 .DELETE_ON_ERROR:
 
+.PHONY: all
+all: $(DBDIR)/genesrc.sqlite $(DBDIR)/Orthology.eg.sqlite
+
 # ── Download ──────────────────────────────────────────────────────────────────
 # All files are downloaded once and shared across all species; per-species
 # filtering happens in the parse step using taxids from config/species.tsv.

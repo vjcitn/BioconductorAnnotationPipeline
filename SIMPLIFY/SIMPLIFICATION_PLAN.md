@@ -302,6 +302,16 @@ If a future need arises for the family-level cross-reference tables (e.g. a new 
 
 ---
 
+## Closed Gap: `make package` Couldn't Build `genesrc.sqlite`/`gosrc.sqlite` (2026-Oct)
+
+`make download` only fetches raw provider files; building the intermediate per-provider SQLite files (`genesrc.sqlite`, `gosrc.sqlite`, `uniprot.sqlite`, `PFAM.sqlite`) happened inside each provider's own Makefile, via file targets that nothing at the top level invoked. Running `make package` on a fresh `DATA_ROOT` failed with `No rule to make target '.../db/chipsrc_human.sqlite'` because the top-level Makefile had no rule to produce `genesrc.sqlite`/`gosrc.sqlite` in the first place — it only listed them as prerequisites.
+
+**Fix**: added `all` targets to `providers/gene/Makefile` (`genesrc.sqlite` + `Orthology.eg.sqlite`) and `providers/go/Makefile` (`gosrc.sqlite` + `GO.sqlite`) — `pfam` and `uniprot` already had one. The top-level `Makefile` now has explicit rules for `$(DATA_ROOT)/db/{genesrc,gosrc,uniprot,PFAM}.sqlite` that delegate to `$(MAKE) -C providers/<name> all`, each of which transitively triggers any missing downloads too. `genesrc.sqlite` and `gosrc.sqlite` stay hard dependencies of `chipsrc_%.sqlite`; `uniprot.sqlite`/`PFAM.sqlite` remain optional (only pulled in via the existing `wildcard`-based check) — they're buildable on demand (`make <DATA_ROOT>/db/uniprot.sqlite`) but `package` won't force them.
+
+Net effect: `make package SPECIES=<x> DATA_ROOT=<dir>` alone now drives the entire chain — raw downloads, provider SQLite assembly, `chipsrc_<x>.sqlite`, and the OrgDb build — with no manual provider-level steps required first.
+
+---
+
 ## Open Questions for Team Discussion
 
 1. **Should db0 packages remain a separate artifact?** `AnnotationForge::wrapBaseDBPackages()` requires them to be installed before `makeAnnDbPkg()` can run. We could encode this as a two-step `package` target (`make db0` then `make orgdb`) or keep them as one `package` target with an intermediate install step.

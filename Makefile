@@ -94,8 +94,26 @@ _download_organism_specific:
 # Builds db/chipsrc_<species>.sqlite from the provider SQLite files.
 # scripts/assemble_species.sh wraps the per-species SQL from organism_annotation/.
 
-# uniprot.sqlite and PFAM.sqlite are optional; include as dependencies only
-# when they exist so Make rebuilds chipsrc when either provider completes.
+# genesrc.sqlite and gosrc.sqlite are hard dependencies: `download` only
+# fetches raw provider files, so building them here delegates to each
+# provider's own `all` target, which runs its download->parse->sqlite chain
+# (triggering any missing downloads along the way).
+$(DATA_ROOT)/db/genesrc.sqlite:
+	$(MAKE) -C providers/gene all
+
+$(DATA_ROOT)/db/gosrc.sqlite:
+	$(MAKE) -C providers/go all
+
+# uniprot.sqlite and PFAM.sqlite are optional enrichment sources: build them
+# on demand (e.g. `make <DATA_ROOT>/db/uniprot.sqlite`), but only include as
+# dependencies of chipsrc below when they already exist, so chipsrc assembly
+# doesn't require them.
+$(DATA_ROOT)/db/uniprot.sqlite:
+	$(MAKE) -C providers/uniprot all
+
+$(DATA_ROOT)/db/PFAM.sqlite:
+	$(MAKE) -C providers/pfam all
+
 UNIPROT_DEP := $(wildcard $(DATA_ROOT)/db/uniprot.sqlite)
 PFAM_DEP    := $(wildcard $(DATA_ROOT)/db/PFAM.sqlite)
 
