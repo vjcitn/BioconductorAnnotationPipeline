@@ -1,0 +1,218 @@
+# Plan: Restore `db0` + `makeAnnDbPkg()` for the 3.24 OrgDb Build
+
+## Why
+
+Two bugs that looked separate turn out to share one root cause:
+
+1. The legacy per-table Bimap objects (`org.Hs.egSYMBOL`, `org.Hs.egCHRLOC`, ...)
+   are missing from freshly-built packages. `AnnotationForge::makeOrgPackage()`
+   (used today by `scripts/make_orgdb.R`) only produces the modern single
+   `OrgDb` S4 object; it never generates the legacy Bimap suite.
+2. Even the *modern* API is broken for most keytypes. `keys(org.Hs.eg.db,
+   keytype="GOALL")`, `"PFAM"`, `"IPI"`, `"ENSEMBL"`, etc. fail with raw SQL
+   errors (`no such table: go_all`, `no such table: pfam`, `no such column:
+   ensembl_id`).
+
+Investigation traced (2) to an internal, **unexported** function,
+`AnnotationDbi:::.definePossibleTables(class, species)`. It is a hardcoded
+table/column map keyed only by `class` ("OrgDb") and the literal `ORGANISM`
+string ("Homo sapiens", with per-organism exception blocks baked into the
+function body — e.g. Human gets `OMIM`/`UCSCKG` added). It is **not** driven
+by the `DBSCHEMA` metadata field at all — setting `DBSCHEMA="HUMAN_DB"` (as
+`make_orgdb.R` does today) has no effect on which tables `keys()`/`select()`
+actually query. Confirmed: `AnnotationForge:::filterSeeds()`, which decides
+which legacy Bimap objects `makeAnnDbPkg()` generates, calls this exact same
+`.definePossibleTables()` — so the legacy-object gap and the modern-API gap
+are the same contract, checked in two places.
+
+Comparing `.definePossibleTables("OrgDb", "Homo sapiens")` against the
+actual tables in a freshly built package
+(`accnum, genes, go_cc_all, map_metadata, synonym, chrloc, genetype,
+metadata, ucsckg, ensembl, go_bp_all, map, pubmed, gene_info, go_bp,
+map_counts, refseq, chromosome, go_cc, go_mf, omim`):
+
+| Keytype | Expected table.column | Actual | Status |
+|---|---|---|---|
+| ENTREZID | `genes.gene_id` | `genes.gene_id` (renamed from `GID` by `make_orgdb.R`) | OK |
+| SYMBOL / GENENAME | `gene_info.symbol` / `.gene_name` | matches | OK |
+| PMID | `pubmed.pubmed_id` | matches | OK |
+| REFSEQ | `refseq.accession` | matches | OK |
+| GENETYPE | `genetype.gene_type` | table matches; column name TBD | OK (verify column) |
+| OMIM | `omim.omim_id` | matches | OK |
+| ACCNUM | `accessions.accession` | table is `accnum` | BROKEN (table renamed) |
+| ALIAS2EG | `alias.alias_symbol` | table is `synonym` | BROKEN (table renamed) |
+| CHR | `chromosomes.chromosome` | table is `chromosome` (singular vs plural) | BROKEN |
+| MAP | `cytogenetic_locations.cytogenetic_location` | table is `map` | BROKEN |
+| CHRLOC / CHRLOCEND | `chromosome_locations.{start,end}_location` | table is `chrloc`, column names unverified | BROKEN |
+| ENZYME | `ec.ec_number` | no `ec` table present | BROKEN (table missing) |
+| PATH | `kegg.path_id` | no `kegg` table present | BROKEN (table missing) |
+| ENSEMBL | `ensembl.ensembl_id` | table matches; column is not literally `ensembl_id` (built via `e.ensid AS ENSEMBL`) | BROKEN (column name) |
+| ENSEMBLPROT / ENSEMBLTRANS | `ensembl_prot.prot_id` / `ensembl_trans.trans_id` | tables absent | BROKEN (missing) |
+| UNIPROT | `uniprot.uniprot_id` | table absent | BROKEN (missing) |
+| UCSCKG | `ucsc.ucsc_id` | table is `ucsckg` | BROKEN (table renamed) |
+| PFAM / IPI | `pfam.{pfam_id,ipi_id}` | table absent entirely (confirmed absent even from `chipsrc_human.sqlite` upstream — Pfam data never made it into assembly) | BROKEN (missing, upstream gap) |
+| PROSITE | `prosite.{ipi_id,prosite_id}` | table absent | BROKEN (missing) |
+| GO / GOALL / EVIDENCE* / ONTOLOGY* | `.definePossibleTables()` says literal tables `go` / `go_all` | we have the ontology-split `go_bp`/`go_cc`/`go_mf` (+ `_all`) tables, no unified `go`/`go_all`, no `ontology` column anywhere | **Partially a false alarm** — see "GO is special" below |
+
+### GO is special — legacy Bimaps already handle the split tables correctly
+
+`filterSeeds()` only uses `.definePossibleTables()` to decide *which* object
+names to generate, not how to query them. The actual `GO` seed is a
+`Go3AnnDbBimap`, and its real table list comes from a separate function,
+`AnnotationDbi:::Go3tablenames()`, which returns exactly `go_bp`/`go_cc`/
+`go_mf` (and `_all` variants) — i.e. the split-by-ontology layout we already
+produce. So **the legacy `org.Hs.egGO`/`org.Hs.egGOALL` Bimap objects, once
+restored via `makeAnnDbPkg()`, will work against our existing tables with no
+schema change.** It is only the *modern*, Bimap-free `select()`/`keys()`
+dispatch on the bare `OrgDb` object that falls through to the generic
+`.definePossibleTables()` literal-table lookup and breaks on `GOALL`. This
+needs to be confirmed empirically once the db0 package is built (see
+Milestone 4) — if the `OrgDb` wrapper produced by `makeAnnDbPkg()` also
+degrades to the generic path for `GOALL`, we likely need to also create a
+literal `go`/`go_all` view (`CREATE VIEW go AS SELECT _id, go_id, evidence,
+NULL AS ontology FROM go_bp UNION ALL SELECT ... go_cc ... UNION ALL SELECT
+... go_mf ...`) purely to satisfy that fallback path.
+
+## Decision
+
+Restore the `db0` → `AnnotationForge::makeAnnDbPkg()` pipeline, but
+streamlined: skip the historical heavy Perl/`makeDBPackage()` scaffolding.
+Concretely, "db0" becomes nothing more than:
+
+1. A `chipsrc_<species>.sqlite`-shaped SQLite file whose table/column names
+   are rewritten to literally match what `.definePossibleTables("OrgDb",
+   <organism>)` expects (same renaming work needed either way — this isn't
+   extra cost over patching `make_orgdb.R`'s `makeOrgPackage()` output).
+2. A `metadata` table with exactly the columns `(name, value)` and a
+   `DBSCHEMA` row (required by `AnnotationForge:::initWithDbMetada`, which
+   hard-stops if `DBSCHEMA` is absent — but see note below, the value itself
+   is largely cosmetic for query purposes).
+3. One call to `AnnotationForge::makeAnnDbPkg()` with an `AnnDbPkgSeed`
+   pointing at the `NCBIORG.DB` template (the Entrez-Gene-centric OrgDb
+   template shipped inside `AnnotationForge`, confirmed present locally at
+   `.../AnnotationForge/AnnDbPkg-templates/NCBIORG.DB/`), which:
+   - Auto-generates all legacy Bimap objects whose `.definePossibleTables()`
+     entry resolves to a table that exists in the sqlite (so partial
+     conformance degrades gracefully, same as now, but for *more* keytypes
+     as each table gets renamed/added).
+   - Writes the package skeleton, `NAMESPACE`, man pages, and `zzz.R` for us
+     — no hand-rolled `zzz.R` shim needed.
+
+This fixes both bugs in one pass instead of (a) writing a `zzz.R` shim to
+paper over the legacy-object gap and (b) separately patching
+`make_orgdb.R`'s raw SQL to satisfy the modern dispatch table names — those
+would have been two fixes converging on the same underlying table-naming
+work anyway.
+
+## Scope note: per-species, not just human
+
+`config/species.tsv` has 18 rows, each with a `pkg_template` column
+(`HUMAN_DB`, `MOUSE_DB`, `RAT_DB`, `FLY_DB`, `ZEBRAFISH_DB`, `YEAST_DB`,
+`WORM_DB`, `ARABIDOPSIS_DB`, `BOVINE_DB`, `CANINE_DB`, `CHICKEN_DB`,
+`CHIMP_DB`, `PIG_DB`, `RHESUS_DB`, `ANOPHELES_DB`, `XENOPUS_DB`,
+`ECOLI_DB` ×2). `.definePossibleTables()` has a per-organism exception
+block for each of these (e.g. yeast gets a completely different table set:
+`gene2systematic`, `chromosome_features`, `sgd`, `interpro`, `smart`; fly
+gets `FLYBASE`/`FLYBASECG`/`FLYBASEPROT`; worm gets `WORMBASE`; etc.) — this
+is a real per-organism cost, not a one-time human-only fix. **Recommend
+scoping the first implementation pass to `human` only** (prove the pipeline
+end-to-end, validate against `AnnotationDbi::checkMappedkeys`/manual spot
+checks), then generalize table-renaming logic per organism using the same
+`.definePossibleTables()` introspection used to build this plan, rather than
+hand-writing 18 separate cases.
+
+## Milestones
+
+### 1. Add a schema-conformance layer — DONE (`scripts/make_db0.sh`)
+Re-reading `annosrc/organism_annotation/script/bindb_human.sql` (the actual
+SQL that builds `chipsrc_human.sqlite`, as opposed to re-deriving names from
+`make_orgdb.R`'s re-extraction) showed the mismatch list was much shorter
+than the table in this doc's "Why" section implied — `chipsrc_human.sqlite`
+itself already uses most of the official names (`accessions`, `chromosomes`,
+`cytogenetic_locations`, `omim`, `refseq`, `pubmed`, `genetype`, `ec`,
+`kegg`, `ucsc`, `uniprot` all already match `.definePossibleTables()`
+exactly). The mismatches `make_orgdb.R` was papering over with ad hoc
+aliases (`accnum`, `synonym`, `chromosome`, `map`, `ucsckg`, `chrloc`) don't
+actually originate in `chipsrc`; they were introduced by `make_orgdb.R`'s
+own re-extraction SQL. Building `db0` from `chipsrc` directly, rather than
+through that re-extraction, sidesteps most of the renaming work entirely.
+
+New script `scripts/make_db0.sh <species>` copies
+`db/chipsrc_<species>.sqlite` to `db/db0_<species>.sqlite` and applies only
+the renames `chipsrc_human.sqlite` actually needs:
+- `gene_synonyms` → `alias`, column `symbol` → `alias_symbol` (backs `ALIAS2EG`/`ALIAS2PROBE`)
+- `chromosome_locations` column `chromosome` → `seqname` (backs `CHRLOCCHR`; `start_location`/`end_location` already matched)
+- `ensembl` column `ensid` → `ensembl_id`
+- `ensembl_pro`/`pro_id` → `ensembl_prot`/`prot_id`, `ensembl_trs`/`trs_id` → `ensembl_trans`/`trans_id` **if present** (only exist when `assemble_species.sh`'s optional UniProt enrichment ran); otherwise stub empty tables with the right column names so the keytype returns `character(0)` instead of erroring
+- `pfam` gets an added `ipi_id` column (NULL — no IPI data source exists yet) if present, else stubbed empty
+- `prosite`/`unigene` stubbed empty (no data source in this pipeline)
+- `go_bp`/`go_cc`/`go_mf`(`_all`) left untouched — legacy `GO`/`GOALL` Bimaps use these directly per the "GO is special" note; no literal `go`/`go_all` table created yet (deferred to Milestone 4's empirical check of the modern dispatch path)
+- Sets the `DBSCHEMA` metadata row (`HUMAN_DB`), required by `makeAnnDbPkg()`'s `initWithDbMetada()` in Milestone 2/3
+
+Wired into the top-level `Makefile` as `$(DATA_ROOT)/db/db0_%.sqlite:
+$(DATA_ROOT)/db/chipsrc_%.sqlite`. Only `human` has rename rules; other
+species `exit 1` with a pointer to this doc's Milestone 5. Verified against
+a synthetic `chipsrc_human.sqlite` (both the "enrichment ran" and
+"enrichment didn't run" branches) — correct output schema confirmed; not
+yet run against a real build (no local `DATA_ROOT` data; needs validation
+on the build server next).
+
+### 2. Build a minimal "db0" wrapper
+Not a real intermediate R package — just the bare metadata `AnnDbPkgSeed`
+needs:
+```r
+seed <- new("AnnDbPkgSeed",
+  Package      = "org.Hs.eg.db",
+  Version      = bioc_ver,
+  Author       = ..., Maintainer = ...,
+  PkgTemplate  = "NCBIORG.DB",
+  DBschema     = "HUMAN_DB",
+  AnnObjPrefix = "org.Hs.eg",
+  organism     = "Homo sapiens",
+  species      = "Human",
+  biocViews    = "annotation")
+makeAnnDbPkg(seed, dbfile = "<path>/org.Hs.eg.sqlite", dest_dir = outdir)
+```
+`dbfile`'s basename **must** equal `<AnnObjPrefix>.sqlite` exactly
+(`makeAnnDbPkg` hard-stops otherwise) — need to rename/copy the conformant
+sqlite from Milestone 1 to match.
+
+### 3. Rewrite `scripts/make_orgdb.R`'s packaging step
+Replace the `makeOrgPackage()` call (lines ~277-290) with: (a) the existing
+SQL-assembly logic that builds `frames`/writes the raw tables — kept as-is
+for whichever tables don't need conformance work — then (b) the Milestone-1
+renaming pass, then (c) the `AnnDbPkgSeed` + `makeAnnDbPkg()` call from
+Milestone 2 instead of `makeOrgPackage()`. Drop the manual `DBSCHEMA`
+metadata `UPDATE` block (lines ~376-399) — `makeAnnDbPkg()`/`AnnDbPkgSeed`
+own that now via `initWithDbMetada()`.
+
+### 4. Validate against both APIs
+- Legacy: `ls(2)` after `library(org.Hs.eg.db)` should show the full Bimap
+  suite (`org.Hs.egSYMBOL`, `org.Hs.egCHRLOC`, ... — the ~43 objects from
+  the original comparison listing).
+- Modern: re-run the exact failing calls from this investigation —
+  `keys(org.Hs.eg.db, keytype="GOALL")`, `"PFAM"`, `"ENSEMBL"` — and confirm
+  whether they now succeed, or whether (per the "GO is special" open
+  question) a literal `go`/`go_all` view is still needed for the bare
+  `OrgDb` object's generic dispatch path even with Bimaps present.
+- Run `tests/check_orgdb.R` (existing validation harness) and extend it to
+  assert `keytypes(x)` are all actually queryable, not just listed.
+
+### 5. Generalize to remaining species
+Once human is proven, build the same renaming map for each
+`pkg_template` value by diffing `.definePossibleTables("OrgDb", <organism>)`
+against each organism's current `chipsrc_<species>.sqlite` tables (the same
+process used in this document), prioritizing species with existing
+production consumers.
+
+## Open questions carried forward
+- Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through the
+  Bimap-aware path or the generic `.definePossibleTables()` fallback? Needs
+  empirical check once Milestone 2 produces a real package (see Milestone 4).
+- Where should Pfam/Prosite/Ensembl-protein/Ensembl-transcript/UniProt data
+  come from for `chipsrc_human.sqlite`? Confirmed absent from the current
+  assembly; this is a data-sourcing gap independent of the schema-renaming
+  work, tracked separately from this plan's scope.
+- `GENETYPE`'s expected column name (`gene_type` vs. our actual column name)
+  was not explicitly re-verified in this pass — confirm before relying on it
+  staying "OK".

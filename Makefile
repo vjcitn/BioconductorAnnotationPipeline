@@ -141,6 +141,15 @@ $(DATA_ROOT)/db/chipsrc_%.sqlite: $(DATA_ROOT)/db/genesrc.sqlite $(DATA_ROOT)/db
 	@mkdir -p $(DATA_ROOT)/db
 	bash scripts/assemble_species.sh $*
 
+# ── db0 (schema-conformant intermediate) ─────────────────────────────────────
+# Renames/stubs chipsrc_<species>.sqlite's tables and columns to match
+# AnnotationDbi's internal .definePossibleTables() contract, so that a
+# later AnnotationForge::makeAnnDbPkg() build gets both the legacy per-table
+# Bimap objects and a working modern keys()/select() API. See
+# PlanFor3.24.md. Currently only `human` has rename rules implemented.
+$(DATA_ROOT)/db/db0_%.sqlite: $(DATA_ROOT)/db/chipsrc_%.sqlite
+	bash scripts/make_db0.sh $*
+
 # ── Package ───────────────────────────────────────────────────────────────────
 # Builds OrgDb packages directly via AnnotationForge::makeOrgPackage().
 # Reads genus/species/prefix from config/species.tsv; no hard-coded names.
