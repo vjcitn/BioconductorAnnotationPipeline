@@ -1,7 +1,11 @@
 SHELL    := /bin/bash
 ROOTDIR  := ../..
-DBDIR    := $(ROOTDIR)/db
-RAWDIR   := raw
+
+# Set by the top-level Makefile (exported); defaults to <repo>/data when
+# this Makefile is invoked standalone.
+DATA_ROOT ?= $(abspath $(ROOTDIR)/data)
+DBDIR    := $(DATA_ROOT)/db
+RAWDIR   := $(DATA_ROOT)/raw/uniprot
 
 DBDIR_ABS   := $(abspath $(DBDIR))
 RAWDIR_ABS  := $(abspath $(RAWDIR))

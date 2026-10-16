@@ -1,10 +1,15 @@
 SHELL    := /bin/bash
 ROOTDIR  := ../..
-DBDIR    := $(ROOTDIR)/db
-RAWDIR   := raw
+
+# Set by the top-level Makefile (exported); defaults to <repo>/data when
+# this Makefile is invoked standalone.
+DATA_ROOT ?= $(abspath $(ROOTDIR)/data)
+DBDIR    := $(DATA_ROOT)/db
+RAWDIR   := $(DATA_ROOT)/raw/go
 
 DBDIR_ABS  := $(abspath $(DBDIR))
 RAWDIR_ABS := $(abspath $(RAWDIR))
+SCRIPTDIR  := $(abspath script)
 
 GOSOURCEURL  := http://current.geneontology.org/ontology/go-basic.obo
 GOSOURCENAME := Gene Ontology
@@ -54,7 +59,7 @@ GOTERM_TXT := $(addprefix $(GOTERM_DIR)/,\
 $(RAWDIR)/.goterm_done: $(RAWDIR)/go-basic.obo script/parseOBO.R
 	$(MAKE) check-r-deps
 	mkdir -p $(GOTERM_DIR)
-	cd $(GOTERM_DIR) && Rscript ../../script/parseOBO.R
+	cd $(GOTERM_DIR) && Rscript $(SCRIPTDIR)/parseOBO.R
 	touch $@
 
 $(GOTERM_TXT): $(RAWDIR)/.goterm_done
@@ -69,7 +74,7 @@ SCHEMA_SQL := $(addprefix script/,\
 
 $(RAWDIR)/gosrcsrc.sqlite: $(GOTERM_TXT) script/srcdb.sql $(SCHEMA_SQL)
 	rm -f $@ $@.tmp
-	cd $(RAWDIR) && sqlite3 -bail $(RAWDIR_ABS)/gosrcsrc.sqlite.tmp < ../script/srcdb.sql
+	cd $(RAWDIR) && sqlite3 -bail $(RAWDIR_ABS)/gosrcsrc.sqlite.tmp < $(SCRIPTDIR)/srcdb.sql
 	sqlite3 $@.tmp "INSERT INTO metadata VALUES('GOSOURCENAME','$(GOSOURCENAME)');"
 	sqlite3 $@.tmp "INSERT INTO metadata VALUES('GOSOURCEURL','$(GOSOURCEURL)');"
 	sqlite3 $@.tmp "INSERT INTO metadata VALUES('GOSOURCEDATE','$$(date +%Y-%m-%d)');"
@@ -83,8 +88,8 @@ $(DBDIR)/GO.sqlite: $(RAWDIR)/gosrcsrc.sqlite $(DBDIR)/genesrc.sqlite \
         script/bindb4.sql script/bindb5.sql
 	mkdir -p $(DBDIR_ABS)
 	rm -f $@ $@.tmp
-	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/GO.sqlite.tmp < ../script/bindb4.sql
-	cd $(DBDIR_ABS) && sqlite3 -bail GO.sqlite.tmp < $(CURDIR)/script/bindb5.sql
+	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/GO.sqlite.tmp < $(SCRIPTDIR)/bindb4.sql
+	cd $(DBDIR_ABS) && sqlite3 -bail GO.sqlite.tmp < $(SCRIPTDIR)/bindb5.sql
 	mv $@.tmp $@
 
 # ── GO_ORGANISM_SPEC.sqlite ───────────────────────────────────────────────────
@@ -95,8 +100,8 @@ $(DBDIR)/GO_ORGANISM_SPEC.sqlite: $(RAWDIR)/gosrcsrc.sqlite $(DBDIR)/genesrc.sql
         script/bindb1.sql script/bindb2.sql
 	mkdir -p $(DBDIR_ABS)
 	rm -f $@ $@.tmp
-	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/GO_ORGANISM_SPEC.sqlite.tmp < ../script/bindb1.sql
-	cd $(DBDIR_ABS) && sqlite3 -bail GO_ORGANISM_SPEC.sqlite.tmp < $(CURDIR)/script/bindb2.sql
+	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/GO_ORGANISM_SPEC.sqlite.tmp < $(SCRIPTDIR)/bindb1.sql
+	cd $(DBDIR_ABS) && sqlite3 -bail GO_ORGANISM_SPEC.sqlite.tmp < $(SCRIPTDIR)/bindb2.sql
 	mv $@.tmp $@
 
 # ── gosrc.sqlite ──────────────────────────────────────────────────────────────
@@ -106,7 +111,7 @@ $(DBDIR)/GO_ORGANISM_SPEC.sqlite: $(RAWDIR)/gosrcsrc.sqlite $(DBDIR)/genesrc.sql
 $(DBDIR)/gosrc.sqlite: $(DBDIR)/GO_ORGANISM_SPEC.sqlite script/bindb3.sql
 	mkdir -p $(DBDIR_ABS)
 	rm -f $@ $@.tmp
-	cd $(DBDIR_ABS) && sqlite3 -bail gosrc.sqlite.tmp < $(CURDIR)/script/bindb3.sql
+	cd $(DBDIR_ABS) && sqlite3 -bail gosrc.sqlite.tmp < $(SCRIPTDIR)/bindb3.sql
 	mv $@.tmp $@
 
 # ── Clean ─────────────────────────────────────────────────────────────────────

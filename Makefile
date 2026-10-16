@@ -2,6 +2,17 @@ SHELL        := /bin/bash
 CONFIG       := config/species.tsv
 BIOC_PKG_VERSION := 3.24.0
 
+# Root directory for all downloaded and generated data: raw provider
+# downloads, intermediate/assembled SQLite files, and built R package
+# tarballs. Keeping this out of the repo tree is what lets `providers/`
+# and the top-level scripts stay pure code. Override to build on
+# external storage, e.g.:
+#   make download SPECIES=human DATA_ROOT=/mnt/annobuild
+# Default keeps everything under a single gitignored `data/` directory
+# in the repo so a no-argument `make download` still works out of the box.
+DATA_ROOT ?= $(CURDIR)/data
+export DATA_ROOT
+
 # Set SPECIES=<name> to operate on one organism; default runs all 19.
 SPECIES ?= all
 
@@ -25,6 +36,9 @@ help:
 	@echo "  make clean-raw             # remove downloaded files (preserves built SQLites)"
 	@echo "  make clean-db              # remove built SQLites (preserves downloads)"
 	@echo "  make clean                 # remove everything"
+	@echo ""
+	@echo "  DATA_ROOT=<dir>            # build data (raw/db/packages) outside the repo"
+	@echo "                              # current: $(DATA_ROOT)"
 	@echo ""
 	@echo "Species defined in $(CONFIG):"
 	@tail -n +2 $(CONFIG) | awk '{printf "  %-14s taxid=%-8s ucsc=%s\n", $$1, $$2, $$3}'
@@ -82,11 +96,11 @@ _download_organism_specific:
 
 # uniprot.sqlite and PFAM.sqlite are optional; include as dependencies only
 # when they exist so Make rebuilds chipsrc when either provider completes.
-UNIPROT_DEP := $(wildcard db/uniprot.sqlite)
-PFAM_DEP    := $(wildcard db/PFAM.sqlite)
+UNIPROT_DEP := $(wildcard $(DATA_ROOT)/db/uniprot.sqlite)
+PFAM_DEP    := $(wildcard $(DATA_ROOT)/db/PFAM.sqlite)
 
-db/chipsrc_%.sqlite: db/genesrc.sqlite db/gosrc.sqlite $(UNIPROT_DEP) $(PFAM_DEP)
-	@mkdir -p db
+$(DATA_ROOT)/db/chipsrc_%.sqlite: $(DATA_ROOT)/db/genesrc.sqlite $(DATA_ROOT)/db/gosrc.sqlite $(UNIPROT_DEP) $(PFAM_DEP)
+	@mkdir -p $(DATA_ROOT)/db
 	bash scripts/assemble_species.sh $*
 
 # ── Package ───────────────────────────────────────────────────────────────────
@@ -95,13 +109,13 @@ db/chipsrc_%.sqlite: db/genesrc.sqlite db/gosrc.sqlite $(UNIPROT_DEP) $(PFAM_DEP
 # No db0 intermediate step required.
 
 .PHONY: package
-package: $(foreach sp,$(TARGET_SPECIES),db/chipsrc_$(sp).sqlite)
-	@mkdir -p packages/orgdb
+package: $(foreach sp,$(TARGET_SPECIES),$(DATA_ROOT)/db/chipsrc_$(sp).sqlite)
+	@mkdir -p $(DATA_ROOT)/packages/orgdb
 	Rscript scripts/make_orgdb.R \
 	    --species "$(TARGET_SPECIES)" \
 	    --config  $(CONFIG) \
-	    --dbpath  db/ \
-	    --outdir  packages/orgdb/ \
+	    --dbpath  $(DATA_ROOT)/db/ \
+	    --outdir  $(DATA_ROOT)/packages/orgdb/ \
 	    --version $(BIOC_PKG_VERSION)
 
 # ── GO.db package ─────────────────────────────────────────────────────────────
@@ -110,11 +124,11 @@ package: $(foreach sp,$(TARGET_SPECIES),db/chipsrc_$(sp).sqlite)
 
 .PHONY: godb
 godb:
-	@mkdir -p packages/godb
+	@mkdir -p $(DATA_ROOT)/packages/godb
 	$(MAKE) -C providers/go go-sqlite
 	Rscript scripts/make_godb.R \
-	    --input   db/GO.sqlite \
-	    --outdir  packages/godb/ \
+	    --input   $(DATA_ROOT)/db/GO.sqlite \
+	    --outdir  $(DATA_ROOT)/packages/godb/ \
 	    --version $(BIOC_PKG_VERSION)
 
 # ── Check ─────────────────────────────────────────────────────────────────────
@@ -124,7 +138,7 @@ godb:
 .PHONY: check
 check:
 	@for sp in $(TARGET_SPECIES); do \
-	    tarball=$$(ls packages/orgdb/$$(awk -v s=$$sp '$$1==s{print $$4}' $(CONFIG)).db_*.tar.gz 2>/dev/null | tail -1); \
+	    tarball=$$(ls $(DATA_ROOT)/packages/orgdb/$$(awk -v s=$$sp '$$1==s{print $$4}' $(CONFIG)).db_*.tar.gz 2>/dev/null | tail -1); \
 	    if [ -z "$$tarball" ]; then \
 	        echo "ERROR: no tarball found for $$sp — run 'make package SPECIES=$$sp' first"; \
 	        exit 1; \
@@ -132,7 +146,7 @@ check:
 	    echo "Checking $$sp ($$tarball) ..."; \
 	    Rscript tests/check_orgdb.R \
 	        --species $$sp \
-	        --dbpath  db/ \
+	        --dbpath  $(DATA_ROOT)/db/ \
 	        --tarball $$tarball \
 	    || exit 1; \
 	done
@@ -146,7 +160,7 @@ clean-raw:
 	done
 
 clean-db:
-	rm -f db/*.sqlite
+	rm -f $(DATA_ROOT)/db/*.sqlite
 	@for p in providers/*/; do \
 	    [ -f $$p/Makefile ] && $(MAKE) -C $$p clean-db || true; \
 	done
@@ -154,4 +168,4 @@ clean-db:
 clean: clean-raw clean-db
 
 clean-packages:
-	rm -rf packages/orgdb/
+	rm -rf $(DATA_ROOT)/packages/orgdb/

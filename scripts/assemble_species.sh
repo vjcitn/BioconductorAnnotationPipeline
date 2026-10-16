@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 # Usage: assemble_species.sh <species>
-# Builds db/chipsrc_<species>.sqlite from provider SQLites.
+# Builds <DATA_ROOT>/db/chipsrc_<species>.sqlite from provider SQLites.
 # Must be run from the repository root (the top-level Makefile does this).
+# DATA_ROOT is inherited from the environment (exported by the top-level
+# Makefile); it defaults to <repo>/data when unset, e.g. when this script
+# is run by hand.
 set -euo pipefail
 
 SPECIES="${1:?Usage: assemble_species.sh <species>}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DBDIR="$ROOT/db"
+DATA_ROOT="${DATA_ROOT:-$ROOT/data}"
+DBDIR="$DATA_ROOT/db"
 CONFIG="$ROOT/config/species.tsv"
 ORGDIR="$ROOT/annosrc/organism_annotation/script"
 

@@ -1,0 +1,11 @@
+# Default DATA_ROOT: all downloaded/built data (raw downloads, intermediate
+# SQLite files, built package tarballs). Never tracked in git; set
+# DATA_ROOT=<external dir> on the build server to keep this out of the repo
+# tree entirely. See SIMPLIFY/SIMPLIFICATION_PLAN.md.
+/data/
+
+# Legacy/ad-hoc locations from before DATA_ROOT existed; ignored as a
+# backstop in case a Makefile is invoked without it.
+/db/
+/packages/
+providers/*/raw/

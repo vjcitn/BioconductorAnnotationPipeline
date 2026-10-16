@@ -38,8 +38,8 @@ BioconductorAnnotationPipeline/
     pfam/               # PFAM (shared)
     flybase/            # FlyBase only (extracted from inparanoid, fly only)
     # NOTE: ensembl/ provider removed — see Phase 4
-  db/                   # intermediate SQLite files (gitignored)
-  packages/             # output R packages (gitignored)
+  data/                 # DATA_ROOT default: raw/, db/, packages/ (gitignored;
+                         # override with DATA_ROOT=<dir> to build outside the repo)
   Makefile              # top-level with download and package targets
   scripts/
     assemble_species.sh # builds chipsrc_<species>.sqlite from provider SQLites
@@ -263,6 +263,30 @@ Anopheles is harder than pig: UCSC's `anoGam3` build does not carry a `refGene` 
 Rather than reconstruct the missing `srcdb_*.sql` files and extend UCSC coverage to these three species, the pipeline switches to **NCBI Gene as the coordinate source** for all species. NCBI's `gene_info` table already contains `chromosome` and `map_location` columns, and a companion file (`gene2refseq` / NCBI gene coordinates) provides strand-aware start/end positions via RefSeq alignments. This is more self-contained (no separate UCSC provider needed) and consistent across all organisms including those UCSC does not cover.
 
 The `chrloc` frame in `make_orgdb.R` is moved from core to optional so that packages build correctly for any species where the `chromosome_locations` table is absent from the chipsrc. Once the NCBI coordinate source is wired into the assembly SQL for pig/anopheles/xenopus, their `chromosome_locations` tables will be populated and `chrloc` will be included automatically.
+
+---
+
+## Data/Code Separation: `DATA_ROOT` (2026-Oct)
+
+Once the Makefile-based system above was actually implemented (see commit history on the `oct2026` branch), it became clear that it had quietly reproduced the original problem it was meant to fix: every provider Makefile wrote raw downloads to `providers/<name>/raw/`, and the top-level Makefile wrote intermediate SQLite files to `db/` and package tarballs to `packages/` — all inside the repo's working tree, with no `.gitignore`. This is the same code+data entanglement that produced multi-GB untracked directories like `annosrc/gene/2025-Dec05/` under the old `annosrc/`-based workflow.
+
+**Fix**: every Makefile (top-level and all five provider Makefiles — `gene`, `go`, `ucsc`, `pfam`, `uniprot`) now derives its data paths from a single `DATA_ROOT` variable instead of hardcoded `raw`/`db`/`packages` paths:
+
+- Top-level `Makefile` sets `DATA_ROOT ?= $(CURDIR)/data` and `export`s it, so every `$(MAKE) -C providers/...` sub-invocation inherits it.
+- Each provider Makefile declares `DATA_ROOT ?= $(abspath $(ROOTDIR)/data)` as its own fallback, so it still works when run standalone (e.g. `cd providers/gene && make download`) without the top-level Makefile in the loop. Because `DATA_ROOT` arrives as an inherited environment variable when invoked via the top level, `?=` does not override it — the exported value wins.
+- `DBDIR` and `RAWDIR` in every provider Makefile are now `$(DATA_ROOT)/db` and `$(DATA_ROOT)/raw/<provider>` respectively (previously `../../db` and a bare `raw`, local to the provider's own directory).
+- `scripts/assemble_species.sh` reads `DATA_ROOT` from the environment (default `<repo>/data`) instead of hardcoding `$ROOT/db`.
+- A handful of recipes in `gene` and `go` referenced their own SQL/R scripts via `../script/...`, which only worked because `raw/` used to be a sibling of `script/` inside the same provider directory. Since `raw/` now lives under `DATA_ROOT` instead, those were rewritten to use an absolute `SCRIPTDIR := $(abspath script)` (the pattern `pfam` and `uniprot` already used).
+- Added a repo-root `.gitignore` for `/data/` as a backstop — belt-and-suspenders in case `DATA_ROOT` is left at its default and someone forgets to `.gitignore` it locally.
+
+**Usage on the build server**: run everything exactly as before, but point `DATA_ROOT` at external storage so the repo clone never accumulates build artifacts:
+
+```sh
+make download SPECIES=human DATA_ROOT=/mnt/annobuild
+make package  SPECIES=human DATA_ROOT=/mnt/annobuild
+```
+
+No code or script in this repo writes outside `$(DATA_ROOT)` (raw downloads, intermediate SQLite, and package tarballs all land under it); the repo itself only ever contains code, SQL, and config.
 
 ---
 

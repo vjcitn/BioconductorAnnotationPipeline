@@ -1,8 +1,13 @@
 SHELL    := /bin/bash
 ROOTDIR  := ../..
 CONFIG   := $(ROOTDIR)/config/species.tsv
-DBDIR    := $(ROOTDIR)/db
-RAWDIR   := raw
+
+# Set by the top-level Makefile (exported); defaults to <repo>/data when
+# this Makefile is invoked standalone (e.g. `cd providers/gene && make download`).
+DATA_ROOT ?= $(abspath $(ROOTDIR)/data)
+DBDIR    := $(DATA_ROOT)/db
+RAWDIR   := $(DATA_ROOT)/raw/gene
+SCRIPTDIR := $(abspath script)
 
 EGSOURCEURL := ftp://ftp.ncbi.nlm.nih.gov/gene/DATA
 TAXDUMP_URL := ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
@@ -105,7 +110,7 @@ $(RAWDIR)/mim2gene_medgen: $(RAWDIR)/mim2gene_medgen.raw
 
 $(RAWDIR)/.alias_tabs_done: $(RAWDIR)/gene_info script/parseAlias.R
 	$(MAKE) check-r-deps
-	cd $(RAWDIR) && Rscript ../script/parseAlias.R
+	cd $(RAWDIR) && Rscript $(SCRIPTDIR)/parseAlias.R
 	touch $@
 
 ALIAS_TABS := $(addprefix $(RAWDIR)/,gene_cytogenetic.tab gene_chromosome.tab \
@@ -128,7 +133,7 @@ GENESRC_DEPS := \
 $(DBDIR)/genesrc.sqlite: $(GENESRC_DEPS)
 	mkdir -p $(DBDIR_ABS)
 	rm -f $@
-	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/genesrc.sqlite < ../script/srcdb.sql
+	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/genesrc.sqlite < $(SCRIPTDIR)/srcdb.sql
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCEDATE','$$(date +%Y-%b%d)');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCENAME','Entrez Gene');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCEURL','$(EGSOURCEURL)');"
@@ -137,7 +142,7 @@ $(DBDIR)/genesrc.sqlite: $(GENESRC_DEPS)
 $(DBDIR)/Orthology.eg.sqlite: $(RAWDIR)/gene_orthologs $(RAWDIR)/names.txt script/src_orthology.sql
 	mkdir -p $(DBDIR_ABS)
 	rm -f $@
-	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/Orthology.eg.sqlite < ../script/src_orthology.sql
+	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/Orthology.eg.sqlite < $(SCRIPTDIR)/src_orthology.sql
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCEDATE','$$(date +%Y-%b%d)');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCENAME','Entrez Gene');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCEURL','$(EGSOURCEURL)');"
