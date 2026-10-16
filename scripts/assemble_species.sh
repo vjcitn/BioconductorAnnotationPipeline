@@ -70,6 +70,21 @@ if [ ! -f "$MAIN_SQL" ]; then
     exit 1
 fi
 
+# $MAIN_SQL unconditionally ATTACHes these as bare filenames (resolved
+# relative to $DBDIR below). SQLite's ATTACH silently creates an empty file
+# when the target doesn't exist rather than erroring, so a missing source
+# here would otherwise surface later as a confusing "no such table" error
+# while also leaving behind a stray empty .sqlite that permanently satisfies
+# the top-level Makefile's (prerequisite-less) rule for that file. Check
+# explicitly and fail loudly instead.
+for req in genesrc.sqlite gosrc.sqlite gpsrc.sqlite; do
+    if [ ! -s "$DBDIR/$req" ]; then
+        echo "ERROR: $DBDIR/$req is missing or empty — required by $MAIN_SQL" >&2
+        echo "       rebuild it (e.g. 'make $DBDIR/$req') before retrying" >&2
+        exit 1
+    fi
+done
+
 # ── Build chipsrc_<species>.sqlite ───────────────────────────────────────────
 OUT="$DBDIR/chipsrc_${SPECIES}.sqlite"
 OUT_TMP="${OUT}.tmp"

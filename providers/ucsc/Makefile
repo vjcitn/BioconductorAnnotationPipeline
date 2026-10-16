@@ -111,6 +111,12 @@ $(RAWDIR)/%/gpsrc.sqlite: $(RAWDIR)/%/.download_done
 	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp "INSERT INTO metadata VALUES('GPSOURCENAME','$(GPNAME)');"
 	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp "INSERT INTO metadata VALUES('GPSOURCEURL','$(GPURL)');"
 	sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp "INSERT INTO metadata VALUES('GPSOURCEDATE','$$(date +%Y-%b%d)');"
+	@for t in $$(grep -o '^CREATE TABLE [A-Za-z_]*' $(CURDIR)/script/srcdb_$(UNAME).sql | awk '{print $$3}'); do \
+	    sqlite3 $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp \
+	        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='$$t';" | grep -q 1 || \
+	        { echo "ERROR: $@.tmp is missing expected table '$$t' (declared in script/srcdb_$(UNAME).sql)" >&2; \
+	          rm -f $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp; exit 1; }; \
+	done
 	mv $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite.tmp $(RAWDIR_ABS)/$(SP)/gpsrc.sqlite
 
 # ── db/gpsrc.sqlite (aggregated across all UCSC species) ─────────────────────
@@ -121,6 +127,17 @@ $(RAWDIR)/%/gpsrc.sqlite: $(RAWDIR)/%/.download_done
 ALL_GPSRC := $(foreach sp,$(ALL_UCSC_SPECIES),$(RAWDIR)/$(sp)/gpsrc.sqlite)
 
 $(DBDIR)/gpsrc.sqlite: $(ALL_GPSRC) script/bindb.sql
+	@for f in $(ALL_GPSRC); do \
+	    sqlite3 "$$f" "SELECT 1 FROM sqlite_master WHERE type='table' AND name='chrlength';" \
+	        2>/dev/null | grep -q 1 || \
+	        { echo "ERROR: $$f is missing or invalid (no chrlength table)." >&2; \
+	          echo "       This usually means it is a stray file created by a bare" >&2; \
+	          echo "       ATTACH DATABASE on a path that didn't exist yet. Delete it" >&2; \
+	          echo "       and rerun so the per-species rule rebuilds it properly:" >&2; \
+	          echo "         rm -f $$f && $(MAKE) -C $(CURDIR) $$f" >&2; \
+	          exit 1; \
+	        }; \
+	done
 	mkdir -p $(DBDIR_ABS)
 	rm -f $@
 	cd $(RAWDIR_ABS) && sqlite3 -bail $(DBDIR_ABS)/gpsrc.sqlite < $(CURDIR)/script/bindb.sql

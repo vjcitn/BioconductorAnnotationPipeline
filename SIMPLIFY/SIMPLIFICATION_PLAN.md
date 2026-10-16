@@ -314,6 +314,25 @@ Net effect: `make package SPECIES=<x> DATA_ROOT=<dir>` alone now drives the enti
 
 ---
 
+## Guard Against Stale/Empty Files Satisfying Make Dependencies (2026-Oct)
+
+Closing the `gpsrc.sqlite` gap above exposed a second, more insidious failure mode, hit twice in the same debugging session:
+
+1. SQLite's `ATTACH DATABASE '<path>' AS <alias>` silently **creates an empty file** at `<path>` if it doesn't already exist, rather than erroring. This happened when `bindb.sql`/`bindb_<species>.sql` ran (directly, or via an out-of-order manual command during troubleshooting) and attached a source database — `db/gpsrc.sqlite`, or a per-species `raw/ucsc/<sp>/gpsrc.sqlite` — before the real build had produced it.
+2. A plain Make file-target rule with **no prerequisites** (as all the provider-delegating rules were) is considered up to date the moment the target file exists on disk, regardless of whether it's valid. Once step 1 dropped a 0-byte stub at the target path, every subsequent `make` run trusted it forever and never re-invoked the real build — turning a one-time accident into a silent, recurring failure that resurfaces as a confusing SQL error (`no such table: ...`) far downstream instead of a clear build failure.
+
+This bit twice in a row: once via the `gpsrc.sqlite` gap itself (closed above), and again immediately after via a leftover 0-byte `raw/ucsc/human/gpsrc.sqlite` stub from an earlier manual/out-of-order run — closing the top-level gap wasn't enough, because the stray per-species file silently satisfied `providers/ucsc`'s own `ALL_GPSRC` prerequisite.
+
+**Fix — defense at three layers**, each failing loudly (and telling the operator exactly what to delete and rebuild) instead of silently trusting an existing file:
+
+- `scripts/assemble_species.sh`: before running `$MAIN_SQL` (`bindb_<species>.sql`), explicitly checks that `genesrc.sqlite`, `gosrc.sqlite`, and `gpsrc.sqlite` exist and are non-empty, mirroring the existing `[ -f "$UNIPROTSRC" ]`-style guard already used for the optional UniProt/Pfam enrichment sources.
+- `providers/ucsc/Makefile`: the per-species `%/gpsrc.sqlite` recipe now verifies every table its own `srcdb_<name>.sql` declares actually exists in the freshly-built file before `mv`-ing it into place (catches a broken/partial build of its own output). The aggregate `db/gpsrc.sqlite` recipe now verifies every per-species input has a `chrlength` table before attaching any of them (catches a stray/stale per-species file left over from elsewhere).
+- Top-level `Makefile`: the delegating rules for `genesrc.sqlite`, `gosrc.sqlite`, and `gpsrc.sqlite` each run `test -s $@` immediately after delegating to the provider's `all`/build target, failing the build if the result is empty.
+
+None of this prevents the underlying cause (an out-of-order `ATTACH` on a missing path) — that's an inherent SQLite behavior — but it ensures the resulting empty file can never silently persist as a trusted build artifact across runs; the first `make` invocation to touch it will catch and reject it.
+
+---
+
 ## Open Questions for Team Discussion
 
 1. **Should db0 packages remain a separate artifact?** `AnnotationForge::wrapBaseDBPackages()` requires them to be installed before `makeAnnDbPkg()` can run. We could encode this as a two-step `package` target (`make db0` then `make orgdb`) or keep them as one `package` target with an intermediate install step.

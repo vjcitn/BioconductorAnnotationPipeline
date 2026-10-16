@@ -98,11 +98,20 @@ _download_organism_specific:
 # fetches raw provider files, so building them here delegates to each
 # provider's own `all` target, which runs its download->parse->sqlite chain
 # (triggering any missing downloads along the way).
+# These delegating rules have no prerequisites, so once the target file
+# exists at all — even empty or stale — make treats it as satisfied and
+# never re-invokes the sub-make. That let a 0-byte file created by a stray
+# `ATTACH DATABASE` (SQLite silently creates an empty file when the attached
+# path doesn't exist yet) persist across runs and mask the real failure.
+# `test -s` after each delegate catches that: an empty output fails the
+# build loudly instead of quietly "succeeding".
 $(DATA_ROOT)/db/genesrc.sqlite:
 	$(MAKE) -C providers/gene all
+	@test -s $@ || { echo "ERROR: $@ is empty after build" >&2; exit 1; }
 
 $(DATA_ROOT)/db/gosrc.sqlite:
 	$(MAKE) -C providers/go all
+	@test -s $@ || { echo "ERROR: $@ is empty after build" >&2; exit 1; }
 
 # gpsrc.sqlite (UCSC provider) is also a hard dependency: bindb_<species>.sql
 # unconditionally ATTACHes db/gpsrc.sqlite and reads chrlength_<species> from
@@ -113,6 +122,7 @@ $(DATA_ROOT)/db/gosrc.sqlite:
 # the top-level SPECIES= filter.
 $(DATA_ROOT)/db/gpsrc.sqlite:
 	$(MAKE) -C providers/ucsc $@
+	@test -s $@ || { echo "ERROR: $@ is empty after build" >&2; exit 1; }
 
 # uniprot.sqlite and PFAM.sqlite are optional enrichment sources: build them
 # on demand (e.g. `make <DATA_ROOT>/db/uniprot.sqlite`), but only include as
