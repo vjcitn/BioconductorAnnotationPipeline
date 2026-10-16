@@ -290,6 +290,18 @@ No code or script in this repo writes outside `$(DATA_ROOT)` (raw downloads, int
 
 ---
 
+## Pfam Provider: Dropped the `Pfam-A.full.gz` Download (2026-Oct)
+
+The `pfam` provider's `download` target used to fetch `Pfam-A.full.gz` (~24GB, ~5 hours over FTP from EBI). That file was parsed (`simplifyToIds.sh` → `parseIDs.R` → `srcdb_pfam.sql`) into 17 family-level metadata/cross-reference tables in `PFAM.sqlite`: `id`, `de`, `tp`, `cazy`, `homstrad`, `interpro`, `load`, `merops`, `mim`, `pdb`, `prints`, `prosite`, `prosite_profile`, `rm`, `scop`, `smart`, `tc`, `url`.
+
+Tracing every downstream consumer (`scripts/assemble_species.sh`, `scripts/make_orgdb.R`, and the `annosrc/organism_annotation/script/*.sql` files) showed that **none of those 17 tables are read anywhere**. The only thing the pipeline actually consumes from `PFAM.sqlite` is the `uniprot2pfam` table (`scripts/assemble_species.sh` attaches `PFAM.sqlite` and joins `pfsrc.uniprot2pfam` to bridge gene IDs to Pfam families via UniProt) — and that table is built from the separate `Pfam-A.regions.tsv.gz` file (~5GB) by `load_regions.sh`, independent of `Pfam-A.full.gz`.
+
+**Fix**: `providers/pfam/Makefile` no longer downloads or parses `Pfam-A.full.gz`. `download` and `all` now depend only on `Pfam-A.regions.tsv.gz`, and `PFAM.sqlite` is created directly by `load_regions.sh` (which already used `CREATE TABLE IF NOT EXISTS`). Removed the now-dead `providers/pfam/script/simplifyToIds.sh`, `parseIDs.R`, `srcdb_pfam.sql`, `bindb_pfam.sql`, and `GS_types.txt`. This cuts the Pfam provider's download from ~24GB/~5 hours to ~5GB, with no loss of data actually used by OrgDb assembly.
+
+If a future need arises for the family-level cross-reference tables (e.g. a new organism-annotation feature that wants CAZY/InterPro/etc. cross-references), the cheapest path is `Pfam-A.hmm.dat.gz` (~780KB) for `id`/`de`/`tp`; the other 14 tables no longer have a small dedicated source at EBI (the old `database_files/` MySQL-dump directory is gone) and would require either re-adding the `Pfam-A.full.gz` parse or sourcing them from InterPro instead.
+
+---
+
 ## Open Questions for Team Discussion
 
 1. **Should db0 packages remain a separate artifact?** `AnnotationForge::wrapBaseDBPackages()` requires them to be installed before `makeAnnDbPkg()` can run. We could encode this as a two-step `package` target (`make db0` then `make orgdb`) or keep them as one `package` target with an intermediate install step.

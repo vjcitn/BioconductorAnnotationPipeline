@@ -23,69 +23,37 @@ CURL := curl --fail -L -C - --retry 3 --retry-delay 10
 .PHONY: all
 all: $(RAWDIR)/.regions_done
 
-# ── R dependency check ────────────────────────────────────────────────────────
-# parseIDs.R uses only base R; this confirms Rscript is callable.
-.PHONY: check-r-deps
-check-r-deps:
-	@Rscript -e "cat(R.version.string, 'OK\n')" || \
-	    { echo "ERROR: Rscript not found or not working"; exit 1; }
-
 # ── Download ──────────────────────────────────────────────────────────────────
-# Pfam-A.full.gz is ~4GB; -C - resumes interrupted downloads.
+# Pfam-A.regions.tsv.gz (~5GB) directly provides the uniprot_id -> pfam_id
+# mapping needed for OrgDb assembly; it's the only Pfam data this pipeline
+# consumes downstream (see SIMPLIFY/SIMPLIFICATION_PLAN.md). The much larger
+# Pfam-A.full.gz (~24GB) was previously parsed into family-level
+# cross-reference tables (cazy, interpro, prosite, etc.) that nothing in the
+# organism-assembly or OrgDb-build steps ever reads; that chain was removed.
 
 .PHONY: download
-download: $(RAWDIR)/Pfam-A.full.gz
-
-$(RAWDIR)/Pfam-A.full.gz:
-	mkdir -p $(RAWDIR)
-	$(CURL) --disable-epsv -o $@.tmp $(PFAMSOURCEURL)/Pfam-A.full.gz
-	mv $@.tmp $@
-
-# ── Step 1: extract GF/GS records into ID text files ─────────────────────────
-# simplifyToIds.sh streams through Pfam-A.full.gz via zcat+awk and writes:
-# Pfam-A.GF, Pfam-A.GS, DR_IDs.txt, DE_IDs.txt, ID_IDs.txt,
-# TP_IDs.txt, RM_IDs.txt, PDB_IDs.txt
-
-$(RAWDIR)/.simplify_done: $(RAWDIR)/Pfam-A.full.gz script/simplifyToIds.sh
-	cd $(RAWDIR) && bash $(SCRIPTDIR)/simplifyToIds.sh
-	touch $@
-
-# ── Step 2: parse ID text files into .tab files (R) ──────────────────────────
-# parseIDs.R reads the text files and writes one .tab file per ID type.
-# Uses only base R; stamp file covers all outputs at once.
-
-$(RAWDIR)/.parseids_done: $(RAWDIR)/.simplify_done script/parseIDs.R
-	$(MAKE) check-r-deps
-	cd $(RAWDIR) && Rscript $(SCRIPTDIR)/parseIDs.R
-	touch $@
-
-# ── PFAM.sqlite ───────────────────────────────────────────────────────────────
-# srcdb_pfam.sql imports all .tab files from the raw directory.
-# The resulting PFAM.sqlite is placed in db/ for organism_annotation to ATTACH.
-
-$(DBDIR)/PFAM.sqlite: $(RAWDIR)/.parseids_done script/srcdb_pfam.sql
-	mkdir -p $(DBDIR_ABS)
-	rm -f $@
-	cd $(RAWDIR) && sqlite3 -bail $(DBDIR_ABS)/PFAM.sqlite < $(SCRIPTDIR)/srcdb_pfam.sql
-	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCENAME','$(PFAMSOURCENAME)');"
-	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCEURL','$(PFAMSOURCEURL)');"
-	sqlite3 $@ "INSERT INTO metadata VALUES('PFAMSOURCEDATE','$$(date +%Y-%b%d)');"
-
-# ── Regions TSV: UniProt → Pfam family mapping ───────────────────────────────
-# Pfam-A.regions.tsv.gz is ~400 MB vs 24 GB for the full file and
-# directly provides the uniprot_id → pfam_id table needed for OrgDb assembly.
+download: $(RAWDIR)/Pfam-A.regions.tsv.gz
 
 $(RAWDIR)/Pfam-A.regions.tsv.gz:
 	mkdir -p $(RAWDIR)
 	$(CURL) --disable-epsv -o $@.tmp $(PFAMSOURCEURL)/Pfam-A.regions.tsv.gz
 	mv $@.tmp $@
 
+# ── PFAM.sqlite: UniProt -> Pfam family mapping ──────────────────────────────
+# load_regions.sh creates PFAM.sqlite (if needed) and loads uniprot2pfam
+# directly from the regions TSV.
+
 $(RAWDIR)/.regions_done: $(RAWDIR)/Pfam-A.regions.tsv.gz \
-                          $(DBDIR)/PFAM.sqlite \
                           script/load_regions.sh
+	mkdir -p $(DBDIR_ABS)
 	bash $(SCRIPTDIR)/load_regions.sh \
 	    $(DBDIR_ABS)/PFAM.sqlite \
 	    $(RAWDIR_ABS)/Pfam-A.regions.tsv.gz
+	sqlite3 $(DBDIR_ABS)/PFAM.sqlite "CREATE TABLE IF NOT EXISTS metadata (name TEXT, value TEXT);"
+	sqlite3 $(DBDIR_ABS)/PFAM.sqlite "DELETE FROM metadata WHERE name LIKE 'PFAMSOURCE%';"
+	sqlite3 $(DBDIR_ABS)/PFAM.sqlite "INSERT INTO metadata VALUES('PFAMSOURCENAME','$(PFAMSOURCENAME)');"
+	sqlite3 $(DBDIR_ABS)/PFAM.sqlite "INSERT INTO metadata VALUES('PFAMSOURCEURL','$(PFAMSOURCEURL)');"
+	sqlite3 $(DBDIR_ABS)/PFAM.sqlite "INSERT INTO metadata VALUES('PFAMSOURCEDATE','$$(date +%Y-%b%d)');"
 	touch $@
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
