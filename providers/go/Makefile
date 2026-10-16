@@ -77,7 +77,8 @@ SCHEMA_SQL := $(addprefix script/,\
 
 $(RAWDIR)/gosrcsrc.sqlite: $(GOTERM_TXT) script/srcdb.sql $(SCHEMA_SQL)
 	rm -f $@ $@.tmp
-	cd $(RAWDIR) && sqlite3 -bail $(RAWDIR_ABS)/gosrcsrc.sqlite.tmp < $(SCRIPTDIR)/srcdb.sql
+	cd $(RAWDIR) && sed "s|\.\./script/|$(SCRIPTDIR)/|g" $(SCRIPTDIR)/srcdb.sql | \
+	    sqlite3 -bail $(RAWDIR_ABS)/gosrcsrc.sqlite.tmp
 	sqlite3 $@.tmp "INSERT INTO metadata VALUES('GOSOURCENAME','$(GOSOURCENAME)');"
 	sqlite3 $@.tmp "INSERT INTO metadata VALUES('GOSOURCEURL','$(GOSOURCEURL)');"
 	sqlite3 $@.tmp "INSERT INTO metadata VALUES('GOSOURCEDATE','$$(date +%Y-%m-%d)');"
