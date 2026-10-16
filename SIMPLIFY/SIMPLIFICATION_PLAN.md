@@ -310,6 +310,8 @@ If a future need arises for the family-level cross-reference tables (e.g. a new 
 
 Net effect: `make package SPECIES=<x> DATA_ROOT=<dir>` alone now drives the entire chain — raw downloads, provider SQLite assembly, `chipsrc_<x>.sqlite`, and the OrgDb build — with no manual provider-level steps required first.
 
+**Follow-up (same day)**: the UCSC provider's `db/gpsrc.sqlite` had the identical gap — `bindb_<species>.sql` unconditionally `ATTACH`es it and reads `chrlength_<species>` from it, but nothing built it either, surfacing as `no such table: gp.chrlength_human`. Added the same delegating rule for `$(DATA_ROOT)/db/gpsrc.sqlite` (`$(MAKE) -C providers/ucsc $@`) and added it as a hard dependency of `chipsrc_%.sqlite`. Note this one isn't species-filterable: `providers/ucsc/script/bindb.sql` aggregates every UCSC-enabled species from `config/species.tsv` into one `gpsrc.sqlite` in a single pass (it builds `chrlength_mouse`, `chrlength_rat`, etc. unconditionally alongside `chrlength_human`), so building it for `SPECIES=human` still downloads refGene/chromInfo/cytoBand for all ~14 UCSC species — small files individually, but worth knowing in advance rather than being surprised mid-build.
+
 ---
 
 ## Open Questions for Team Discussion

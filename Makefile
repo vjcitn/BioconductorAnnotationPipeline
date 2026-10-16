@@ -104,6 +104,16 @@ $(DATA_ROOT)/db/genesrc.sqlite:
 $(DATA_ROOT)/db/gosrc.sqlite:
 	$(MAKE) -C providers/go all
 
+# gpsrc.sqlite (UCSC provider) is also a hard dependency: bindb_<species>.sql
+# unconditionally ATTACHes db/gpsrc.sqlite and reads chrlength_<species> from
+# it for every species, not just the one being packaged. ucsc's own
+# bindb.sql aggregates ALL UCSC-enabled species into this one file (it is
+# not per-species filterable), so building it downloads refGene/chromInfo
+# for every species in config/species.tsv with a UCSC build, regardless of
+# the top-level SPECIES= filter.
+$(DATA_ROOT)/db/gpsrc.sqlite:
+	$(MAKE) -C providers/ucsc $@
+
 # uniprot.sqlite and PFAM.sqlite are optional enrichment sources: build them
 # on demand (e.g. `make <DATA_ROOT>/db/uniprot.sqlite`), but only include as
 # dependencies of chipsrc below when they already exist, so chipsrc assembly
@@ -117,7 +127,7 @@ $(DATA_ROOT)/db/PFAM.sqlite:
 UNIPROT_DEP := $(wildcard $(DATA_ROOT)/db/uniprot.sqlite)
 PFAM_DEP    := $(wildcard $(DATA_ROOT)/db/PFAM.sqlite)
 
-$(DATA_ROOT)/db/chipsrc_%.sqlite: $(DATA_ROOT)/db/genesrc.sqlite $(DATA_ROOT)/db/gosrc.sqlite $(UNIPROT_DEP) $(PFAM_DEP)
+$(DATA_ROOT)/db/chipsrc_%.sqlite: $(DATA_ROOT)/db/genesrc.sqlite $(DATA_ROOT)/db/gosrc.sqlite $(DATA_ROOT)/db/gpsrc.sqlite $(UNIPROT_DEP) $(PFAM_DEP)
 	@mkdir -p $(DATA_ROOT)/db
 	bash scripts/assemble_species.sh $*
 
