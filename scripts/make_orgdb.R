@@ -166,7 +166,29 @@ build_via_db0 <- function(sp, row, chip, dbpath, outdir, bioc_ver) {
     cat("  Building", seed@Package, "via makeAnnDbPkg() ...\n")
     makeAnnDbPkg(seed, dbfile = staged_dbfile, dest_dir = outdir)
 
-    file.path(normalizePath(outdir, mustWork = FALSE), paste0(ann_obj_prefix, ".db"))
+    pkg_dir <- file.path(normalizePath(outdir, mustWork = FALSE), paste0(ann_obj_prefix, ".db"))
+    fix_escaped_rd_underscores(pkg_dir)
+    pkg_dir
+}
+
+## AnnotationForge's own NCBIORG.DB Rd template (man/REFSEQ.Rd) ships with
+## literal "\_" in plain Rd text (e.g. "NG\_XXXXX"), copied verbatim into
+## every package built from it -- Rd text never needs underscore escaped,
+## so this is flagged by R CMD check as "checkRd: Escaped LaTeX specials:
+## \_" and is almost certainly also why the PDF manual's LaTeX render
+## fails. Strip the unnecessary escaping from every generated .Rd file
+## post-hoc rather than patching AnnotationForge's installed template.
+fix_escaped_rd_underscores <- function(pkg_dir) {
+    man_dir <- file.path(pkg_dir, "man")
+    rd_files <- list.files(man_dir, pattern = "\\.Rd$", full.names = TRUE)
+    for (f in rd_files) {
+        txt <- readLines(f, warn = FALSE)
+        fixed <- gsub("\\\\_", "_", txt, fixed = FALSE)
+        if (!identical(txt, fixed)) {
+            writeLines(fixed, f)
+            cat("  Fixed escaped underscores in", basename(f), "\n")
+        }
+    }
 }
 
 ## ── Legacy pipeline: build via AnnotationForge::makeOrgPackage() ─────────────
