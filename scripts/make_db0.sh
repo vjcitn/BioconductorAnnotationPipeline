@@ -43,9 +43,18 @@ if [ ! -s "$SRC" ]; then
     exit 1
 fi
 
+# HAS_MAP: whether .definePossibleTables("OrgDb", <organism>) keeps MAP as
+# a real keytype for this species. bindb_meta.sql (shared by every species
+# using it) unconditionally inserts a map_counts row for 'MAP' (from
+# cytogenetic_locations) -- for human that's correct (MAP is a real
+# keytype), but for mouse (and most other non-human organisms;
+# .definePossibleTables() drops MAP for everything except human) it's a
+# phantom entry, same failure class as the ENTREZID/ENZYME2GENE fixes
+# below: checkMAPCOUNTS() get()s 'org.Mm.egMAP', which makeAnnDbPkg()
+# never creates since MAP isn't in mouse's possible-tables list.
 case "$SPECIES" in
-    human) DBSCHEMA="HUMAN_DB" ;;
-    mouse) DBSCHEMA="MOUSE_DB" ;;
+    human) DBSCHEMA="HUMAN_DB"; HAS_MAP=1 ;;
+    mouse) DBSCHEMA="MOUSE_DB"; HAS_MAP=0 ;;
     *)
         echo "ERROR: make_db0.sh has no schema-conformance rules for '$SPECIES' yet" >&2
         echo "       see PlanFor3.24.md Milestone 5" >&2
@@ -254,6 +263,9 @@ if has_table map_counts; then
         "DELETE FROM map_counts WHERE map_name IN
             ('ENTREZID', 'ENZYME2GENE', 'GO2GENE', 'GO2ALLGENES',
              'PATH2GENE', 'PMID2GENE', 'SYNONYM2GENE');"
+    if [ "$HAS_MAP" -eq 0 ]; then
+        sqlite3 -bail "$OUT_TMP" "DELETE FROM map_counts WHERE map_name = 'MAP';"
+    fi
 fi
 
 mv "$OUT_TMP" "$OUT"
