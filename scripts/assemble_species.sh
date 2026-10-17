@@ -185,6 +185,18 @@ INSERT OR IGNORE INTO uniprot (_id, uniprot_id)
     JOIN up.gene2uniprot u ON g.gene_id = u.gene_id
     WHERE u.taxon_id = '$TAXID';
 
+-- bindb_meta.sql's map_counts row for UNIPROT was computed against the
+-- empty stub table above, before this enrichment ran, so it's stale (0)
+-- against the real data just inserted. AnnotationDbi:::createMAPCOUNTS()
+-- reads map_counts verbatim into the package's MAPCOUNTS vector, and
+-- checkMAPCOUNTS() (run from the auto-generated MAPCOUNTS.Rd example
+-- during R CMD check) hard-stops if that count disagrees with the
+-- actual Bimap's mapped-key count -- confirmed empirically: real count
+-- is 19457, map_counts said 0. Refresh it here, using the same
+-- count(DISTINCT _id) formula bindb_meta.sql itself uses for UNIPROT.
+UPDATE map_counts SET count = (SELECT count(DISTINCT _id) FROM uniprot)
+    WHERE map_name = 'UNIPROT';
+
 -- Ensembl protein IDs (via gene→UniProt→Ensembl_PRO)
 CREATE TABLE IF NOT EXISTS ensembl_pro (
     _id    INTEGER REFERENCES genes(_id),
