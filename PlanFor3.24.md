@@ -364,6 +364,46 @@ Verified on the server: `R CMD check` on the rebuilt
 `org.Hs.eg.db_3.24.0.tar.gz` runs clean except for that one accepted
 NOTE.
 
+### 4.6 `GO.db` — `R CMD check` pass clean — DONE
+`GO.db` is built by a separate script, `scripts/make_godb.R`, which
+hand-assembles the package skeleton (DESCRIPTION, NAMESPACE, `R/zzz.R`)
+rather than going through `AnnotationForge::makeAnnDbPkg()`'s seed-driven
+template substitution the way `make_orgdb.R` does. Its `man/` pages were
+copied verbatim from AnnotationForge's `GO.DB` Rd templates
+(`AnnDbPkg-templates/GO.DB/man/`) — which ship with literal, unsubstituted
+`@TOKEN@` placeholders (`@ANNOBJPREFIX@`, `@PKGNAME@`, and several
+`@*SOURCE@` provenance tokens), e.g. `\name{@ANNOBJPREFIX@TERM}` and
+`columns(@ANNOBJPREFIX@.db)`. A real `R CMD check` run on
+`GO.db_3.24.0.tar.gz` surfaced two bugs, both in `make_godb.R` itself
+(not inherited from upstream data, unlike the org.Hs.eg.db fixes above):
+
+1. **Unsubstituted template placeholders.** Explained all three
+   remaining findings at once: the `\name should not contain !, | or @`
+   warning (17 files), the undocumented-code-objects warning (Rd
+   `\name` no longer matched the real object names like `GOTERM`/
+   `GOBPANCESTOR`), and a hard parse `ERROR` in the auto-generated
+   `GO.db-Ex.R` (`unexpected '@'` at `columns(@` — a literal `@` is not
+   valid R). Fixed by adding a `placeholder_map` covering all 16 tokens
+   present in the real installed template and substituting them via
+   `gsub()` on every copied file, with a warning if any `@WORD@`-shaped
+   token survives (none do, verified against the real AnnotationForge
+   templates). The PDF-manual `ERROR`/`WARNING` cleared up as a
+   byproduct, same as the REFSEQ.Rd fix did for org.Hs.eg.db — both were
+   downstream of malformed Rd, not a separate bug.
+2. **Invalid man-page filename.** Even after (1), `GO_dbconn`/
+   `_dbfile`/`_dbInfo`/`_dbschema` stayed undocumented: the template file
+   is named `_dbconn.Rd`, and `R CMD build` silently excludes any
+   `man/` file starting with `_` ("Subdirectory 'man' contains invalid
+   file names"), dropping it from the built tarball entirely even
+   though its content was otherwise fine. Fixed by renaming it to
+   `<annobj>_dbconn.Rd` (`GO_dbconn.Rd`) on copy.
+
+Left alone, same reasoning as org.Hs.eg.db: the `.onLoad calls:
+packageStartupMessage(...)` NOTE.
+
+Verified on the server: `R CMD check` on the rebuilt
+`GO.db_3.24.0.tar.gz` runs clean except for that one accepted NOTE.
+
 ### 5. Generalize to remaining species
 Once human is proven, build the same renaming map for each
 `pkg_template` value by diffing `.definePossibleTables("OrgDb", <organism>)`
