@@ -145,13 +145,60 @@ writeLines(c(
     '}'
 ), file.path(pkg_dir, "R", "zzz.R"))
 
-## ── man pages: copy from AnnotationForge template ────────────────────────────
+## ── man pages: copy from AnnotationForge template, substituting placeholders ──
 template_dir <- system.file("AnnDbPkg-templates", "GO.DB", "man",
                              package = "AnnotationForge")
+
+## AnnotationForge's GO.DB man templates ship with literal "@TOKEN@"
+## placeholders (e.g. "\name{@ANNOBJPREFIX@TERM}", "columns(@ANNOBJPREFIX@.db)")
+## that a package builder is expected to fill in. makeAnnDbPkg() does this
+## substitution for the orgdb path (see fix_escaped_rd_underscores() and
+## surrounding code in make_orgdb.R), but this hand-built godb path used to
+## copy the templates verbatim -- leaving raw "@...@" tokens in every
+## \name{}/\alias{} and in \examples{} code. That's what produced the
+## "\name should not contain !, | or @" warnings, the undocumented-objects
+## warnings (Rd \name no longer matched the real object names), and the
+## hard parse error in GO.db-Ex.R (a literal "@" is not valid R syntax).
+go_source_desc <- sprintf("the Gene Ontology Consortium (%s)", go_source_date)
+placeholder_map <- c(
+    ANNOBJPREFIX      = annobj,
+    PKGNAME           = pkg_name,
+    TERMSOURCE        = go_source_desc,
+    BPANCESTORSOURCE  = go_source_desc,
+    BPCHILDRENSOURCE  = go_source_desc,
+    BPOFFSPRINGSOURCE = go_source_desc,
+    BPPARENTSSOURCE   = go_source_desc,
+    CCANCESTORSOURCE  = go_source_desc,
+    CCCHILDRENSOURCE  = go_source_desc,
+    CCOFFSPRINGSOURCE = go_source_desc,
+    CCPARENTSSOURCE   = go_source_desc,
+    MFANCESTORSOURCE  = go_source_desc,
+    MFCHILDRENSOURCE  = go_source_desc,
+    MFOFFSPRINGSOURCE = go_source_desc,
+    MFPARENTSSOURCE   = go_source_desc,
+    OBSOLETESOURCE    = go_source_desc
+)
+
+substitute_placeholders <- function(txt) {
+    for (key in names(placeholder_map)) {
+        txt <- gsub(paste0("@", key, "@"), placeholder_map[[key]], txt, fixed = TRUE)
+    }
+    txt
+}
+
 if (nzchar(template_dir) && dir.exists(template_dir)) {
     man_files <- list.files(template_dir, full.names = TRUE)
-    for (mf in man_files) file.copy(mf, file.path(pkg_dir, "man", basename(mf)))
-    cat(sprintf("  Copied %d man pages from AnnotationForge template\n", length(man_files)))
+    for (mf in man_files) {
+        txt <- substitute_placeholders(readLines(mf, warn = FALSE))
+        leftover <- grep("@[A-Z_]+@", txt, value = TRUE)
+        if (length(leftover)) {
+            warning("Unsubstituted placeholder(s) remain in ", basename(mf), ": ",
+                    paste(leftover, collapse = " | "), call. = FALSE)
+        }
+        writeLines(txt, file.path(pkg_dir, "man", basename(mf)))
+    }
+    cat(sprintf("  Copied %d man pages from AnnotationForge template (placeholders substituted)\n",
+                length(man_files)))
 } else {
     ## Minimal fallback man page
     writeLines(c(
