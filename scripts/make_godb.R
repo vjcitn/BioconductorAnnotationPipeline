@@ -195,7 +195,13 @@ if (nzchar(template_dir) && dir.exists(template_dir)) {
             warning("Unsubstituted placeholder(s) remain in ", basename(mf), ": ",
                     paste(leftover, collapse = " | "), call. = FALSE)
         }
-        writeLines(txt, file.path(pkg_dir, "man", basename(mf)))
+        ## R CMD build rejects man/ filenames starting with "_" as invalid
+        ## and silently drops them ("excluding invalid files") -- the
+        ## template's "_dbconn.Rd" never made it into the built tarball,
+        ## leaving GO_dbconn/_dbfile/_dbInfo/_dbschema undocumented even
+        ## though the .Rd content itself (and its \alias{}es) were fine.
+        out_name <- sub("^_", paste0(annobj, "_"), basename(mf))
+        writeLines(txt, file.path(pkg_dir, "man", out_name))
     }
     cat(sprintf("  Copied %d man pages from AnnotationForge template (placeholders substituted)\n",
                 length(man_files)))
