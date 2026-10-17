@@ -239,17 +239,37 @@ Milestone 2 instead of `makeOrgPackage()`. Drop the manual `DBSCHEMA`
 metadata `UPDATE` block (lines ~376-399) — `makeAnnDbPkg()`/`AnnDbPkgSeed`
 own that now via `initWithDbMetada()`.
 
-### 4. Validate against both APIs
-- Legacy: `ls(2)` after `library(org.Hs.eg.db)` should show the full Bimap
-  suite (`org.Hs.egSYMBOL`, `org.Hs.egCHRLOC`, ... — the ~43 objects from
-  the original comparison listing).
-- Modern: re-run the exact failing calls from this investigation —
-  `keys(org.Hs.eg.db, keytype="GOALL")`, `"PFAM"`, `"ENSEMBL"` — and confirm
-  whether they now succeed, or whether (per the "GO is special" open
-  question) a literal `go`/`go_all` view is still needed for the bare
-  `OrgDb` object's generic dispatch path even with Bimaps present.
-- Run `tests/check_orgdb.R` (existing validation harness) and extend it to
-  assert `keytypes(x)` are all actually queryable, not just listed.
+### 4. Validate against both APIs — DONE for human, against real data
+Ran the full Milestone 1+2 pipeline end to end on the build server against
+the real `chipsrc_human.sqlite` (not just the synthetic fixture used to
+develop Milestones 1-2): `make db0_human.sqlite` → `make_db0_pkg.R` →
+`R CMD INSTALL` → `library(org.Hs.eg.db)`.
+
+Both APIs confirmed working with real, non-trivial data:
+- Legacy: `org.Hs.egSYMBOL`, `org.Hs.egALIAS2EG`, `org.Hs.egENSEMBL`,
+  `org.Hs.egENSEMBLPROT`, `org.Hs.egENSEMBLTRANS`, `org.Hs.egGO`,
+  `org.Hs.egPFAM`, `org.Hs.egUCSCKG`, `org.Hs.egOMIM` all exist.
+- Modern: `keys()` counts — `ENSEMBL` 38267, `ENSEMBLPROT` 116363,
+  `ENSEMBLTRANS` 116359, `PFAM` 8868, `GOALL` 21341 — and
+  `select(org.Hs.eg.db, columns=c("SYMBOL","PFAM","ENSEMBL"))` returns
+  correct joined rows (e.g. A2M → 7 Pfam domains). `IPI` returns 0, which
+  is correct, not a bug: the International Protein Index was discontinued
+  years ago, so modern UniProt-sourced Pfam data has no `ipi_id` to
+  populate.
+- `PFAM`/`ENSEMBLPROT`/`ENSEMBLTRANS` only got real (non-stub) data after
+  also building `providers/pfam` and `providers/uniprot` — these are
+  optional enrichment sources (`make`'s `UNIPROT_DEP`/`PFAM_DEP` wildcards
+  only pull them into `chipsrc`'s prerequisite list if
+  `db/uniprot.sqlite`/`db/PFAM.sqlite` already exist when `chipsrc` is
+  assembled). On a from-scratch build, run
+  `make -C providers/pfam all && make -C providers/uniprot all` *before*
+  `make chipsrc_human.sqlite`, or the stub tables Milestone 1 creates as a
+  fallback will stay empty.
+
+Still pending: running `tests/check_orgdb.R` (existing validation harness)
+and extending it to assert `keytypes(x)` are all actually queryable, not
+just listed — currently this was checked ad hoc via the commands above,
+not via the formal harness.
 
 ### 5. Generalize to remaining species
 Once human is proven, build the same renaming map for each
@@ -259,13 +279,18 @@ process used in this document), prioritizing species with existing
 production consumers.
 
 ## Open questions carried forward
-- Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through the
-  Bimap-aware path or the generic `.definePossibleTables()` fallback? Needs
-  empirical check once Milestone 2 produces a real package (see Milestone 4).
-- Where should Pfam/Prosite/Ensembl-protein/Ensembl-transcript/UniProt data
-  come from for `chipsrc_human.sqlite`? Confirmed absent from the current
-  assembly; this is a data-sourcing gap independent of the schema-renaming
-  work, tracked separately from this plan's scope.
+- ~~Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through
+  the Bimap-aware path or the generic `.definePossibleTables()` fallback?~~
+  Resolved: generic fallback only, no legacy `GOALL` Bimap exists even in
+  production packages; needs the `go`/`go_all` views (see "GO is special"
+  under Milestone 2). Confirmed on real data in Milestone 4.
+- ~~Where should Pfam/Prosite/Ensembl-protein/Ensembl-transcript/UniProt
+  data come from for `chipsrc_human.sqlite`?~~ Resolved: `providers/pfam`
+  and `providers/uniprot` already produce this data, but are optional
+  enrichment sources that must be built *before* `chipsrc_human.sqlite` is
+  assembled (see Milestone 4) — not a missing-provider gap, just a build
+  ordering one. `Prosite` is still unaddressed (no provider currently
+  populates it; `make_db0.sh` only creates an empty stub).
 - `GENETYPE`'s expected column name (`gene_type` vs. our actual column name)
   was not explicitly re-verified in this pass — confirm before relying on it
   staying "OK".
