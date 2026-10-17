@@ -55,6 +55,7 @@ fi
 case "$SPECIES" in
     human) DBSCHEMA="HUMAN_DB"; HAS_MAP=1 ;;
     mouse) DBSCHEMA="MOUSE_DB"; HAS_MAP=0 ;;
+    rat)   DBSCHEMA="RAT_DB";   HAS_MAP=0 ;;
     *)
         echo "ERROR: make_db0.sh has no schema-conformance rules for '$SPECIES' yet" >&2
         echo "       see PlanFor3.24.md Milestone 5" >&2

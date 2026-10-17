@@ -146,7 +146,8 @@ $(DATA_ROOT)/db/chipsrc_%.sqlite: $(DATA_ROOT)/db/genesrc.sqlite $(DATA_ROOT)/db
 # AnnotationDbi's internal .definePossibleTables() contract, so that a
 # later AnnotationForge::makeAnnDbPkg() build gets both the legacy per-table
 # Bimap objects and a working modern keys()/select() API. See
-# PlanFor3.24.md. Currently `human` and `mouse` have rename rules implemented.
+# PlanFor3.24.md. Currently `human`, `mouse`, and `rat` have rename rules
+# implemented.
 $(DATA_ROOT)/db/db0_%.sqlite: $(DATA_ROOT)/db/chipsrc_%.sqlite
 	bash scripts/make_db0.sh $*
 
@@ -154,7 +155,7 @@ $(DATA_ROOT)/db/db0_%.sqlite: $(DATA_ROOT)/db/chipsrc_%.sqlite
 # Builds OrgDb packages from chipsrc_<species>.sqlite. Reads genus/species/
 # prefix from config/species.tsv; no hard-coded names.
 #
-# scripts/make_orgdb.R dispatches per species: for human/mouse (see
+# scripts/make_orgdb.R dispatches per species: for human/mouse/rat (see
 # DB0_SUPPORTED_SPECIES there), it runs scripts/make_db0.sh itself to produce
 # the schema-conformant db0_<species>.sqlite, then builds via
 # AnnotationForge::makeAnnDbPkg() (PlanFor3.24.md Milestones 1-2) — this

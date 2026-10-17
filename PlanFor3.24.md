@@ -446,10 +446,22 @@ first) → `make package SPECIES=mouse` → `make check SPECIES=mouse` →
 `R CMD check` on the resulting `org.Mm.eg.db` tarball, the same
 validation sequence Milestones 4/4.5 ran for human.
 
+**`rat` added.** Smaller delta than mouse, as predicted:
+`AnnotationDbi:::.definePossibleTables("OrgDb", "Rattus norvegicus")`
+only drops `MAP` — no additions at all (no `MGI`-equivalent). Diffing
+`bindb_rat.sql` against `bindb_human.sql` confirmed every renamed
+table/column (`gene_synonyms.symbol`, `ensembl.ensid`,
+`chromosome_locations.chromosome`) is identical, and `rat` has no
+`mgi`/`omim`/`ucsc` tables at all (expected — none are rat keytypes).
+`assemble_species.sh`'s meta dispatch for rat runs only `bindb_meta.sql`
+(no extra per-species meta script, unlike mouse's
+`bindb_extra_meta_mouse.sql`), so no new `map_metadata` backfill gap
+exists either. Added `rat) DBSCHEMA="RAT_DB"; HAS_MAP=0` to
+`make_db0.sh` and `"rat"` to `DB0_SUPPORTED_SPECIES` — no other code
+changes needed. Not yet run against real server data.
+
 The next easiest species to generalize, by the same diff-against-
-`.definePossibleTables()` method: `rat` (also only drops `MAP`, no
-species-specific table additions at all — likely an even smaller delta
-than mouse) and `chimp`/`bovine`/`chicken`/`canine`/`rhesus` (each drops
+`.definePossibleTables()` method: `chimp`/`bovine`/`chicken`/`canine`/`rhesus` (each drops
 a handful of keytypes but adds none, so no new table names to reconcile,
 just confirming `bindb_<species>.sql` already uses the retained ones'
 expected names). Species that *add* genuinely new tables not covered by
