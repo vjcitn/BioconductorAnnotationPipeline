@@ -304,6 +304,66 @@ one column. Fixed by discovering the real column name via `PRAGMA
 table_info()` against a candidate list covering both naming
 conventions, instead of hardcoding either.
 
+### 4.5 Make `R CMD check` pass clean — DONE for human
+`make check`/`check_orgdb.R` validate data correctness but don't run
+`R CMD check`, which exercises a different path: every `.Rd` example,
+including `AnnotationDbi::checkMAPCOUNTS()` (from the auto-generated
+`MAPCOUNTS.Rd`), which `get()`s every name listed in the package's
+exported `MAPCOUNTS` vector and compares it against the live Bimap's
+mapped-key count. Running it on the real server-built
+`org.Hs.eg.db_3.24.0.tar.gz` surfaced three real, fixable bugs, all
+inherited from the legacy `bindb_meta.sql`/`assemble_species.sh`
+pipeline rather than introduced by Milestones 1-3, discovered one at a
+time as each fix unmasked the next `checkMAPCOUNTS()` failure:
+
+1. **Phantom `ENTREZID` entry.** `bindb_meta.sql` inserts a
+   `map_counts` row `'ENTREZID' = count(*) FROM genes`, and
+   `AnnotationDbi:::createMAPCOUNTS()` builds `MAPCOUNTS` straight from
+   that table — but ENTREZID is the central gene ID, not a separate
+   map, so no Bimap object by that name is ever created.
+   `checkMAPCOUNTS()` special-cases `PFAM`/`PROSITE` this way but not
+   `ENTREZID`, so it `get()`s a nonexistent object and aborts.
+2. **Six more phantom entries, same root cause.** `bindb_meta.sql`
+   also records several reverse-map rows under the old,
+   pre-AnnotationDbi env-package naming convention (`ENZYME2GENE`,
+   `GO2GENE`, `GO2ALLGENES`, `PATH2GENE`, `PMID2GENE`,
+   `SYNONYM2GENE`) instead of the modern Bimap names AnnotationDbi
+   actually creates (`ENZYME2EG`, `GO2EG`, `GO2ALLEGS`, `PATH2EG`,
+   `PMID2EG`, `ALIAS2EG`). Found the complete set in one shot via
+   `setdiff(names(org.Hs.egMAPCOUNTS), ls(getNamespace("org.Hs.eg.db")))`
+   against a built package, rather than discovering them one slow
+   `R CMD check` run at a time.
+3. **Stale `UNIPROT` count.** `bindb_meta.sql` computes
+   `map_counts('UNIPROT')` early, against the empty stub `uniprot`
+   table that exists at that point. `assemble_species.sh`'s UniProt
+   enrichment step later `DELETE`s and repopulates `uniprot` with real
+   gene→UniProt mappings (19457 genes, for human) but never refreshed
+   `map_counts` to match, so `checkMAPCOUNTS()` hard-stopped
+   ("count1 and count0 differ").
+
+All three fixed by deleting/refreshing the relevant `map_counts` rows
+in `scripts/make_db0.sh` (phantoms 1-2) and `scripts/assemble_species.sh`
+(stale UNIPROT count, 3), right at the point each is produced.
+
+Separately, `R CMD check` also flagged a Rd NOTE (`checkRd: Escaped
+LaTeX specials: \_`) and a PDF-manual `ERROR`/`WARNING`, both traced to
+literal `"\_"` text baked into AnnotationForge's own shipped
+`NCBIORG.DB` Rd template (`man/REFSEQ.Rd`) — not something generated
+from our data, and not fixable by editing our sqlite. Fixed by
+post-processing every generated `.Rd` file in `make_orgdb.R` right
+after `makeAnnDbPkg()` writes them, stripping the unnecessary escape.
+
+Left alone: the `.onLoad calls: packageStartupMessage(...)` NOTE. This
+comes from `AnnotationDbi:::annoStartupMessages()`, called from the
+package's own auto-generated `zzz.R` — a style NOTE present on
+essentially every Bioconductor annotation package, not an `ERROR`, and
+not something this pipeline controls or should suppress (the message
+may be wanted later).
+
+Verified on the server: `R CMD check` on the rebuilt
+`org.Hs.eg.db_3.24.0.tar.gz` runs clean except for that one accepted
+NOTE.
+
 ### 5. Generalize to remaining species
 Once human is proven, build the same renaming map for each
 `pkg_template` value by diffing `.definePossibleTables("OrgDb", <organism>)`
