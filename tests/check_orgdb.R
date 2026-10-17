@@ -330,6 +330,29 @@ cat("\n--- 4. Spot checks (known landmark genes) ---\n")
 
 cat("  using gene ID column:", gene_id_col, "\n")
 
+## Column naming differs by which pipeline built the package: db0
+## (Milestone 1-3, currently human) uses the lowercase schema-conformant
+## names .definePossibleTables() expects (gene_name, symbol, uniprot_id);
+## the legacy makeOrgPackage() path (every other species, for now) uses
+## the uppercase names from make_orgdb.R's own extraction SQL aliases
+## (GENENAME, SYMBOL, UNIPROT). Discover which is actually present rather
+## than hardcoding either -- SYMBOL/symbol differ only in case, which
+## SQLite's identifier matching papers over, but GENENAME/gene_name and
+## UNIPROT/uniprot_id do not, so a hardcoded guess silently errors on
+## whichever pipeline it doesn't match.
+pick_col <- function(table, candidates) {
+    cols <- tryCatch(dbGetQuery(org_conn,
+        sprintf("PRAGMA table_info(%s)", table))$name,
+        error = function(e) character(0))
+    hit <- candidates[candidates %in% cols]
+    if (length(hit) == 0L) NA_character_ else hit[1L]
+}
+symbol_col   <- pick_col("gene_info", c("SYMBOL", "symbol"))
+genename_col <- pick_col("gene_info", c("GENENAME", "gene_name"))
+uniprot_col  <- pick_col("uniprot",   c("UNIPROT", "uniprot_id"))
+cat("  gene_info symbol/genename columns:", symbol_col, "/", genename_col,
+    " -- uniprot column:", uniprot_col, "\n")
+
 known_file <- "tests/known_genes.tsv"
 
 if (file.exists(known_file)) {
@@ -346,29 +369,32 @@ if (file.exists(known_file)) {
             ## AnnotationDbi method dispatch which can fail in temp-lib context)
 
             ## Symbol
-            sym <- tryCatch(dbGetQuery(org_conn, sprintf(
-                "SELECT gi.SYMBOL FROM genes g
+            sym <- if (is.na(symbol_col)) NA_character_ else tryCatch(
+                dbGetQuery(org_conn, sprintf(
+                "SELECT gi.\"%s\" FROM genes g
                  JOIN gene_info gi ON g._id = gi._id
-                 WHERE g.\"%s\" = '%s'", gene_id_col, gid))[[1L]][1L],
+                 WHERE g.\"%s\" = '%s'", symbol_col, gene_id_col, gid))[[1L]][1L],
                 error = function(e) NA_character_)
             check(sprintf("gene %s SYMBOL == %s", gid, row$symbol),
                   isTRUE(sym == row$symbol))
 
             ## GENENAME contains expected substring
-            gname <- tryCatch(dbGetQuery(org_conn, sprintf(
-                "SELECT gi.GENENAME FROM genes g
+            gname <- if (is.na(genename_col)) NA_character_ else tryCatch(
+                dbGetQuery(org_conn, sprintf(
+                "SELECT gi.\"%s\" FROM genes g
                  JOIN gene_info gi ON g._id = gi._id
-                 WHERE g.\"%s\" = '%s'", gene_id_col, gid))[[1L]][1L],
+                 WHERE g.\"%s\" = '%s'", genename_col, gene_id_col, gid))[[1L]][1L],
                 error = function(e) NA_character_)
             check(sprintf("gene %s GENENAME contains '%s'", gid, row$genename_contains),
                   isTRUE(grepl(row$genename_contains, gname, ignore.case = TRUE)))
 
             ## UniProt
             if (nzchar(row$uniprot %||% "")) {
-                uni <- tryCatch(dbGetQuery(org_conn, sprintf(
-                    "SELECT u.UNIPROT FROM genes g
+                uni <- if (is.na(uniprot_col)) character(0) else tryCatch(
+                    dbGetQuery(org_conn, sprintf(
+                    "SELECT u.\"%s\" FROM genes g
                      JOIN uniprot u ON g._id = u._id
-                     WHERE g.\"%s\" = '%s'", gene_id_col, gid))[[1L]],
+                     WHERE g.\"%s\" = '%s'", uniprot_col, gene_id_col, gid))[[1L]],
                     error = function(e) character(0))
                 check(sprintf("gene %s has UniProt %s", gid, row$uniprot),
                       row$uniprot %in% uni)

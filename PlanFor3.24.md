@@ -289,6 +289,21 @@ synthetic data lacking the real TP53/BRCA1/EGFR landmark genes) are
 unrelated fixture limitations, confirmed unchanged by running the harness
 before and after this edit.
 
+Then run against the **real** build-server `chipsrc_human.sqlite`/package
+(`make check SPECIES=human`): 85 passed, 6 failed — every modern-API
+keytype check passed against real data, confirming Milestone 4's intent
+end to end. The 6 failures were all in the pre-existing spot-check
+section: `gene_info`/`uniprot` column-name lookups were hardcoded to the
+legacy `makeOrgPackage()` path's uppercase aliases (`GENENAME`,
+`UNIPROT`), but `db0`-built packages (human) use the lowercase
+schema-conformant names `.definePossibleTables()` expects (`gene_name`,
+`uniprot_id`) — confirmed directly via `.schema gene_info`/`.schema
+uniprot` on the server. `SYMBOL`/`symbol` happened to still match
+(SQLite column lookups are case-insensitive), masking the bug for that
+one column. Fixed by discovering the real column name via `PRAGMA
+table_info()` against a candidate list covering both naming
+conventions, instead of hardcoding either.
+
 ### 5. Generalize to remaining species
 Once human is proven, build the same renaming map for each
 `pkg_template` value by diffing `.definePossibleTables("OrgDb", <organism>)`
