@@ -212,5 +212,25 @@ INSERT INTO map_metadata
 SQL
 fi
 
+# map_counts ENTREZID phantom entry: bindb_meta.sql (annosrc/organism_
+# annotation/script/bindb_meta.sql, line ~103-105) inserts a map_counts
+# row 'ENTREZID' = count(*) FROM genes. AnnotationDbi:::createMAPCOUNTS()
+# builds the package's exported MAPCOUNTS vector straight from this
+# table (excluding only 'TOTAL' by name), so MAPCOUNTS ends up listing
+# org.<X>.egENTREZID -- but ENTREZID is the central gene ID, not a
+# separate map, so makeAnnDbPkg() never creates a Bimap/env object by
+# that name. AnnotationDbi::checkMAPCOUNTS() -- called from the
+# auto-generated MAPCOUNTS.Rd example run by R CMD check --examples --
+# special-cases PFAM/PROSITE this same way but not ENTREZID, so it
+# calls get('org.<X>.egENTREZID', ...), which fails with "object not
+# found" and aborts R CMD check. This is a legacy bindb_meta.sql
+# characteristic (present for every species, not introduced by this
+# pipeline); drop the row here so MAPCOUNTS never claims a map that
+# doesn't exist.
+if has_table map_counts; then
+    sqlite3 -bail "$OUT_TMP" \
+        "DELETE FROM map_counts WHERE map_name = 'ENTREZID';"
+fi
+
 mv "$OUT_TMP" "$OUT"
 echo "Done: $OUT ($(du -sh "$OUT" | cut -f1))"
