@@ -12,9 +12,20 @@
 #
 # Per-species rename rules live in the `case` block below, derived by
 # diffing annosrc/organism_annotation/script/bindb_<species>.sql (and its
-# meta scripts) against .definePossibleTables()'s expectations. Currently
-# only `human` is implemented; see PlanFor3.24.md Milestone 5 for the plan
-# to generalize to the other 17 species in config/species.tsv.
+# meta scripts) against .definePossibleTables()'s expectations. `human` and
+# `mouse` are implemented; see PlanFor3.24.md Milestone 5 for the plan to
+# generalize to the remaining species in config/species.tsv.
+#
+# The renaming SQL below the `case` block is intentionally NOT further
+# species-gated: bindb_mouse.sql was confirmed (PlanFor3.24.md Milestone 5)
+# to use the exact same table/column names as bindb_human.sql for every
+# rename this script performs (gene_synonyms.symbol, ensembl.ensid,
+# chromosome_locations.chromosome, etc.) — mouse only *adds* tables
+# (mgi/mgi_id, already conformant, no rename needed) and *omits* some
+# (omim, ucsc) that this script never touches anyway, since neither OMIM
+# nor UCSCKG is a mouse keytype. If a future species' bindb_<species>.sql
+# uses different names for any of these, split that rule into a per-species
+# branch rather than assuming this pattern holds.
 set -euo pipefail
 
 SPECIES="${1:?Usage: make_db0.sh <species>}"
@@ -34,6 +45,7 @@ fi
 
 case "$SPECIES" in
     human) DBSCHEMA="HUMAN_DB" ;;
+    mouse) DBSCHEMA="MOUSE_DB" ;;
     *)
         echo "ERROR: make_db0.sh has no schema-conformance rules for '$SPECIES' yet" >&2
         echo "       see PlanFor3.24.md Milestone 5" >&2

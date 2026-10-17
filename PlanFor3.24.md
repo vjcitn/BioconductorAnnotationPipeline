@@ -404,12 +404,63 @@ packageStartupMessage(...)` NOTE.
 Verified on the server: `R CMD check` on the rebuilt
 `GO.db_3.24.0.tar.gz` runs clean except for that one accepted NOTE.
 
-### 5. Generalize to remaining species
+### 5. Generalize to remaining species — `mouse` DONE
 Once human is proven, build the same renaming map for each
 `pkg_template` value by diffing `.definePossibleTables("OrgDb", <organism>)`
 against each organism's current `chipsrc_<species>.sqlite` tables (the same
 process used in this document), prioritizing species with existing
 production consumers.
+
+**`mouse` added.** `AnnotationDbi:::.definePossibleTables("OrgDb", "Mus
+musculus")` differs from the human entry by exactly two things: it adds
+`MGI = c("mgi", "mgi_id")` and drops `MAP` (no `MAP`/`UCSCKG` for mouse;
+no `OMIM` either — human's exception block is the only one that adds
+those two). Diffing `annosrc/organism_annotation/script/bindb_mouse.sql`
+against `bindb_human.sql` showed every table/column this pipeline
+renames (`gene_synonyms.symbol`, `ensembl.ensid`,
+`chromosome_locations.chromosome`, `ensembl_pro`/`ensembl_trs`, `pfam`,
+`kegg`, `ec`, ...) is named identically in both — mouse only *adds*
+`mgi`/`mgi_id` (already conformant as-is, confirmed against
+`.definePossibleTables()`'s expected name — no rename needed) and omits
+`omim`/`ucsc` (never referenced by `make_db0.sh` anyway, since neither is
+a mouse keytype). `bindb_extra_meta_mouse.sql` (already run by
+`assemble_species.sh` for mouse) backfills the `map_metadata` rows for
+`MGI`/`MGI2GENE` the same way `bindb_OMIM.sql`/`bindb_meta_ucsc.sql` do
+for human's `OMIM`/`UCSCKG` — so Milestone 2's man-page-generation gap
+doesn't recur for mouse. `AnnotationForge`'s `NCBIORG.DB` template (the
+one `PkgTemplate` value used by `build_via_db0()` for every species) has
+an `MGI.Rd`, so no template work was needed either — this template is
+not species-specific; `.definePossibleTables()`/`filterSeeds()` alone
+decide which of its Rd pages apply to a given species' seed.
+
+Net result: the per-species renaming SQL in `make_db0.sh` needed **no
+changes at all** for mouse — it was already written against table/column
+names `bindb_mouse.sql` happens to share with `bindb_human.sql`. Only
+two things were added: a `mouse) DBSCHEMA="MOUSE_DB" ;;` case arm in
+`make_db0.sh`, and `"mouse"` in `make_orgdb.R`'s `DB0_SUPPORTED_SPECIES`.
+`build_via_db0()` itself required no change — it already reads
+`pkg_prefix`/`pkg_template`/`genus`/`species` generically from
+`config/species.tsv` per row. Not yet run against real server data —
+next step is `make db0_mouse.sqlite` (needs `chipsrc_mouse.sqlite` built
+first) → `make package SPECIES=mouse` → `make check SPECIES=mouse` →
+`R CMD check` on the resulting `org.Mm.eg.db` tarball, the same
+validation sequence Milestones 4/4.5 ran for human.
+
+The next easiest species to generalize, by the same diff-against-
+`.definePossibleTables()` method: `rat` (also only drops `MAP`, no
+species-specific table additions at all — likely an even smaller delta
+than mouse) and `chimp`/`bovine`/`chicken`/`canine`/`rhesus` (each drops
+a handful of keytypes but adds none, so no new table names to reconcile,
+just confirming `bindb_<species>.sql` already uses the retained ones'
+expected names). Species that *add* genuinely new tables not covered by
+`NCBIORG.DB`'s template — `fly` (FLYBASE/FLYBASECG/FLYBASEPROT), `worm`
+(WORMBASE), `yeast` (ORF/DESCRIPTION/COMMON/INTERPRO/SMART/SGD — also a
+wholesale table-set replacement, not an addition), `arabidopsis`
+(TAIR/ARACYC/ARACYCENZYME, also wholesale replacement) — should wait
+until `NCBIORG.DB`'s Rd templates are confirmed to actually carry those
+object names (not yet checked); if they don't, `AnnotationForge` likely
+expects a different `PkgTemplate` for those organisms, which would be
+new work rather than a `make_db0.sh` rename-rule addition.
 
 ## Open questions carried forward
 - ~~Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through
