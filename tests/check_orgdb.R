@@ -401,6 +401,41 @@ if (file.exists(known_file)) {
     cat("  NOTE  tests/known_genes.tsv not found — skipping spot checks\n")
 }
 
+## ── 5. MODERN API COVERAGE ───────────────────────────────────────────────────
+## columns()/keytypes() listing a type is not the same as it being queryable
+## -- this is exactly the bug Milestones 1-2 fixed (GOALL/PFAM/IPI/ENSEMBL
+## listed but erroring with raw SQL errors on keys()/select()). Walk every
+## keytype and confirm both keys() and a small select() round-trip succeed.
+cat("\n--- 5. Modern API coverage (every keytype must be queryable) ---\n")
+
+pkg_keytypes <- tryCatch(keytypes(org), error = function(e) character(0))
+check("keytypes() is non-empty", length(pkg_keytypes) > 0L)
+
+for (kt in pkg_keytypes) {
+    kt_keys <- tryCatch(keys(org, keytype = kt), error = function(e) {
+        cat(sprintf("  ERROR keys(keytype=\"%s\"): %s\n", kt, conditionMessage(e)))
+        NULL
+    })
+    check(sprintf("keys(keytype=\"%s\") succeeds", kt), !is.null(kt_keys))
+
+    if (!is.null(kt_keys) && length(kt_keys) > 0L) {
+        sample_keys <- kt_keys[seq_len(min(5L, length(kt_keys)))]
+        sel <- tryCatch(
+            select(org, keys = sample_keys, keytype = kt, columns = "SYMBOL"),
+            error = function(e) {
+                cat(sprintf("  ERROR select(keytype=\"%s\"): %s\n",
+                            kt, conditionMessage(e)))
+                NULL
+            })
+        check(sprintf("select(keytype=\"%s\") succeeds", kt), !is.null(sel))
+    } else if (!is.null(kt_keys)) {
+        ## 0 keys can be legitimate (e.g. IPI -- discontinued identifier
+        ## system, no source data in modern UniProt-derived Pfam) -- keys()
+        ## succeeding without error is the actual requirement; skip select().
+        cat(sprintf("  NOTE  keytype \"%s\" returns 0 keys -- select() skipped\n", kt))
+    }
+}
+
 ## ── Summary ───────────────────────────────────────────────────────────────────
 cat(sprintf("\n=== Results: %d passed, %d failed ===\n", pass_count, fail_count))
 if (fail_count > 0L) {

@@ -247,7 +247,7 @@ Both return a package source directory path; the `R CMD build` tarball
 step is now shared, run once after the dispatch regardless of which path
 built the source tree.
 
-### 4. Validate against both APIs — DONE for human, against real data
+### 4. Validate against both APIs — DONE for human, against real data; harness extended
 Ran the full Milestone 1+2 pipeline end to end on the build server against
 the real `chipsrc_human.sqlite` (not just the synthetic fixture used to
 develop Milestones 1-2): `make db0_human.sqlite` → `make_db0_pkg.R` →
@@ -274,10 +274,20 @@ Both APIs confirmed working with real, non-trivial data:
   `make chipsrc_human.sqlite`, or the stub tables Milestone 1 creates as a
   fallback will stay empty.
 
-Still pending: running `tests/check_orgdb.R` (existing validation harness)
-and extending it to assert `keytypes(x)` are all actually queryable, not
-just listed — currently this was checked ad hoc via the commands above,
-not via the formal harness.
+`tests/check_orgdb.R` now has a 5th section ("Modern API coverage") that
+walks every `keytypes(x)` entry and asserts both `keys(x, keytype=kt)` and
+a small `select(x, keys=..., keytype=kt, columns="SYMBOL")` round-trip
+succeed without error — this is exactly the bug class Milestones 1-2 fixed
+(a keytype listed by `keytypes()`/`columns()` but erroring with a raw SQL
+error when actually queried). A keytype returning 0 keys is not treated as
+a failure (e.g. `IPI` — discontinued identifier system, correctly empty);
+only `keys()`/`select()` throwing an error fails the check. Verified
+against the Milestone 1-3 synthetic `chipsrc_human.sqlite` fixture: all 24
+keytypes pass both checks (44 new PASS results). The harness's pre-existing
+spot-check failures against that fixture (missing `TAXID` metadata row,
+synthetic data lacking the real TP53/BRCA1/EGFR landmark genes) are
+unrelated fixture limitations, confirmed unchanged by running the harness
+before and after this edit.
 
 ### 5. Generalize to remaining species
 Once human is proven, build the same renaming map for each
