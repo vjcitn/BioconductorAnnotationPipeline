@@ -404,7 +404,7 @@ packageStartupMessage(...)` NOTE.
 Verified on the server: `R CMD check` on the rebuilt
 `GO.db_3.24.0.tar.gz` runs clean except for that one accepted NOTE.
 
-### 5. Generalize to remaining species — `mouse` DONE
+### 5. Generalize to remaining species — `mouse`, `rat`, `zebrafish` DONE
 Once human is proven, build the same renaming map for each
 `pkg_template` value by diffing `.definePossibleTables("OrgDb", <organism>)`
 against each organism's current `chipsrc_<species>.sqlite` tables (the same
@@ -459,6 +459,38 @@ table/column (`gene_synonyms.symbol`, `ensembl.ensid`,
 exists either. Added `rat) DBSCHEMA="RAT_DB"; HAS_MAP=0` to
 `make_db0.sh` and `"rat"` to `DB0_SUPPORTED_SPECIES` — no other code
 changes needed. Not yet run against real server data.
+
+**`zebrafish` added.** First species in this milestone that needed an
+actual new rename rule, not just a case-arm/flag addition.
+`AnnotationDbi:::.definePossibleTables("OrgDb", "Danio rerio")` adds
+`ZFIN = c("zfin", "zfin_id")` and drops `MAP` and `GENETYPE` (confirmed
+`bindb_zebrafish.sql` has no `genetype` table at all, consistent with the
+drop). Diffing `bindb_zebrafish.sql` against `bindb_human.sql` showed the
+usual renamed tables/columns (`gene_synonyms.symbol`, `ensembl.ensid`,
+`chromosome_locations.chromosome`, ...) are identical, but the new `zfin`
+table itself is defined as `zfin(_id, ZFid)` — unlike mouse's `mgi`/
+`mgi_id` (already conformant), zebrafish's ID column is named `ZFid`, not
+the `zfin_id` `.definePossibleTables()` expects. Added
+`ALTER TABLE zfin RENAME COLUMN ZFid TO zfin_id;` to `make_db0.sh`, gated
+on `has_table zfin` (not `$SPECIES`) since no other currently-supported
+species has this table — same pattern as the existing
+`ensembl_pro`/`ensembl_trs` stubs.
+
+Also found that zebrafish's `assemble_species.sh` meta dispatch runs
+`bindb_meta.sql` *and* a species-specific `bindb_meta_fish.sql` (unlike
+rat, which only runs `bindb_meta.sql`). `bindb_meta_fish.sql` already (a)
+`DROP TABLE cytogenetic_locations` outright — confirmed `make_db0.sh`'s
+existing unconditional SQL never references that table, so this is safe
+— (b) deletes the phantom `MAP` `map_counts`/`map_metadata` rows itself,
+and (c) backfills a correct `ZFIN` `map_counts` row and a `map_metadata`
+row (copying `ACCNUM`'s provenance, same pattern `bindb_meta.sql` uses
+for `OMIM`/`UCSCKG`). So unlike mouse/rat, zebrafish's `MAP`-phantom
+problem is already solved upstream of `make_db0.sh` — the `HAS_MAP=0`
+case-arm setting added for consistency is a harmless no-op here (the
+`DELETE ... WHERE map_name = 'MAP'` matches zero rows). Added
+`zebrafish) DBSCHEMA="ZEBRAFISH_DB"; HAS_MAP=0` to `make_db0.sh` and
+`"zebrafish"` to `DB0_SUPPORTED_SPECIES`. Not yet run against real server
+data.
 
 The next easiest species to generalize, by the same diff-against-
 `.definePossibleTables()` method: `chimp`/`bovine`/`chicken`/`canine`/`rhesus` (each drops

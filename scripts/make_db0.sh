@@ -12,20 +12,25 @@
 #
 # Per-species rename rules live in the `case` block below, derived by
 # diffing annosrc/organism_annotation/script/bindb_<species>.sql (and its
-# meta scripts) against .definePossibleTables()'s expectations. `human` and
-# `mouse` are implemented; see PlanFor3.24.md Milestone 5 for the plan to
-# generalize to the remaining species in config/species.tsv.
+# meta scripts) against .definePossibleTables()'s expectations. `human`,
+# `mouse`, `rat`, and `zebrafish` are implemented; see PlanFor3.24.md
+# Milestone 5 for the plan to generalize to the remaining species in
+# config/species.tsv.
 #
 # The renaming SQL below the `case` block is intentionally NOT further
-# species-gated: bindb_mouse.sql was confirmed (PlanFor3.24.md Milestone 5)
-# to use the exact same table/column names as bindb_human.sql for every
-# rename this script performs (gene_synonyms.symbol, ensembl.ensid,
-# chromosome_locations.chromosome, etc.) — mouse only *adds* tables
-# (mgi/mgi_id, already conformant, no rename needed) and *omits* some
+# species-gated: bindb_mouse.sql and bindb_rat.sql were confirmed
+# (PlanFor3.24.md Milestone 5) to use the exact same table/column names as
+# bindb_human.sql for every rename this script performs (gene_synonyms.symbol,
+# ensembl.ensid, chromosome_locations.chromosome, etc.) — they only *add*
+# tables (mgi/mgi_id, already conformant, no rename needed) and *omit* some
 # (omim, ucsc) that this script never touches anyway, since neither OMIM
-# nor UCSCKG is a mouse keytype. If a future species' bindb_<species>.sql
-# uses different names for any of these, split that rule into a per-species
-# branch rather than assuming this pattern holds.
+# nor UCSCKG is a keytype for them. zebrafish's bindb_zebrafish.sql *does*
+# need one new rule (zfin.ZFid -> zfin.zfin_id, see below), but it's gated
+# on has_table rather than $SPECIES since no other species has a zfin
+# table — same harmless-elsewhere pattern as the ensembl_pro/ensembl_trs
+# stubs above it. If a future species' bindb_<species>.sql uses different
+# names for any of the unconditional rules, split that rule into a
+# per-species branch rather than assuming this pattern holds.
 set -euo pipefail
 
 SPECIES="${1:?Usage: make_db0.sh <species>}"
@@ -53,9 +58,10 @@ fi
 # below: checkMAPCOUNTS() get()s 'org.Mm.egMAP', which makeAnnDbPkg()
 # never creates since MAP isn't in mouse's possible-tables list.
 case "$SPECIES" in
-    human) DBSCHEMA="HUMAN_DB"; HAS_MAP=1 ;;
-    mouse) DBSCHEMA="MOUSE_DB"; HAS_MAP=0 ;;
-    rat)   DBSCHEMA="RAT_DB";   HAS_MAP=0 ;;
+    human)     DBSCHEMA="HUMAN_DB";     HAS_MAP=1 ;;
+    mouse)     DBSCHEMA="MOUSE_DB";     HAS_MAP=0 ;;
+    rat)       DBSCHEMA="RAT_DB";       HAS_MAP=0 ;;
+    zebrafish) DBSCHEMA="ZEBRAFISH_DB"; HAS_MAP=0 ;;
     *)
         echo "ERROR: make_db0.sh has no schema-conformance rules for '$SPECIES' yet" >&2
         echo "       see PlanFor3.24.md Milestone 5" >&2
@@ -124,6 +130,14 @@ if has_table pfam; then
 else
     sqlite3 -bail "$OUT_TMP" \
         "CREATE TABLE pfam (_id INTEGER REFERENCES genes(_id), ipi_id TEXT, pfam_id TEXT);"
+fi
+
+# ZFIN: zebrafish-only table (bindb_zebrafish.sql). .definePossibleTables()
+# expects zfin.zfin_id; bindb_zebrafish.sql names the column "ZFid". Gated
+# on has_table rather than $SPECIES since no other currently-supported
+# species has a zfin table at all -- harmless no-op for human/mouse/rat.
+if has_table zfin; then
+    sqlite3 -bail "$OUT_TMP" "ALTER TABLE zfin RENAME COLUMN ZFid TO zfin_id;"
 fi
 
 # PROSITE / UNIGENE: no data source in this pipeline yet. Stub empty rather
