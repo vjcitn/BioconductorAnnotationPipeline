@@ -227,9 +227,21 @@ fi
 # characteristic (present for every species, not introduced by this
 # pipeline); drop the row here so MAPCOUNTS never claims a map that
 # doesn't exist.
+# Same bindb_meta.sql source also populates map_counts with several
+# reverse-map rows under their OLD, pre-AnnotationDbi env-package names
+# (ENZYME2GENE, GO2GENE, GO2ALLGENES, PATH2GENE, PMID2GENE,
+# SYNONYM2GENE) instead of the modern Bimap names AnnotationDbi
+# actually creates (ENZYME2EG, GO2EG, GO2ALLEGS, PATH2EG, PMID2EG,
+# ALIAS2EG) -- confirmed empirically via
+#   setdiff(names(org.Hs.egMAPCOUNTS), ls(getNamespace("org.Hs.eg.db")))
+# against a built package. Same failure mode as ENTREZID above: listed
+# in MAPCOUNTS, no object by that literal name, checkMAPCOUNTS() errors.
+# Drop all of them here rather than fix one at a time as each surfaces.
 if has_table map_counts; then
     sqlite3 -bail "$OUT_TMP" \
-        "DELETE FROM map_counts WHERE map_name = 'ENTREZID';"
+        "DELETE FROM map_counts WHERE map_name IN
+            ('ENTREZID', 'ENZYME2GENE', 'GO2GENE', 'GO2ALLGENES',
+             'PATH2GENE', 'PMID2GENE', 'SYNONYM2GENE');"
 fi
 
 mv "$OUT_TMP" "$OUT"
