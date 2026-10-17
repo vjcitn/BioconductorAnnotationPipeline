@@ -1,21 +1,35 @@
-## Build OrgDb packages using AnnotationForge::makeOrgPackage().
+## Build OrgDb packages, dispatching per species between two pipelines:
 ## Called by the top-level Makefile as:
 ##   Rscript scripts/make_orgdb.R --species "human mouse ..." \
 ##       --config config/species.tsv --dbpath db/ --outdir packages/orgdb/
 ##
-## Uses the public makeOrgPackage() API directly from chipsrc_<species>.sqlite.
-## No db0 packages, no metadatasrc.sqlite, no internal AnnotationForge paths.
+## - DB0_SUPPORTED_SPECIES: the Milestone 1+2 pipeline from PlanFor3.24.md --
+##   scripts/make_db0.sh rewrites chipsrc_<species>.sqlite's table/column
+##   names to match AnnotationDbi's internal .definePossibleTables() contract,
+##   then AnnotationForge::makeAnnDbPkg() builds the package from that
+##   conformant sqlite. This restores the legacy per-table Bimap objects
+##   (org.Hs.egSYMBOL, ...) and fixes modern keys()/select() dispatch for
+##   keytypes makeOrgPackage() alone cannot satisfy (GOALL, PFAM, IPI,
+##   ENSEMBL, ...). Currently only `human`; see PlanFor3.24.md Milestone 5
+##   for generalizing make_db0.sh's rename rules to the rest of
+##   config/species.tsv.
+## - All other species: the original makeOrgPackage()-based pipeline, kept
+##   as-is until each one gets its own make_db0.sh rename rules.
 ##
 ## GO tables (go_bp/mf/cc and go_bp/mf/cc_all) are NOT passed through
-## makeOrgPackage because GO.db is itself produced by this pipeline (circular).
-## Instead they are written directly into the OrgDb sqlite via ATTACH after
-## makeOrgPackage creates the package skeleton.
+## makeOrgPackage in the legacy path because GO.db is itself produced by this
+## pipeline (circular). Instead they are written directly into the OrgDb
+## sqlite via ATTACH after makeOrgPackage creates the package skeleton. The
+## db0 path has no such issue -- make_db0.sh's go/go_all views are already
+## baked into db0_<species>.sqlite before makeAnnDbPkg() ever runs.
 
 suppressPackageStartupMessages({
     library(AnnotationForge)
     library(DBI)
     library(RSQLite)
 })
+
+DB0_SUPPORTED_SPECIES <- c("human")
 
 ## ── Parse args ───────────────────────────────────────────────────────────────
 args <- commandArgs(trailingOnly = TRUE)
@@ -34,6 +48,9 @@ cli_version <- get_arg("--version", args)
 
 if (is.null(species_str))
     stop("--species argument is required", call. = FALSE)
+if (is.null(cli_version))
+    stop("--version is required (e.g. --version 3.24.0)", call. = FALSE)
+bioc_ver <- cli_version
 
 run_start    <- Sys.time()
 species_list <- strsplit(trimws(species_str), "\\s+")[[1]]
@@ -100,22 +117,61 @@ safe_query <- function(db, sql, sp = NULL, ...) {
              })
 }
 
-## ── Per-species package build ─────────────────────────────────────────────────
-for (sp in species_list) {
-    row <- cfg[cfg$name == sp, ]
-    if (nrow(row) == 0L) {
-        warning("Species '", sp, "' not in config — skipping", call. = FALSE)
-        next
-    }
+## ── db0 pipeline (Milestone 1+2): build via AnnotationForge::makeAnnDbPkg() ──
+## Returns the path to the created package source directory.
+build_via_db0 <- function(sp, row, chip, dbpath, outdir, bioc_ver) {
+    cat("  Building db0_", sp, ".sqlite (schema-conformance pass) ...\n", sep = "")
+    ## make_db0.sh resolves its own DATA_ROOT from the environment, not from
+    ## an argument -- pass the one implied by --dbpath explicitly (dbpath is
+    ## always "<DATA_ROOT>/db/" by this repo's convention) rather than
+    ## relying on an ambient DATA_ROOT happening to agree with it.
+    data_root <- dirname(normalizePath(dbpath, mustWork = FALSE))
+    rc <- system2("bash", c("scripts/make_db0.sh", sp),
+                  env = paste0("DATA_ROOT=", shQuote(data_root)))
+    if (rc != 0L) stop("make_db0.sh failed for ", sp, call. = FALSE)
 
-    chip <- file.path(dbpath, paste0("chipsrc_", sp, ".sqlite"))
-    if (!file.exists(chip)) {
-        warning("Missing ", chip, " — skipping ", sp, call. = FALSE)
-        next
-    }
+    db0 <- file.path(dbpath, paste0("db0_", sp, ".sqlite"))
 
-    cat("\n--", paste0(row$pkg_prefix, ".db"), "(", row$genus, row$species, ") --\n")
+    ## makeAnnDbPkg() requires dbfile's basename to be exactly
+    ## <AnnObjPrefix>.sqlite. Stage a renamed copy rather than renaming
+    ## db0_<species>.sqlite itself, which the Makefile tracks by its own name.
+    ann_obj_prefix <- row$pkg_prefix                      # e.g. "org.Hs.eg"
+    stage_dir      <- tempfile("db0pkg_")
+    dir.create(stage_dir)
+    on.exit(unlink(stage_dir, recursive = TRUE), add = TRUE)
+    staged_dbfile  <- file.path(stage_dir, paste0(ann_obj_prefix, ".sqlite"))
+    file.copy(db0, staged_dbfile)
 
+    full_organism <- paste(row$genus, row$species)
+    ## AnnDbPkgSeed's "species" slot must match the sqlite's SPECIES metadata
+    ## row exactly (initWithDbMetada() hard-stops otherwise) -- the
+    ## capitalized common name (e.g. "Human"), not the binomial, which goes
+    ## in "organism" instead. make_db0.sh derives it the same way.
+    species_tag <- paste0(toupper(substr(sp, 1L, 1L)), substring(sp, 2L))
+
+    seed <- new("AnnDbPkgSeed",
+        Package         = paste0(ann_obj_prefix, ".db"),
+        Title           = paste0("Genome wide annotation for ", full_organism),
+        Version         = bioc_ver,
+        Author          = "Bioconductor Core Team",
+        Maintainer      = "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+        PkgTemplate     = "NCBIORG.DB",
+        DBschema        = row$pkg_template,                 # e.g. "HUMAN_DB"
+        AnnObjPrefix    = ann_obj_prefix,
+        organism        = full_organism,                    # e.g. "Homo sapiens"
+        species         = species_tag,                       # e.g. "Human"
+        manufacturerUrl = "https://www.ncbi.nlm.nih.gov",
+        biocViews       = "annotation")
+
+    cat("  Building", seed@Package, "via makeAnnDbPkg() ...\n")
+    makeAnnDbPkg(seed, dbfile = staged_dbfile, dest_dir = outdir)
+
+    file.path(normalizePath(outdir, mustWork = FALSE), paste0(ann_obj_prefix, ".db"))
+}
+
+## ── Legacy pipeline: build via AnnotationForge::makeOrgPackage() ─────────────
+## Returns the path to the created package source directory.
+build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     db <- dbConnect(SQLite(), chip)
 
     ## ── Extract frames from chipsrc ───────────────────────────────────────────
@@ -255,11 +311,6 @@ for (sp in species_list) {
 
     ## GO is handled post-hoc via SQL ATTACH (see below); do not pass here.
 
-    if (is.null(cli_version))
-        stop("--version is required (e.g. --version 3.24.0)", call. = FALSE)
-    bioc_ver <- cli_version
-
-    expected_pkg  <- paste0(row$pkg_prefix, ".db")
     full_organism <- paste(row$genus, row$species)
 
     ## makeOrgPackage names the package:
@@ -274,213 +325,239 @@ for (sp in species_list) {
 
     pre_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
 
-    tryCatch({
-        do.call(makeOrgPackage, c(
-            frames,
-            list(
-                version    = bioc_ver,
-                maintainer = "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
-                author     = "Bioconductor Core Team",
-                outputDir  = outdir,
-                tax_id     = as.character(row$taxid),
-                genus      = genus_code,
-                species    = species_code,
-                goTable    = NA
-            )
-        ))
+    do.call(makeOrgPackage, c(
+        frames,
+        list(
+            version    = bioc_ver,
+            maintainer = "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+            author     = "Bioconductor Core Team",
+            outputDir  = outdir,
+            tax_id     = as.character(row$taxid),
+            genus      = genus_code,
+            species    = species_code,
+            goTable    = NA
+        )
+    ))
 
-        ## Detect the directory makeOrgPackage created
-        post_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
-        new_dirs  <- setdiff(post_dirs, pre_dirs)
-        if (length(new_dirs) != 1L)
-            stop("Expected one new package directory, got: ",
-                 paste(basename(new_dirs), collapse = ", "), call. = FALSE)
+    ## Detect the directory makeOrgPackage created
+    post_dirs <- list.dirs(outdir, recursive = FALSE, full.names = TRUE)
+    new_dirs  <- setdiff(post_dirs, pre_dirs)
+    if (length(new_dirs) != 1L)
+        stop("Expected one new package directory, got: ",
+             paste(basename(new_dirs), collapse = ", "), call. = FALSE)
 
-        src_dir    <- new_dirs[1L]
-        src_prefix <- sub("\\.db$", "", basename(src_dir))  # "org.Hs.eg"
+    src_dir    <- new_dirs[1L]
+    src_prefix <- sub("\\.db$", "", basename(src_dir))  # "org.Hs.eg"
 
-        ## makeOrgPackage always produces an .eg. name. For species whose
-        ## pkg_prefix ends in something other than .eg (e.g. org.Sc.sgd,
-        ## org.At.tair), rename the directory, SQLite, and DESCRIPTION to
-        ## match the canonical pkg_prefix name.
-        canonical_prefix <- row$pkg_prefix          # e.g. "org.Sc.sgd"
-        canonical_dir    <- file.path(outdir, paste0(canonical_prefix, ".db"))
-        if (src_prefix != canonical_prefix) {
-            old_pkg_name <- paste0(src_prefix, ".db")   # "org.Sc.eg.db"
-            new_pkg_name <- paste0(canonical_prefix, ".db") # "org.Sc.sgd.db"
+    ## makeOrgPackage always produces an .eg. name. For species whose
+    ## pkg_prefix ends in something other than .eg (e.g. org.Sc.sgd,
+    ## org.At.tair), rename the directory, SQLite, and DESCRIPTION to
+    ## match the canonical pkg_prefix name.
+    canonical_prefix <- row$pkg_prefix          # e.g. "org.Sc.sgd"
+    canonical_dir    <- file.path(outdir, paste0(canonical_prefix, ".db"))
+    if (src_prefix != canonical_prefix) {
+        old_pkg_name <- paste0(src_prefix, ".db")   # "org.Sc.eg.db"
+        new_pkg_name <- paste0(canonical_prefix, ".db") # "org.Sc.sgd.db"
 
-            ## 1. Rename the sqlite inside inst/extdata
-            old_sqlite <- file.path(src_dir, "inst", "extdata",
-                                    paste0(src_prefix, ".sqlite"))
-            new_sqlite <- file.path(src_dir, "inst", "extdata",
-                                    paste0(canonical_prefix, ".sqlite"))
-            file.rename(old_sqlite, new_sqlite)
+        ## 1. Rename the sqlite inside inst/extdata
+        old_sqlite <- file.path(src_dir, "inst", "extdata",
+                                paste0(src_prefix, ".sqlite"))
+        new_sqlite <- file.path(src_dir, "inst", "extdata",
+                                paste0(canonical_prefix, ".sqlite"))
+        file.rename(old_sqlite, new_sqlite)
 
-            ## 2. Patch all text files in the package (R/, NAMESPACE, man/,
-            ##    DESCRIPTION) — replace both the package name ("org.Sc.eg.db")
-            ##    and the bare prefix ("org.Sc.eg", appears in sqlite filename,
-            ##    exported symbol names, man page aliases, etc.).
-            ##    Replace longer string first to avoid partial substitution.
-            all_pkg_files <- list.files(src_dir, recursive = TRUE,
-                                        full.names = TRUE)
-            for (pf in all_pkg_files) {
-                if (file.info(pf)$isdir) next
-                txt <- tryCatch(readLines(pf, warn = FALSE), error = function(e) NULL)
-                if (is.null(txt)) next
-                txt2 <- gsub(old_pkg_name,  new_pkg_name,    txt, fixed = TRUE)
-                txt2 <- gsub(src_prefix,    canonical_prefix, txt2, fixed = TRUE)
-                if (!identical(txt, txt2)) writeLines(txt2, pf)
-            }
-
-            ## 3. Rename the package directory itself
-            file.rename(src_dir, canonical_dir)
-            src_dir    <- canonical_dir
-            src_prefix <- canonical_prefix
-            cat("  Renamed package to", basename(src_dir), "\n")
+        ## 2. Patch all text files in the package (R/, NAMESPACE, man/,
+        ##    DESCRIPTION) — replace both the package name ("org.Sc.eg.db")
+        ##    and the bare prefix ("org.Sc.eg", appears in sqlite filename,
+        ##    exported symbol names, man page aliases, etc.).
+        ##    Replace longer string first to avoid partial substitution.
+        all_pkg_files <- list.files(src_dir, recursive = TRUE,
+                                    full.names = TRUE)
+        for (pf in all_pkg_files) {
+            if (file.info(pf)$isdir) next
+            txt <- tryCatch(readLines(pf, warn = FALSE), error = function(e) NULL)
+            if (is.null(txt)) next
+            txt2 <- gsub(old_pkg_name,  new_pkg_name,    txt, fixed = TRUE)
+            txt2 <- gsub(src_prefix,    canonical_prefix, txt2, fixed = TRUE)
+            if (!identical(txt, txt2)) writeLines(txt2, pf)
         }
 
-        ## Fix DESCRIPTION (abbreviated codes were used for naming)
-        desc_path <- file.path(src_dir, "DESCRIPTION")
-        desc <- readLines(desc_path, warn = FALSE)
-        desc <- sub("^Package:.*",
-                    paste0("Package: ", canonical_prefix, ".db"),
-                    desc)
-        desc <- sub("^Title:.*",
-                    paste0("Title: Genome wide annotation for ", full_organism),
-                    desc)
-        desc <- sub("^Description:.*",
-                    paste0("Description: Annotation maps for ", full_organism,
-                           ", assembled from public repositories."),
-                    desc)
-        writeLines(desc, desc_path)
+        ## 3. Rename the package directory itself
+        file.rename(src_dir, canonical_dir)
+        src_dir    <- canonical_dir
+        src_prefix <- canonical_prefix
+        cat("  Renamed package to", basename(src_dir), "\n")
+    }
 
-        ## Open the OrgDb sqlite (chmod first — makeOrgPackage creates it 0444)
-        sqlite_path <- file.path(src_dir, "inst", "extdata",
-                                 paste0(src_prefix, ".sqlite"))
-        Sys.chmod(sqlite_path, mode = "0644")
-        conn <- dbConnect(SQLite(), sqlite_path)
+    ## Fix DESCRIPTION (abbreviated codes were used for naming)
+    desc_path <- file.path(src_dir, "DESCRIPTION")
+    desc <- readLines(desc_path, warn = FALSE)
+    desc <- sub("^Package:.*",
+                paste0("Package: ", canonical_prefix, ".db"),
+                desc)
+    desc <- sub("^Title:.*",
+                paste0("Title: Genome wide annotation for ", full_organism),
+                desc)
+    desc <- sub("^Description:.*",
+                paste0("Description: Annotation maps for ", full_organism,
+                       ", assembled from public repositories."),
+                desc)
+    writeLines(desc, desc_path)
 
-        ## makeOrgPackage stores the frame's first column name (GID) literally
-        ## in the genes table. AnnotationDbi's HUMAN_DB and related schemas
-        ## expect the column to be named gene_id for select()/keys() to work.
-        ## Rename immediately before any other operations touch the table.
-        gp <- dbGetQuery(conn, "PRAGMA table_info(genes)")
-        if ("GID" %in% gp$name) {
-            dbExecute(conn, "ALTER TABLE genes RENAME COLUMN GID TO gene_id")
+    ## Open the OrgDb sqlite (chmod first — makeOrgPackage creates it 0444)
+    sqlite_path <- file.path(src_dir, "inst", "extdata",
+                             paste0(src_prefix, ".sqlite"))
+    Sys.chmod(sqlite_path, mode = "0644")
+    conn <- dbConnect(SQLite(), sqlite_path)
+
+    ## makeOrgPackage stores the frame's first column name (GID) literally
+    ## in the genes table. AnnotationDbi's HUMAN_DB and related schemas
+    ## expect the column to be named gene_id for select()/keys() to work.
+    ## Rename immediately before any other operations touch the table.
+    gp <- dbGetQuery(conn, "PRAGMA table_info(genes)")
+    if ("GID" %in% gp$name) {
+        dbExecute(conn, "ALTER TABLE genes RENAME COLUMN GID TO gene_id")
+    }
+
+    ## ── Fix metadata ──────────────────────────────────────────────────────
+    ## 1. Copy source provenance rows from chipsrc (EGSOURCE*, GOSOURCE*,
+    ##    KEGGSOURCE*, GPSOURCE*).  INSERT OR IGNORE skips any that already
+    ##    exist in the OrgDb metadata table.
+    dbExecute(conn,
+        paste0("ATTACH DATABASE '", normalizePath(chip), "' AS chipmeta"))
+    dbExecute(conn,
+        "INSERT OR IGNORE INTO metadata
+         SELECT * FROM chipmeta.metadata
+         WHERE name LIKE '%SOURCE%' OR name = 'TAXID'")
+    dbExecute(conn, "DETACH DATABASE chipmeta")
+
+    ## 2. Correct the standard entries that makeOrgPackage set incorrectly
+    ##    because we passed abbreviated genus/species codes for naming, and
+    ##    because goTable=NA causes it to write NOSCHEMA_DB / GID defaults.
+    centralid   <- toupper(strsplit(row$pkg_prefix, "\\.")[[1L]][3L]) # "EG"
+    species_tag <- paste0(toupper(substr(row$name, 1L, 1L)),
+                          substr(row$name, 2L, nchar(row$name)))      # "Human"
+    for (md in list(
+        list("ORGANISM",  full_organism),
+        list("SPECIES",   species_tag),
+        list("DBSCHEMA",  row$pkg_template),
+        list("CENTRALID", centralid)
+    )) {
+        dbExecute(conn,
+            "UPDATE metadata SET value = ? WHERE name = ?",
+            params = list(md[[2L]], md[[1L]]))
+    }
+
+    ## ── Populate GO tables directly from chipsrc ──────────────────────────
+    ## go_bp/mf/cc     -> GO, EVIDENCE, ONTOLOGY
+    ## go_bp/mf/cc_all -> GOALL, EVIDENCEALL, ONTOLOGYALL
+    ##
+    ## The OrgDb genes table gene-ID column name varies by AnnotationForge
+    ## version. Discover it via PRAGMA, then use SQL ATTACH for the join
+    ## (fast, no R data frames, negligible RAM).
+
+    gp <- dbGetQuery(conn, "PRAGMA table_info(genes)")
+    gene_col <- gp$name[grepl("text|char", gp$type, ignore.case = TRUE)][1L]
+    if (is.na(gene_col))
+        gene_col <- gp$name[gp$name != "_id"][1L]
+    cat("  OrgDb genes gene-ID column:", gene_col, "\n")
+
+    dbExecute(conn,
+        paste0("ATTACH DATABASE '", normalizePath(chip), "' AS chip"))
+
+    for (ont in c("bp", "mf", "cc")) {
+        for (sfx in c("", "_all")) {
+            tbl <- paste0("go_", ont, sfx)
+            dbExecute(conn, sprintf(
+                "CREATE TABLE %s (_id INTEGER, go_id TEXT, evidence TEXT)",
+                tbl))
+            dbExecute(conn, sprintf(
+                'INSERT INTO %s
+                 SELECT og.rowid, c.go_id, c.evidence
+                 FROM genes og
+                 JOIN chip.genes cg ON og."%s" = cg.gene_id
+                 JOIN chip.%s c ON cg._id = c._id',
+                tbl, gene_col, tbl))
+            dbExecute(conn, sprintf(
+                "CREATE INDEX %s__id ON %s(_id)", tbl, tbl))
+            nr <- dbGetQuery(conn,
+                sprintf("SELECT count(*) FROM %s", tbl))[[1L]]
+            cat(sprintf("  %s: %d rows\n", tbl, nr))
         }
+    }
 
-        ## ── Fix metadata ──────────────────────────────────────────────────────
-        ## 1. Copy source provenance rows from chipsrc (EGSOURCE*, GOSOURCE*,
-        ##    KEGGSOURCE*, GPSOURCE*).  INSERT OR IGNORE skips any that already
-        ##    exist in the OrgDb metadata table.
-        dbExecute(conn,
-            paste0("ATTACH DATABASE '", normalizePath(chip), "' AS chipmeta"))
-        dbExecute(conn,
-            "INSERT OR IGNORE INTO metadata
-             SELECT * FROM chipmeta.metadata
-             WHERE name LIKE '%SOURCE%' OR name = 'TAXID'")
-        dbExecute(conn, "DETACH DATABASE chipmeta")
-
-        ## 2. Correct the standard entries that makeOrgPackage set incorrectly
-        ##    because we passed abbreviated genus/species codes for naming, and
-        ##    because goTable=NA causes it to write NOSCHEMA_DB / GID defaults.
-        centralid   <- toupper(strsplit(row$pkg_prefix, "\\.")[[1L]][3L]) # "EG"
-        species_tag <- paste0(toupper(substr(row$name, 1L, 1L)),
-                              substr(row$name, 2L, nchar(row$name)))      # "Human"
-        for (md in list(
-            list("ORGANISM",  full_organism),
-            list("SPECIES",   species_tag),
-            list("DBSCHEMA",  row$pkg_template),
-            list("CENTRALID", centralid)
-        )) {
+    ## ── Populate pfam table from chipsrc (if present) ─────────────────────
+    ## makeOrgPackage cannot create pfam correctly (schema expects _id +
+    ## pfam_id; HUMAN_DB schema requires that exact structure). Inject
+    ## post-hoc via ATTACH, same pattern as GO tables.
+    chip_tables <- dbGetQuery(conn,
+        "SELECT name FROM chip.sqlite_master WHERE type='table'")$name
+    if ("pfam" %in% chip_tables) {
+        n_pfam_src <- dbGetQuery(conn,
+            "SELECT count(*) FROM chip.pfam")[[1L]]
+        if (n_pfam_src > 0L) {
             dbExecute(conn,
-                "UPDATE metadata SET value = ? WHERE name = ?",
-                params = list(md[[2L]], md[[1L]]))
+                "CREATE TABLE pfam (_id INTEGER, pfam_id TEXT)")
+            dbExecute(conn, sprintf(
+                'INSERT INTO pfam
+                 SELECT og.rowid, c.pfam_id
+                 FROM genes og
+                 JOIN chip.genes cg ON og."%s" = cg.gene_id
+                 JOIN chip.pfam c ON cg._id = c._id',
+                gene_col))
+            dbExecute(conn, "CREATE INDEX pfam__id ON pfam(_id)")
+            nr <- dbGetQuery(conn, "SELECT count(*) FROM pfam")[[1L]]
+            cat(sprintf("  pfam: %d rows\n", nr))
         }
+    }
 
-        ## ── Populate GO tables directly from chipsrc ──────────────────────────
-        ## go_bp/mf/cc     -> GO, EVIDENCE, ONTOLOGY
-        ## go_bp/mf/cc_all -> GOALL, EVIDENCEALL, ONTOLOGYALL
-        ##
-        ## The OrgDb genes table gene-ID column name varies by AnnotationForge
-        ## version. Discover it via PRAGMA, then use SQL ATTACH for the join
-        ## (fast, no R data frames, negligible RAM).
+    dbExecute(conn, "DETACH DATABASE chip")
+    dbDisconnect(conn)
 
-        gp <- dbGetQuery(conn, "PRAGMA table_info(genes)")
-        gene_col <- gp$name[grepl("text|char", gp$type, ignore.case = TRUE)][1L]
-        if (is.na(gene_col))
-            gene_col <- gp$name[gp$name != "_id"][1L]
-        cat("  OrgDb genes gene-ID column:", gene_col, "\n")
+    src_dir
+}
 
-        dbExecute(conn,
-            paste0("ATTACH DATABASE '", normalizePath(chip), "' AS chip"))
+## ── Per-species package build ─────────────────────────────────────────────────
+for (sp in species_list) {
+    row <- cfg[cfg$name == sp, ]
+    if (nrow(row) == 0L) {
+        warning("Species '", sp, "' not in config — skipping", call. = FALSE)
+        next
+    }
 
-        for (ont in c("bp", "mf", "cc")) {
-            for (sfx in c("", "_all")) {
-                tbl <- paste0("go_", ont, sfx)
-                dbExecute(conn, sprintf(
-                    "CREATE TABLE %s (_id INTEGER, go_id TEXT, evidence TEXT)",
-                    tbl))
-                dbExecute(conn, sprintf(
-                    'INSERT INTO %s
-                     SELECT og.rowid, c.go_id, c.evidence
-                     FROM genes og
-                     JOIN chip.genes cg ON og."%s" = cg.gene_id
-                     JOIN chip.%s c ON cg._id = c._id',
-                    tbl, gene_col, tbl))
-                dbExecute(conn, sprintf(
-                    "CREATE INDEX %s__id ON %s(_id)", tbl, tbl))
-                nr <- dbGetQuery(conn,
-                    sprintf("SELECT count(*) FROM %s", tbl))[[1L]]
-                cat(sprintf("  %s: %d rows\n", tbl, nr))
-            }
+    chip <- file.path(dbpath, paste0("chipsrc_", sp, ".sqlite"))
+    if (!file.exists(chip)) {
+        warning("Missing ", chip, " — skipping ", sp, call. = FALSE)
+        next
+    }
+
+    cat("\n--", paste0(row$pkg_prefix, ".db"), "(", row$genus, row$species, ") --\n")
+
+    src_dir <- tryCatch({
+        if (sp %in% DB0_SUPPORTED_SPECIES) {
+            build_via_db0(sp, row, chip, dbpath, outdir, bioc_ver)
+        } else {
+            build_via_make_org_package(sp, row, chip, outdir, bioc_ver)
         }
-
-        ## ── Populate pfam table from chipsrc (if present) ─────────────────────
-        ## makeOrgPackage cannot create pfam correctly (schema expects _id +
-        ## pfam_id; HUMAN_DB schema requires that exact structure). Inject
-        ## post-hoc via ATTACH, same pattern as GO tables.
-        chip_tables <- dbGetQuery(conn,
-            "SELECT name FROM chip.sqlite_master WHERE type='table'")$name
-        if ("pfam" %in% chip_tables) {
-            n_pfam_src <- dbGetQuery(conn,
-                "SELECT count(*) FROM chip.pfam")[[1L]]
-            if (n_pfam_src > 0L) {
-                dbExecute(conn,
-                    "CREATE TABLE pfam (_id INTEGER, pfam_id TEXT)")
-                dbExecute(conn, sprintf(
-                    'INSERT INTO pfam
-                     SELECT og.rowid, c.pfam_id
-                     FROM genes og
-                     JOIN chip.genes cg ON og."%s" = cg.gene_id
-                     JOIN chip.pfam c ON cg._id = c._id',
-                    gene_col))
-                dbExecute(conn, "CREATE INDEX pfam__id ON pfam(_id)")
-                nr <- dbGetQuery(conn, "SELECT count(*) FROM pfam")[[1L]]
-                cat(sprintf("  pfam: %d rows\n", nr))
-            }
-        }
-
-        dbExecute(conn, "DETACH DATABASE chip")
-        dbDisconnect(conn)
-
-        ## Build the tarball
-        cat("Running R CMD build for", expected_pkg, "\n")
-        old_wd <- getwd()
-        on.exit(setwd(old_wd), add = TRUE)
-        setwd(normalizePath(outdir))
-        rc <- system(paste("R CMD build --no-build-vignettes",
-                           shQuote(basename(src_dir))))
-        setwd(old_wd)
-        if (rc != 0L)
-            warning("R CMD build failed for ", sp, call. = FALSE)
-        else
-            cat("Built:", expected_pkg, "\n")
-
     }, error = function(e) {
-        warning("makeOrgPackage failed for ", sp, ": ", conditionMessage(e),
-                call. = FALSE)
+        warning("Build failed for ", sp, ": ", conditionMessage(e), call. = FALSE)
+        NULL
     })
+    if (is.null(src_dir)) next
+
+    expected_pkg <- paste0(row$pkg_prefix, ".db")
+
+    ## Build the tarball
+    cat("Running R CMD build for", expected_pkg, "\n")
+    old_wd <- getwd()
+    setwd(normalizePath(outdir))
+    rc <- system(paste("R CMD build --no-build-vignettes",
+                       shQuote(basename(src_dir))))
+    setwd(old_wd)
+    if (rc != 0L)
+        warning("R CMD build failed for ", sp, call. = FALSE)
+    else
+        cat("Built:", expected_pkg, "\n")
 }
 
 ## Only report tarballs created during this run (not leftovers from prior builds)

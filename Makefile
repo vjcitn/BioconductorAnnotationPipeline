@@ -151,9 +151,17 @@ $(DATA_ROOT)/db/db0_%.sqlite: $(DATA_ROOT)/db/chipsrc_%.sqlite
 	bash scripts/make_db0.sh $*
 
 # ── Package ───────────────────────────────────────────────────────────────────
-# Builds OrgDb packages directly via AnnotationForge::makeOrgPackage().
-# Reads genus/species/prefix from config/species.tsv; no hard-coded names.
-# No db0 intermediate step required.
+# Builds OrgDb packages from chipsrc_<species>.sqlite. Reads genus/species/
+# prefix from config/species.tsv; no hard-coded names.
+#
+# scripts/make_orgdb.R dispatches per species: for human (see
+# DB0_SUPPORTED_SPECIES there), it runs scripts/make_db0.sh itself to produce
+# the schema-conformant db0_<species>.sqlite, then builds via
+# AnnotationForge::makeAnnDbPkg() (PlanFor3.24.md Milestones 1-2) — this
+# target has no separate db0_%.sqlite prerequisite because that step is
+# invoked internally, only for the species that support it. All other
+# species still go through AnnotationForge::makeOrgPackage() directly,
+# unchanged, until each gets its own make_db0.sh rename rules (Milestone 5).
 
 .PHONY: package
 package: $(foreach sp,$(TARGET_SPECIES),$(DATA_ROOT)/db/chipsrc_$(sp).sqlite)

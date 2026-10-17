@@ -230,14 +230,22 @@ select()-only. `GO` itself works via both paths without the view (Bimap
 first), but the view is harmless and was added for both names for
 consistency/future-proofing.
 
-### 3. Rewrite `scripts/make_orgdb.R`'s packaging step
-Replace the `makeOrgPackage()` call (lines ~277-290) with: (a) the existing
-SQL-assembly logic that builds `frames`/writes the raw tables — kept as-is
-for whichever tables don't need conformance work — then (b) the Milestone-1
-renaming pass, then (c) the `AnnDbPkgSeed` + `makeAnnDbPkg()` call from
-Milestone 2 instead of `makeOrgPackage()`. Drop the manual `DBSCHEMA`
-metadata `UPDATE` block (lines ~376-399) — `makeAnnDbPkg()`/`AnnDbPkgSeed`
-own that now via `initWithDbMetada()`.
+### 3. Rewrite `scripts/make_orgdb.R`'s packaging step — DONE
+Split the per-species body into two functions, dispatched by a
+`DB0_SUPPORTED_SPECIES` vector (currently just `"human"`, extended as
+Milestone 5 generalizes `make_db0.sh`):
+- `build_via_db0()`: invokes `scripts/make_db0.sh <sp>` itself (so `make
+  package` has no separate `db0_%.sqlite` prerequisite — it's called
+  internally, only for supported species), then runs the `AnnDbPkgSeed` +
+  `makeAnnDbPkg()` call from Milestone 2. No post-build directory/metadata
+  patching needed at all (unlike the legacy path) — the canonical package
+  name and all metadata come from the conformant db0 sqlite and the seed
+  directly.
+- `build_via_make_org_package()`: the original `makeOrgPackage()` logic,
+  verbatim, for every other species — unchanged until each one migrates.
+Both return a package source directory path; the `R CMD build` tarball
+step is now shared, run once after the dispatch regardless of which path
+built the source tree.
 
 ### 4. Validate against both APIs — DONE for human, against real data
 Ran the full Milestone 1+2 pipeline end to end on the build server against
