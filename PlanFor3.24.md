@@ -404,7 +404,7 @@ packageStartupMessage(...)` NOTE.
 Verified on the server: `R CMD check` on the rebuilt
 `GO.db_3.24.0.tar.gz` runs clean except for that one accepted NOTE.
 
-### 5. Generalize to remaining species — `mouse`, `rat`, `zebrafish` DONE
+### 5. Generalize to remaining species — `mouse`, `rat`, `zebrafish`, `chimp` DONE
 Once human is proven, build the same renaming map for each
 `pkg_template` value by diffing `.definePossibleTables("OrgDb", <organism>)`
 against each organism's current `chipsrc_<species>.sqlite` tables (the same
@@ -492,8 +492,30 @@ case-arm setting added for consistency is a harmless no-op here (the
 `"zebrafish"` to `DB0_SUPPORTED_SPECIES`. Not yet run against real server
 data.
 
+**`chimp` added.** Even simpler than rat — no new rename rules, and its
+meta script was already favorable like zebrafish's.
+`AnnotationDbi:::.definePossibleTables("OrgDb", "Pan troglodytes")` drops
+`ALIAS`, `ALIAS2PROBE`, `MAP`, `GENETYPE`, `PFAM`, `IPI`, `PROSITE` and
+adds nothing. `bindb_chimp.sql` has no `cytogenetic_locations`, `omim`,
+`genetype`, `ucsc`, or (uncommented) `pfam` table at all — consistent
+with the drops — and its `gene_synonyms`/`ensembl`/`chromosome_locations`
+tables use the exact same names as human's, so the existing unconditional
+rename rules apply cleanly with no changes. Unlike `bindb_human.sql`/
+`bindb_mouse.sql`/`bindb_rat.sql`, chimp's meta script
+(`bindb_meta_chimp.sql`, run standalone — chimp does *not* also run the
+shared `bindb_meta.sql`) is a wholesale self-contained replacement that
+simply never inserts a `MAP` `map_counts`/`map_metadata` row to begin
+with, so — like zebrafish — the `HAS_MAP=0` case-arm setting is a
+harmless no-op here rather than a fix for an actual phantom entry. It
+does already create `map_counts`/`map_metadata` with the same
+legacy-name entries (`ENZYME2GENE`, `GO2GENE`, etc.) the universal
+phantom-entry cleanup already handles, so no new backfill logic was
+needed either. Added `chimp) DBSCHEMA="CHIMP_DB"; HAS_MAP=0` to
+`make_db0.sh` and `"chimp"` to `DB0_SUPPORTED_SPECIES` — no other code
+changes. Not yet run against real server data.
+
 The next easiest species to generalize, by the same diff-against-
-`.definePossibleTables()` method: `chimp`/`bovine`/`chicken`/`canine`/`rhesus` (each drops
+`.definePossibleTables()` method: `bovine`/`chicken`/`canine`/`rhesus` (each drops
 a handful of keytypes but adds none, so no new table names to reconcile,
 just confirming `bindb_<species>.sql` already uses the retained ones'
 expected names). Species that *add* genuinely new tables not covered by

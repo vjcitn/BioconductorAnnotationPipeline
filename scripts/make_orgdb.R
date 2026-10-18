@@ -10,9 +10,9 @@
 ##   conformant sqlite. This restores the legacy per-table Bimap objects
 ##   (org.Hs.egSYMBOL, ...) and fixes modern keys()/select() dispatch for
 ##   keytypes makeOrgPackage() alone cannot satisfy (GOALL, PFAM, IPI,
-##   ENSEMBL, ...). Currently `human`, `mouse`, `rat`, and `zebrafish`; see
-##   PlanFor3.24.md Milestone 5 for generalizing make_db0.sh's rename rules
-##   to the rest of config/species.tsv.
+##   ENSEMBL, ...). Currently `human`, `mouse`, `rat`, `zebrafish`, and
+##   `chimp`; see PlanFor3.24.md Milestone 5 for generalizing
+##   make_db0.sh's rename rules to the rest of config/species.tsv.
 ## - All other species: the original makeOrgPackage()-based pipeline, kept
 ##   as-is until each one gets its own make_db0.sh rename rules.
 ##
@@ -29,7 +29,7 @@ suppressPackageStartupMessages({
     library(RSQLite)
 })
 
-DB0_SUPPORTED_SPECIES <- c("human", "mouse", "rat", "zebrafish")
+DB0_SUPPORTED_SPECIES <- c("human", "mouse", "rat", "zebrafish", "chimp")
 
 ## ── Parse args ───────────────────────────────────────────────────────────────
 args <- commandArgs(trailingOnly = TRUE)
