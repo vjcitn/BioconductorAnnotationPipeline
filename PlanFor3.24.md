@@ -1,5 +1,38 @@
 # Plan: Restore `db0` + `makeAnnDbPkg()` for the 3.24 OrgDb Build
 
+## TODO (prominent, still open on the new instance): build `GO.db_3.24.0.tar.gz`
+
+The build/check logic is done (see Milestone 4.6 below) — this is just the
+"run it on the fresh 400GB instance" step, not yet done there as of
+2026-10-19.
+
+```sh
+cd ~/BioconductorAnnotationPipeline      # or wherever the clone lives
+which sqlite3 || sudo apt-get update && sudo apt-get install -y sqlite3
+make check-r-deps
+make godb
+```
+
+`make godb` (top-level `Makefile`) does, in order:
+1. `make -C providers/go go-sqlite` — downloads `go-basic.obo`, parses it,
+   builds `data/db/GO.sqlite` (needs `data/db/genesrc.sqlite`, so it will
+   also trigger `providers/gene`'s download/build chain if that hasn't run
+   yet).
+2. `Rscript scripts/make_godb.R --input data/db/GO.sqlite --outdir
+   data/packages/godb/ --version 3.24.0` — hand-assembles the `GO.db`
+   package and runs `R CMD build --no-build-vignettes GO.db`.
+
+Result: `data/packages/godb/GO.db_3.24.0.tar.gz` (override the location with
+`DATA_ROOT=...` if building outside the repo tree, same as `make package`).
+
+If it already partially ran and `data/packages/godb/GO.db/` or the tarball
+exists from a prior attempt, `make_godb.R` refuses to overwrite — `rm -rf
+data/packages/godb/GO.db data/packages/godb/GO.db_3.24.0.tar.gz` first.
+
+To verify: `R CMD check --no-manual data/packages/godb/GO.db_3.24.0.tar.gz`
+should come back clean except for the one accepted `.onLoad`/
+`packageStartupMessage` NOTE (see Milestone 4.6).
+
 ## Why
 
 Two bugs that looked separate turn out to share one root cause:
