@@ -13,7 +13,7 @@
 # Per-species rename rules live in the `case` block below, derived by
 # diffing annosrc/organism_annotation/script/bindb_<species>.sql (and its
 # meta scripts) against .definePossibleTables()'s expectations. `human`,
-# `mouse`, `rat`, `zebrafish`, and `chimp` are implemented; see
+# `mouse`, `rat`, `zebrafish`, `chimp`, and `bovine` are implemented; see
 # PlanFor3.24.md Milestone 5 for the plan to generalize to the remaining
 # species in config/species.tsv.
 #
@@ -63,6 +63,7 @@ case "$SPECIES" in
     rat)       DBSCHEMA="RAT_DB";       HAS_MAP=0 ;;
     zebrafish) DBSCHEMA="ZEBRAFISH_DB"; HAS_MAP=0 ;;
     chimp)     DBSCHEMA="CHIMP_DB";     HAS_MAP=0 ;;
+    bovine)    DBSCHEMA="BOVINE_DB";    HAS_MAP=0 ;;
     *)
         echo "ERROR: make_db0.sh has no schema-conformance rules for '$SPECIES' yet" >&2
         echo "       see PlanFor3.24.md Milestone 5" >&2

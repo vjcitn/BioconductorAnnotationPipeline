@@ -404,7 +404,7 @@ packageStartupMessage(...)` NOTE.
 Verified on the server: `R CMD check` on the rebuilt
 `GO.db_3.24.0.tar.gz` runs clean except for that one accepted NOTE.
 
-### 5. Generalize to remaining species — `mouse`, `rat`, `zebrafish`, `chimp` DONE
+### 5. Generalize to remaining species — `mouse`, `rat`, `zebrafish`, `chimp`, `bovine` DONE
 Once human is proven, build the same renaming map for each
 `pkg_template` value by diffing `.definePossibleTables("OrgDb", <organism>)`
 against each organism's current `chipsrc_<species>.sqlite` tables (the same
@@ -514,8 +514,28 @@ needed either. Added `chimp) DBSCHEMA="CHIMP_DB"; HAS_MAP=0` to
 `make_db0.sh` and `"chimp"` to `DB0_SUPPORTED_SPECIES` — no other code
 changes. Not yet run against real server data.
 
+**`bovine` added.** Like chimp, no new rename rules needed — but unlike
+chimp (and like mouse/rat), the `HAS_MAP=0` setting is a real fix here,
+not a no-op. `AnnotationDbi:::.definePossibleTables("OrgDb", "Bos
+taurus")` drops only `MAP` (keeps `GENETYPE`, unlike chimp). Diffing
+`bindb_bovine.sql` against `bindb_human.sql` confirmed identical naming
+for `gene_synonyms`/`ensembl`/`chromosome_locations`, and bovine *does*
+have a `cytogenetic_locations` table and a `genetype` table (consistent
+with `GENETYPE` staying a keytype). Its standalone meta script
+(`bindb_meta_bovine.sql`, run instead of the shared `bindb_meta.sql`,
+same pattern as chimp's) *does* insert a real `MAP` `map_counts`/
+`map_metadata` row from `cytogenetic_locations` — a genuine phantom
+entry for bovine since `.definePossibleTables()` drops `MAP`, so
+`HAS_MAP=0`'s conditional `DELETE` actually does something here (same
+failure class as mouse/rat, not zebrafish/chimp's already-solved-upstream
+case). The legacy map_counts names (`ENZYME2GENE`, `GO2GENE`, etc.) bovine's
+meta script inserts are already covered by the existing universal cleanup.
+Added `bovine) DBSCHEMA="BOVINE_DB"; HAS_MAP=0` to `make_db0.sh` and
+`"bovine"` to `DB0_SUPPORTED_SPECIES` — no other code changes. Not yet
+run against real server data.
+
 The next easiest species to generalize, by the same diff-against-
-`.definePossibleTables()` method: `bovine`/`chicken`/`canine`/`rhesus` (each drops
+`.definePossibleTables()` method: `chicken`/`canine`/`rhesus` (each drops
 a handful of keytypes but adds none, so no new table names to reconcile,
 just confirming `bindb_<species>.sql` already uses the retained ones'
 expected names). Species that *add* genuinely new tables not covered by
