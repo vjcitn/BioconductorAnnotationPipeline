@@ -1,6 +1,6 @@
 # BioconductorAnnotationPipeline
 
-Generates the Bioconductor annotation packages — `org.Hs.eg.db`, `org.Mm.eg.db`, and analogous OrgDb packages for 19 model organisms — as well as `GO.db`, `PFAM.db`, and selected `TxDb` packages.
+Generates the Bioconductor annotation packages — `org.Hs.eg.db`, `org.Mm.eg.db`, and analogous OrgDb packages for 19 model organisms — as well as `GO.db`.
 
 ## Status
 
