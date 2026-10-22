@@ -16,9 +16,13 @@ HS_TAXON <- 9606L
 #'
 #' @param con a `DBI` connection; defaults to the package's shared
 #'   connection, `ice_con()`.
+#' @param cache if `TRUE`, read from the local cache (`ice_cache_refresh()`)
+#'   instead of the live catalog; `con` is ignored. Errors if no cache
+#'   exists yet. See `ice_cache_refresh()` -- provisional, Milestone 8.
 #' @return A lazy `dplyr` table.
 #' @export
-hs_gene <- function(con = ice_con()) {
+hs_gene <- function(con = ice_con(), cache = FALSE) {
+    if (cache) return(dplyr::tbl(ice_cache_con(), "gene"))
     dplyr::tbl(con, "bioc.annotation.ncbi__gene") |>
         dplyr::filter(taxon_id == HS_TAXON, is.na(valid_to))
 }
@@ -35,7 +39,8 @@ hs_gene <- function(con = ice_con()) {
 #' @inheritParams hs_gene
 #' @return A lazy `dplyr` table.
 #' @export
-hs_alias <- function(con = ice_con()) {
+hs_alias <- function(con = ice_con(), cache = FALSE) {
+    if (cache) return(.ice_cache_require_table(ice_cache_con(), "alias"))
     dplyr::tbl(con, "bioc.annotation.identifier_mapping") |>
         dplyr::filter(taxon_id == HS_TAXON, is.na(valid_to))
 }
@@ -51,7 +56,8 @@ hs_alias <- function(con = ice_con()) {
 #' @inheritParams hs_gene
 #' @return A lazy `dplyr` table.
 #' @export
-hs_go <- function(con = ice_con()) {
+hs_go <- function(con = ice_con(), cache = FALSE) {
+    if (cache) return(dplyr::tbl(ice_cache_con(), "go"))
     dplyr::tbl(con, "bioc.annotation.ncbi__gene_go") |>
         dplyr::filter(taxon_id == HS_TAXON, is.na(valid_to))
 }
@@ -64,7 +70,8 @@ hs_go <- function(con = ice_con()) {
 #' @inheritParams hs_gene
 #' @return A lazy `dplyr` table.
 #' @export
-hs_pubmed <- function(con = ice_con()) {
+hs_pubmed <- function(con = ice_con(), cache = FALSE) {
+    if (cache) return(dplyr::tbl(ice_cache_con(), "pubmed"))
     dplyr::tbl(con, "bioc.annotation.ncbi__gene_pubmed") |>
         dplyr::filter(taxon_id == HS_TAXON, is.na(valid_to))
 }

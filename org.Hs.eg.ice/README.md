@@ -99,9 +99,46 @@ hs_gene(con)
 disconnect_ice(con)
 ```
 
+## Local caching (provisional, Milestone 8)
+
+Every accessor above stays live by default. If the live-catalog latency is a
+problem for a session, `ice_cache_refresh()` pulls all four tables once into
+a local `BiocFileCache`-managed DuckDB file; pass `cache = TRUE` to any
+accessor to read from it instead of the live catalog:
+
+```r
+library(org.Hs.eg.ice)
+ice_cache_refresh()                       # one-time, explicit, slow call
+
+hs_gene(cache = TRUE) |>
+    dplyr::filter(symbol == "ORMDL3") |>
+    dplyr::left_join(hs_pubmed(cache = TRUE), by = "gene_id") |>
+    dplyr::collect()
+```
+
+Nothing calls `ice_cache_refresh()` automatically, and nothing expires the
+cache automatically -- call it again when you want a fresher copy, or
+`ice_cache_clear()` to remove it. This is a provisional implementation of
+`PlanFor3.24.md` Milestone 8, built to demonstrate the latency difference;
+it does **not** yet tag the cache with a `bioc-on-ice` `provenance.release`
+identifier, and makes no cross-table-consistency claim beyond what the live
+catalog itself provides (see Milestone 8's open caveat on that).
+
+A real end-to-end run (2026-10-22) confirmed the speedup:
+`hs_gene(cache=TRUE) |> filter(symbol=="ORMDL3") |> collect()` took 0.090s
+versus 15.987s live. The refresh itself took ~869s total, almost entirely
+`alias`/`identifier_mapping` (6.59M rows, ~739s) -- `gene`, `go`, and
+`pubmed` together took well under two minutes. `ice_cache_refresh()`
+prints per-table progress (`pulling ...` / `N rows in Ns`) since this isn't
+fast enough to run silently. If you don't need `hs_alias()` (cross-reference
+lookups), `ice_cache_refresh(skip_alias = TRUE)` skips it and cuts the
+refresh to well under two minutes; `hs_alias(cache = TRUE)` then errors
+telling you to refresh again without `skip_alias`.
+
 ## Status
 
-Skeleton only (`PlanFor3.24.md` Milestone 7's demo package). Not published,
-not `R CMD check`ed against the live catalog yet. `tests/testthat/
-test-accessors.R` has one live-catalog test (`skip`s cleanly if the catalog
-is unreachable) and one offline signature check.
+Skeleton only (`PlanFor3.24.md` Milestone 7's demo package), plus a
+provisional local cache (Milestone 8, above). Not published, not
+`R CMD check`ed against the live catalog yet. `tests/testthat/
+test-accessors.R` has live-catalog tests (`skip`s cleanly if the catalog
+is unreachable) and offline signature/cache-state checks.

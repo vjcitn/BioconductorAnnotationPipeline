@@ -4,11 +4,15 @@
 \alias{hs_pubmed}
 \title{Human gene-to-publication links}
 \usage{
-hs_pubmed(con = ice_con())
+hs_pubmed(con = ice_con(), cache = FALSE)
 }
 \arguments{
 \item{con}{a \code{DBI} connection; defaults to the package's shared
 connection, \code{ice_con()}.}
+
+\item{cache}{if \code{TRUE}, read from the local cache (\code{ice_cache_refresh()})
+instead of the live catalog; \code{con} is ignored. Errors if no cache
+exists yet. See \code{ice_cache_refresh()} -- provisional, Milestone 8.}
 }
 \value{
 A lazy \code{dplyr} table.

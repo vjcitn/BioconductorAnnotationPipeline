@@ -755,7 +755,7 @@ created). Concrete vehicle for the thinness objective above, human-only
 
 Not yet started: no code written; depends on Milestone 6 landing first.
 
-### 8. User-driven local caching of iceberg slices via `BiocFileCache` — PROPOSED, not started
+### 8. User-driven local caching of iceberg slices via `BiocFileCache` — PROTOTYPED (provisional)
 
 Motivated by measured latency on the `org.Hs.eg.ice` demo package
 (Milestone 7): a single-row lookup that's instant against `org.Hs.eg.db`
@@ -859,10 +859,45 @@ upstream directly rather than assuming either answer.
   cross-table-atomicity caveat above (that's an upstream question, not
   something this milestone's own code can settle unilaterally).
 
-Not yet started: no code written; depends on Milestone 7's `org.Hs.eg.ice`
-accessors (already prototyped) as the thing being cached, and on
-raising the cross-table-atomicity question with `bioc-on-ice`
-upstream.
+**Provisional implementation, demonstrated end-to-end (2026-10-22).**
+`org.Hs.eg.ice` now has `ice_cache_refresh()`/`ice_cache_exists()`/
+`ice_cache_con()`/`ice_cache_clear()` (`R/cache.R`) and a `cache = FALSE`
+argument on all four accessors. This does **not yet** implement the
+release-tagging/`provenance.release` design above — it's a flat
+`collect()`-everything-into-local-DuckDB cache with no staleness check
+and no cross-table-atomicity handling, built to demonstrate the latency
+win, not to settle the reproducibility design.
+
+Real run against the live catalog:
+
+```r
+system.time(ice_cache_refresh(con))
+#    user  system elapsed
+# 133.49   66.86  869.26
+system.time(hs_gene(con) |> filter(symbol=="ORMDL3") |> collect())
+#   user  system elapsed
+#  2.394   1.159  15.987
+system.time(hs_gene(cache=TRUE) |> filter(symbol=="ORMDL3") |> collect())
+#   user  system elapsed
+#  0.085   0.011   0.090
+```
+
+~178x speedup on the cached query, identical result. The refresh itself
+is dominated almost entirely by `alias`/`identifier_mapping` — 6.59M
+rows, ~739s of the ~869s total, versus well under two minutes combined
+for `gene` (193,813 rows, 16.8s), `go` (446,674 rows, 68.4s), and
+`pubmed` (3,326,577 rows, 34.1s). `ice_cache_refresh()` prints per-table
+progress (row count + elapsed) since a refresh this slow running
+silently looks indistinguishable from hung. `skip_alias = TRUE` omits
+the `alias` pull/write entirely, cutting a refresh to well under two
+minutes when cross-reference lookups (`hs_alias()`) aren't needed;
+`hs_alias(cache = TRUE)` then errors telling the caller to refresh again
+without `skip_alias`.
+
+Still not started: the release-tagging helper
+(`resolve_release`/`provenance.release`), the staleness check against
+it, and raising the cross-table-atomicity question with `bioc-on-ice`
+upstream — this prototype sidesteps all three rather than solving them.
 
 ## Open questions carried forward
 - ~~Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through
