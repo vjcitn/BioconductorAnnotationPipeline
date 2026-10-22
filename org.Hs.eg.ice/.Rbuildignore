@@ -1,1 +1,3 @@
 ^README\.md$
+^docs$
+^_pkgdown\.yml$

@@ -9,3 +9,7 @@
 /db/
 /packages/
 providers/*/raw/
+
+# pkgdown's local build output -- published to the gh-pages branch by
+# .github/workflows/pkgdown-org-hs-eg-ice.yml, never committed on master.
+/org.Hs.eg.ice/docs/

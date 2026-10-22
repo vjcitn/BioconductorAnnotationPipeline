@@ -1,0 +1,10 @@
+url: https://vjcitn.github.io/BioconductorAnnotationPipeline/org.Hs.eg.ice/
+
+template:
+  bootstrap: 5
+
+home:
+  title: org.Hs.eg.ice
+
+development:
+  mode: auto

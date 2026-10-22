@@ -11,6 +11,9 @@ Description: Thin dplyr/DuckDB accessors over the biocOnIce public Iceberg
     Depends on no AnnotationDbi infrastructure. See PlanFor3.24.md Milestone 7
     in the BioconductorAnnotationPipeline repository for the design rationale.
 License: Artistic-2.0
+URL: https://vjcitn.github.io/BioconductorAnnotationPipeline/org.Hs.eg.ice/,
+    https://github.com/vjcitn/BioconductorAnnotationPipeline
+BugReports: https://github.com/vjcitn/BioconductorAnnotationPipeline/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends:

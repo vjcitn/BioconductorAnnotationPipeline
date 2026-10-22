@@ -1,0 +1,52 @@
+name: pkgdown (org.Hs.eg.ice)
+
+on:
+  push:
+    branches: [master, bioc324anno]
+    paths:
+      - 'org.Hs.eg.ice/**'
+      - '.github/workflows/pkgdown-org-hs-eg-ice.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  pkgdown:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: org.Hs.eg.ice
+          extra-packages: pkgdown, local::.
+          needs: website
+
+      - name: Build pkgdown site
+        # Rebuilds the vignette too: it's a .qmd that queries the live,
+        # anonymous-access bioc-on-ice catalog (no auth, same endpoint the
+        # package itself uses), so this runner can render it like any user.
+        run: pkgdown::build_site(pkg = "org.Hs.eg.ice", devel = FALSE, lazy = FALSE)
+        shell: Rscript {0}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: org.Hs.eg.ice/docs
+          destination_dir: org.Hs.eg.ice
+          keep_files: true
