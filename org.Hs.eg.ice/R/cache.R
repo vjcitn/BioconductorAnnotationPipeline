@@ -156,11 +156,17 @@ ice_cache_con <- function() {
 }
 
 .ice_cache_require_table <- function(cache_con, table) {
-    if (!(table %in% DBI::dbListTables(cache_con)))
-        stop("No '", table, "' table in the local cache -- it was skipped ",
-             "(ice_cache_refresh(skip_alias = TRUE)) or predates this ",
-             "option. Call ice_cache_refresh() without skip_alias = TRUE.",
-             call. = FALSE)
+    if (!(table %in% DBI::dbListTables(cache_con))) {
+        hint <- if (identical(table, "alias")) {
+            paste0(" -- it was skipped (ice_cache_refresh(skip_alias = TRUE)) ",
+                   "or predates this option. Call ice_cache_refresh() ",
+                   "without skip_alias = TRUE.")
+        } else {
+            paste0(" -- the local cache is missing or predates this table. ",
+                   "Call ice_cache_refresh() again.")
+        }
+        stop("No '", table, "' table in the local cache", hint, call. = FALSE)
+    }
     dplyr::tbl(cache_con, table)
 }
 

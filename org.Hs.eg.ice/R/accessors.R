@@ -24,7 +24,7 @@ HS_TAXON <- 9606L
 #' hs_gene() |> dplyr::filter(symbol == "TP53") |> dplyr::collect()
 #' @export
 hs_gene <- function(con = ice_con(), cache = FALSE) {
-    if (cache) return(dplyr::tbl(ice_cache_con(), "gene"))
+    if (cache) return(.ice_cache_require_table(ice_cache_con(), "gene"))
     dplyr::tbl(con, "bioc.annotation.ncbi__gene") |>
         dplyr::filter(taxon_id == HS_TAXON, is.na(valid_to))
 }
@@ -65,7 +65,7 @@ hs_alias <- function(con = ice_con(), cache = FALSE) {
 #' hs_go() |> dplyr::filter(gene_id == "7157") |> dplyr::collect()
 #' @export
 hs_go <- function(con = ice_con(), cache = FALSE) {
-    if (cache) return(dplyr::tbl(ice_cache_con(), "go"))
+    if (cache) return(.ice_cache_require_table(ice_cache_con(), "go"))
     dplyr::tbl(con, "bioc.annotation.ncbi__gene_go") |>
         dplyr::filter(taxon_id == HS_TAXON, is.na(valid_to))
 }
@@ -81,7 +81,7 @@ hs_go <- function(con = ice_con(), cache = FALSE) {
 #' hs_pubmed() |> dplyr::filter(gene_id == "7157") |> dplyr::collect()
 #' @export
 hs_pubmed <- function(con = ice_con(), cache = FALSE) {
-    if (cache) return(dplyr::tbl(ice_cache_con(), "pubmed"))
+    if (cache) return(.ice_cache_require_table(ice_cache_con(), "pubmed"))
     dplyr::tbl(con, "bioc.annotation.ncbi__gene_pubmed") |>
         dplyr::filter(taxon_id == HS_TAXON, is.na(valid_to))
 }
