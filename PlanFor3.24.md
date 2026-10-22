@@ -581,6 +581,111 @@ object names (not yet checked); if they don't, `AnnotationForge` likely
 expects a different `PkgTemplate` for those organisms, which would be
 new work rather than a `make_db0.sh` rename-rule addition.
 
+### 6. Source gene/GO/GO.db data from `bioc-on-ice` instead of direct downloads — PROPOSED, not started
+
+`bioc-on-ice/` (a separate git repo, vendored as a sibling directory in this
+checkout — see its own `README.md`/`SPEC.md`/`AGENTS.md`) publishes NCBI
+Gene, GO, and related annotation as public Apache Iceberg tables, queryable
+anonymously via DuckDB (`INSTALL iceberg; LOAD iceberg; ATTACH ... TYPE
+ICEBERG, AUTHORIZATION_TYPE 'none'`) against
+`https://icegate-bioconice.seandavi.workers.dev`. This milestone explores
+replacing the NCBI-gene and GO portions of this pipeline's download/parse
+chain with queries against that catalog.
+
+**Why this is attractive, specifically for this repo:** biocOnIce's
+NCBI-derived tables (`annotation.ncbi__gene`, `annotation.identifier_mapping`,
+`annotation.ncbi__gene_go`, `annotation.ncbi__gene_pubmed`) are already
+uniform across all 51,796 NCBI taxa — one schema, keyed by `taxon_id`, with
+no per-species table-naming differences. That is exactly the problem
+Milestone 5 exists to paper over (`make_db0.sh`'s growing per-species
+`case` block of rename rules, diffed by hand against
+`.definePossibleTables()` for each new organism). A biocOnIce-backed source
+for the gene/GO tables would make the *rest* of Milestone 5 (`chicken`,
+`canine`, `rhesus`, `fly`, `worm`, `yeast`, `arabidopsis`) unnecessary: one
+query parameterized by `taxon_id` instead of N more rename-rule diffs.
+`config/species.tsv`'s existing `taxid` column is already the exact join
+key needed — no new config.
+
+**Keytype mapping** (traced against `bioc-on-ice/src/bioconice/schemas.py`):
+
+| `db0`/OrgDb keytype | biocOnIce source |
+| --- | --- |
+| `ENTREZID` | `annotation.ncbi__gene.gene_id` |
+| `SYMBOL` | `annotation.ncbi__gene.symbol` |
+| `GENENAME` | `annotation.ncbi__gene.description` |
+| `GENETYPE` | `annotation.ncbi__gene.gene_type` |
+| `CHR` | `annotation.ncbi__gene.chromosome` |
+| `MAP` | `annotation.ncbi__gene.map_location` |
+| `ALIAS` | `annotation.identifier_mapping` WHERE `source_namespace='ENTREZ' AND target_namespace='ALIAS'` |
+| `ENSEMBL` | `annotation.identifier_mapping`, ENSEMBL↔ENTREZ rows |
+| `GO` / `EVIDENCE` / `ONTOLOGY` | `annotation.ncbi__gene_go` (`go_id`, `evidence`, `category`) |
+| `PMID` | `annotation.ncbi__gene_pubmed` |
+| `GO.db` itself | `ontology.term` / `ontology.relationship` (filtered to `ontology='go'`), replacing `providers/go`'s OBO download+parse chain |
+
+**Hard gaps — not optional, must stay on the current path:**
+
+1. **PFAM/UniProt/IPI/PROSITE domain columns are explicitly out of scope
+   for biocOnIce.** Its own `README.md` states: "Knowingly not served: ...
+   the legacy protein-domain columns of OrgDb." `providers/pfam` and
+   `providers/uniprot` would have to keep running exactly as today, feeding
+   those columns into whatever a biocOnIce-sourced build produces. This is
+   a hybrid architecture, not a full replacement — biocOnIce covers the
+   gene/GO core only.
+2. **UCSC `chrlength`/`refGene`** (today's `providers/ucsc`, which feeds
+   `gpsrc.sqlite`, a hard dependency of every `chipsrc_<species>.sqlite`)
+   has no biocOnIce equivalent yet. Their genome-feature tables
+   (`annotation.gene`/`transcript`/`exon`) are Ensembl-only, and their own
+   README calls the TxDb/EnsDb-equivalent R-facing layer "Milestone 2, not
+   built yet." `providers/ucsc` stays as-is regardless of how far this
+   milestone goes.
+3. **New external runtime dependency.** This trades "download NCBI/GO
+   files directly from their own hosts" for "depend on
+   `icegate-bioconice.seandavi.workers.dev` being up, and on *their*
+   re-ingest cadence" — a third-party service this repo doesn't control.
+   biocOnIce's `provenance.release` table (keyed `(release, source,
+   artifact)`) can pin a specific snapshot per Bioconductor release, the
+   same way retrieval dates are tracked today, but the uptime/SLA is
+   external.
+4. **Tooling**: no need for their Python `bioconice` CLI/package — DuckDB's
+   R client (CRAN `duckdb`) supports `ATTACH ... TYPE ICEBERG` directly, so
+   this is one new, fairly light R dependency (DuckDB + its `iceberg`/
+   `httpfs` extensions), not a Python/`uv` toolchain addition.
+
+**Staged plan:**
+
+1. **Proof of concept, human only, additive.** New
+   `scripts/make_db0_from_ice.R`, taking `--taxid` (read straight from
+   `config/species.tsv`), `ATTACH`es the public catalog via DuckDB-R and
+   writes `db0_<species>.sqlite` directly in the schema
+   `.definePossibleTables()` expects — skipping `chipsrc_<species>.sqlite`
+   and `make_db0.sh` entirely for the gene/GO tables. `providers/pfam`,
+   `providers/uniprot`, `providers/ucsc` stay unchanged and get merged in
+   as today. Validate against human with `tests/check_orgdb.R`, diffing
+   row-for-row against the currently-built `org.Hs.eg.db` (same validation
+   pattern as Milestones 4/4.5), and explicitly enumerate every difference
+   as either expected (PFAM/IPI/PROSITE gone, or kept via the legacy path)
+   or a bug.
+2. **`GO.db`.** Replace `providers/go`'s OBO download/parse chain with a
+   query against `bioc.ontology.term`/`bioc.ontology.relationship`, either
+   reproducing `GO.sqlite`'s current shape (smaller change to
+   `make_godb.R`) or rewriting `make_godb.R` to read from biocOnIce
+   directly.
+3. **Generalize by `taxid`.** Once human passes, extend step 1 to every
+   other species in `config/species.tsv` by `taxid` — this *replaces* the
+   remaining Milestone 5 species-by-species work (`chicken`/`canine`/
+   `rhesus`/`fly`/`worm`/`yeast`/`arabidopsis`) rather than extending it,
+   since there is no more per-species table-naming reconciliation to do
+   for any species biocOnIce's NCBI ingest covers.
+4. **Fallback behavior.** Decide what happens if
+   `icegate-bioconice.seandavi.workers.dev` is unreachable at build time.
+   Likely: keep today's direct-download path as the default, make
+   biocOnIce opt-in via an env var (e.g. `GENE_SOURCE=bioconice`), not a
+   silent replacement.
+
+Not yet started: no code written for this milestone yet (as of
+2026-10-21); the mapping and gap analysis above have been traced against
+`bioc-on-ice`'s schema source and README but not run against live data.
+
 ## Open questions carried forward
 - ~~Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through
   the Bimap-aware path or the generic `.definePossibleTables()` fallback?~~
