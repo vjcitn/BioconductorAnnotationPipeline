@@ -29,6 +29,7 @@ build, though the code itself is exercised elsewhere with
 `skip_alias = TRUE`).
 
 ```{r setup}
+#| message: false
 library(org.Hs.eg.ice)
 library(dplyr)
 ```
@@ -48,11 +49,12 @@ join, every column selection, is ordinary `dplyr` written by the caller.
   `evidence`/`qualifier`/`category`.
 - `hs_pubmed()` -- `annotation.ncbi__gene_pubmed`: `gene_id`/`pubmed_id`.
 
-## The comparison this package exists to make
+## The comparison that motivates this package
 
 The `AnnotationDbi` way:
 
 ```{r orgdb-way}
+#| message: false
 library(org.Hs.eg.db)
 mapIds(org.Hs.eg.db, keys = "TP53", keytype = "SYMBOL", column = "ENTREZID")
 select(org.Hs.eg.db, keys = "TP53", keytype = "SYMBOL",
@@ -80,7 +82,8 @@ hs_gene() |>
     filter(symbol == "TP53") |>
     inner_join(hs_go(), by = c("gene_id", "taxon_id")) |>
     dplyr::select(symbol, go_id, go_term, evidence, category) |>
-    collect()
+    collect() |>
+    head(10)
 ```
 
 ## `GOALL`: the GO ancestor closure as a recursive CTE
@@ -104,7 +107,8 @@ DBI::dbGetQuery(con, "
     SELECT DISTINCT t.term_id, t.name
     FROM ancestors a
     JOIN bioc.ontology.term t ON t.term_id = a.go_id AND t.valid_to IS NULL;
-")
+") |>
+    head(10)
 ```
 
 That query is exactly what `GOALL`/`select(..., columns = "GOALL")` can
