@@ -140,6 +140,18 @@ $(DBDIR)/genesrc.sqlite: $(GENESRC_DEPS)
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCEDATE','$$(date +%Y-%b%d)');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCENAME','Entrez Gene');"
 	sqlite3 $@ "INSERT INTO metadata VALUES('EGSOURCEURL','$(EGSOURCEURL)');"
+	# ENSOURCE*: the dedicated Ensembl FTP provider (annosrc/ensembl/) was
+	# removed when its FTP site restructured (see README); Ensembl IDs are
+	# now extracted from this same Entrez Gene gene_info dbXrefs column
+	# (gene_dbXrefs.tab, via parseAlias.R) instead of a separate download.
+	# bindb_<species>.sql's `ATTACH genesrc.sqlite` + `INSERT INTO metadata
+	# SELECT * FROM genesrc.metadata` is what used to pull in ensembl.sqlite's
+	# own ENSOURCE* rows; without a replacement here, dbmeta(conn,
+	# "ENSOURCEDATE") returns nothing in the built package (see
+	# PlanFor3.24.md Milestone 5 ensembl-provenance writeup).
+	sqlite3 $@ "INSERT INTO metadata VALUES('ENSOURCEDATE','$$(date +%Y-%b%d)');"
+	sqlite3 $@ "INSERT INTO metadata VALUES('ENSOURCENAME','Ensembl identifiers (via NCBI Entrez Gene dbXrefs)');"
+	sqlite3 $@ "INSERT INTO metadata VALUES('ENSOURCEURL','$(EGSOURCEURL)');"
 
 # ── Orthology.eg.sqlite ───────────────────────────────────────────────────────
 $(DBDIR)/Orthology.eg.sqlite: $(RAWDIR)/gene_orthologs $(RAWDIR)/names.txt script/src_orthology.sql
