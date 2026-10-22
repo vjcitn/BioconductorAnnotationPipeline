@@ -12,3 +12,11 @@ ice_cache_clear()
 \description{
 Remove the local cache
 }
+\examples{
+old <- getOption("org.Hs.eg.ice.cache_dir")
+options(org.Hs.eg.ice.cache_dir = tempfile())
+ice_cache_refresh(skip_alias = TRUE)
+ice_cache_clear()
+ice_cache_exists()
+options(org.Hs.eg.ice.cache_dir = old)
+}

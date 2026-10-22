@@ -12,3 +12,7 @@ disconnect_ice(con)
 \description{
 Disconnect from the catalog
 }
+\examples{
+con <- connect_ice()
+disconnect_ice(con)
+}

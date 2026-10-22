@@ -25,3 +25,8 @@ assert (\code{ENSEMBL}, \code{HGNC}, \code{MIM}, ...) is a row here, discriminat
 e.g. \code{dplyr::filter(target_namespace == "ALIAS")} for OrgDb's \code{ALIAS}
 keytype.
 }
+\examples{
+hs_alias() |>
+    dplyr::filter(source_id == "7157", target_namespace == "ALIAS") |>
+    dplyr::collect()
+}

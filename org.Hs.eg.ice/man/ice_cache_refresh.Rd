@@ -22,7 +22,8 @@ Pulls \code{hs_gene()}, \code{hs_alias()}, \code{hs_go()}, \code{hs_pubmed()} in
 in this package that writes to the cache -- call it again whenever you
 want a fresher local copy; nothing refreshes it automatically, and
 nothing calls it for you.
-
+}
+\details{
 Provisional: does not yet tag the cache with a \code{bioc-on-ice}
 \code{provenance.release} identifier (\code{PlanFor3.24.md} Milestone 8).
 
@@ -32,4 +33,13 @@ under two minutes combined for the other three. Set \code{skip_alias = TRUE} to
 leave it out of the refresh if you don't need cross-reference lookups;
 \code{hs_alias(cache = TRUE)} then errors telling you to refresh without
 skipping it.
+}
+\examples{
+old <- getOption("org.Hs.eg.ice.cache_dir")
+options(org.Hs.eg.ice.cache_dir = tempfile())
+ice_cache_refresh(skip_alias = TRUE)
+ice_cache_exists()
+hs_gene(cache = TRUE) |> dplyr::filter(symbol == "TP53") |> dplyr::collect()
+ice_cache_clear()
+options(org.Hs.eg.ice.cache_dir = old)
 }

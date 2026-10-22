@@ -17,3 +17,6 @@ first use and reused after that; call \code{connect_ice()} directly instead if
 you want an independent connection (e.g. a second one pointed at a
 different \code{endpoint}).
 }
+\examples{
+ice_con() |> DBI::dbGetQuery("SELECT * FROM bioc.annotation.ncbi__gene LIMIT 3;")
+}

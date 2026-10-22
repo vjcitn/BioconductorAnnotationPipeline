@@ -47,6 +47,14 @@
 #' @param skip_alias if `TRUE`, don't pull/cache the `alias` table -- it
 #'   dominates refresh time and isn't needed for gene/GO/pubmed lookups.
 #' @return The local cache file path (invisibly).
+#' @examples
+#' old <- getOption("org.Hs.eg.ice.cache_dir")
+#' options(org.Hs.eg.ice.cache_dir = tempfile())
+#' ice_cache_refresh(skip_alias = TRUE)
+#' ice_cache_exists()
+#' hs_gene(cache = TRUE) |> dplyr::filter(symbol == "TP53") |> dplyr::collect()
+#' ice_cache_clear()
+#' options(org.Hs.eg.ice.cache_dir = old)
 #' @export
 ice_cache_refresh <- function(con = ice_con(), skip_alias = FALSE) {
     bfc <- .ice_bfc()
@@ -88,6 +96,14 @@ ice_cache_refresh <- function(con = ice_con(), skip_alias = FALSE) {
 #' Does a local cache currently exist?
 #'
 #' @return `TRUE`/`FALSE`.
+#' @examples
+#' old <- getOption("org.Hs.eg.ice.cache_dir")
+#' options(org.Hs.eg.ice.cache_dir = tempfile())
+#' ice_cache_exists()
+#' ice_cache_refresh(skip_alias = TRUE)
+#' ice_cache_exists()
+#' ice_cache_clear()
+#' options(org.Hs.eg.ice.cache_dir = old)
 #' @export
 ice_cache_exists <- function() {
     rid <- .ice_cache_rid()
@@ -98,6 +114,15 @@ ice_cache_exists <- function() {
 #' Open a connection to the local cache
 #'
 #' @return A read-only `DBI` connection to the local cache's DuckDB file.
+#' @examples
+#' old <- getOption("org.Hs.eg.ice.cache_dir")
+#' options(org.Hs.eg.ice.cache_dir = tempfile())
+#' ice_cache_refresh(skip_alias = TRUE)
+#' con <- ice_cache_con()
+#' DBI::dbListTables(con)
+#' DBI::dbDisconnect(con, shutdown = TRUE)
+#' ice_cache_clear()
+#' options(org.Hs.eg.ice.cache_dir = old)
 #' @export
 ice_cache_con <- function() {
     if (!ice_cache_exists())
@@ -120,6 +145,13 @@ ice_cache_con <- function() {
 #' Remove the local cache
 #'
 #' @return `TRUE`, invisibly.
+#' @examples
+#' old <- getOption("org.Hs.eg.ice.cache_dir")
+#' options(org.Hs.eg.ice.cache_dir = tempfile())
+#' ice_cache_refresh(skip_alias = TRUE)
+#' ice_cache_clear()
+#' ice_cache_exists()
+#' options(org.Hs.eg.ice.cache_dir = old)
 #' @export
 ice_cache_clear <- function() {
     bfc <- .ice_bfc()

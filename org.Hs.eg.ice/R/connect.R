@@ -5,6 +5,10 @@
 #'
 #' @param endpoint icegate URL. Defaults to the public biocOnIce deployment.
 #' @return A `DBI` connection with the catalog attached as `bioc`.
+#' @examples
+#' con <- connect_ice()
+#' DBI::dbGetQuery(con, "SELECT * FROM bioc.annotation.ncbi__gene LIMIT 3;")
+#' disconnect_ice(con)
 #' @export
 connect_ice <- function(endpoint = "https://icegate-bioconice.seandavi.workers.dev") {
     con <- DBI::dbConnect(duckdb::duckdb())
@@ -19,6 +23,9 @@ connect_ice <- function(endpoint = "https://icegate-bioconice.seandavi.workers.d
 #' Disconnect from the catalog
 #'
 #' @param con a connection returned by `connect_ice()` or `ice_con()`.
+#' @examples
+#' con <- connect_ice()
+#' disconnect_ice(con)
 #' @export
 disconnect_ice <- function(con) {
     DBI::dbDisconnect(con, shutdown = TRUE)
@@ -36,6 +43,8 @@ disconnect_ice <- function(con) {
 #' different `endpoint`).
 #'
 #' @return A `DBI` connection with the catalog attached as `bioc`.
+#' @examples
+#' ice_con() |> DBI::dbGetQuery("SELECT * FROM bioc.annotation.ncbi__gene LIMIT 3;")
 #' @export
 ice_con <- function() {
     if (is.null(.ice_env$con) || !DBI::dbIsValid(.ice_env$con)) {

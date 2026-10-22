@@ -12,3 +12,13 @@ A read-only \code{DBI} connection to the local cache's DuckDB file.
 \description{
 Open a connection to the local cache
 }
+\examples{
+old <- getOption("org.Hs.eg.ice.cache_dir")
+options(org.Hs.eg.ice.cache_dir = tempfile())
+ice_cache_refresh(skip_alias = TRUE)
+con <- ice_cache_con()
+DBI::dbListTables(con)
+DBI::dbDisconnect(con, shutdown = TRUE)
+ice_cache_clear()
+options(org.Hs.eg.ice.cache_dir = old)
+}

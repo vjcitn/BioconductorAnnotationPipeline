@@ -21,3 +21,6 @@ A lazy \code{dplyr} table.
 \code{annotation.ncbi__gene_pubmed}, filtered to human and to currently-valid
 rows. Columns: \code{gene_id}, \code{pubmed_id} (OrgDb's \code{PMID}).
 }
+\examples{
+hs_pubmed() |> dplyr::filter(gene_id == "7157") |> dplyr::collect()
+}

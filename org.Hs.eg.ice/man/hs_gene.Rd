@@ -23,3 +23,6 @@ Columns: \code{gene_id} (Entrez GeneID, OrgDb's \code{ENTREZID}), \code{symbol},
 \code{description} (OrgDb's \code{GENENAME}), \code{gene_type} (OrgDb's \code{GENETYPE}),
 \code{chromosome} (OrgDb's \code{CHR}), \code{map_location} (OrgDb's \code{MAP}).
 }
+\examples{
+hs_gene() |> dplyr::filter(symbol == "TP53") |> dplyr::collect()
+}

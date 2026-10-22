@@ -20,6 +20,8 @@ HS_TAXON <- 9606L
 #'   instead of the live catalog; `con` is ignored. Errors if no cache
 #'   exists yet. See `ice_cache_refresh()` -- provisional, Milestone 8.
 #' @return A lazy `dplyr` table.
+#' @examples
+#' hs_gene() |> dplyr::filter(symbol == "TP53") |> dplyr::collect()
 #' @export
 hs_gene <- function(con = ice_con(), cache = FALSE) {
     if (cache) return(dplyr::tbl(ice_cache_con(), "gene"))
@@ -38,6 +40,10 @@ hs_gene <- function(con = ice_con(), cache = FALSE) {
 #'
 #' @inheritParams hs_gene
 #' @return A lazy `dplyr` table.
+#' @examples
+#' hs_alias() |>
+#'     dplyr::filter(source_id == "7157", target_namespace == "ALIAS") |>
+#'     dplyr::collect()
 #' @export
 hs_alias <- function(con = ice_con(), cache = FALSE) {
     if (cache) return(.ice_cache_require_table(ice_cache_con(), "alias"))
@@ -55,6 +61,8 @@ hs_alias <- function(con = ice_con(), cache = FALSE) {
 #'
 #' @inheritParams hs_gene
 #' @return A lazy `dplyr` table.
+#' @examples
+#' hs_go() |> dplyr::filter(gene_id == "7157") |> dplyr::collect()
 #' @export
 hs_go <- function(con = ice_con(), cache = FALSE) {
     if (cache) return(dplyr::tbl(ice_cache_con(), "go"))
@@ -69,6 +77,8 @@ hs_go <- function(con = ice_con(), cache = FALSE) {
 #'
 #' @inheritParams hs_gene
 #' @return A lazy `dplyr` table.
+#' @examples
+#' hs_pubmed() |> dplyr::filter(gene_id == "7157") |> dplyr::collect()
 #' @export
 hs_pubmed <- function(con = ice_con(), cache = FALSE) {
     if (cache) return(dplyr::tbl(ice_cache_con(), "pubmed"))

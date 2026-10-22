@@ -24,3 +24,6 @@ Columns: \code{gene_id}, \code{go_id}, \code{evidence} (OrgDb's \code{EVIDENCE})
 Component). Direct annotations only -- joining \code{ontology.relationship} for
 the \code{is_a} closure gets you OrgDb's \code{GOALL}; see the package README.
 }
+\examples{
+hs_go() |> dplyr::filter(gene_id == "7157") |> dplyr::collect()
+}

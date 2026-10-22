@@ -16,3 +16,8 @@ A \code{DBI} connection with the catalog attached as \code{bioc}.
 Opens an anonymous, read-only DuckDB connection with the biocOnIce catalog
 \code{ATTACH}ed as \code{bioc}, served by icegate. No account or token is needed.
 }
+\examples{
+con <- connect_ice()
+DBI::dbGetQuery(con, "SELECT * FROM bioc.annotation.ncbi__gene LIMIT 3;")
+disconnect_ice(con)
+}
