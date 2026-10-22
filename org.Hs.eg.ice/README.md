@@ -83,6 +83,36 @@ That query is exactly what `GOALL`/`select(..., columns = "GOALL")` can
 never return in one `AnnotationDbi` call — this package doesn't need to
 invent an API for it, because the recursive CTE is already SQL.
 
+## AnnotationDbi concept &rarr; org.Hs.eg.ice equivalent
+
+| AnnotationDbi concept (`org.Hs.eg.db`) | org.Hs.eg.db | org.Hs.eg.ice |
+|---|---|---|
+| **Object model** | `OrgDb` S4 class, Bimap objects under the hood | No class at all — four plain `dplyr::tbl()` lazy tables (`hs_gene()`, `hs_alias()`, `hs_go()`, `hs_pubmed()`) |
+| **`keytypes(x)`** | Returns fixed whitelist (`ENTREZID`, `SYMBOL`, `ALIAS`, `ENSEMBL`, `GO`, `PMID`, ...) | No such function/concept. "Keytype" is just whichever column you `filter()` on — e.g. `hs_alias() \|> filter(target_namespace == "ALIAS")` is OrgDb's `ALIAS` keytype, `filter(target_namespace == "ENSEMBL")` is `ENSEMBL`, etc. |
+| **`columns(x)`** | Fixed list of retrievable columns | No enumeration function — the columns are whatever's in the four tables' schemas (visible via `colnames()`/`glimpse()` on the lazy table itself) |
+| **`select(x, keys, keytype, columns)`** | One call does filter + column choice + join across internal tables | No equivalent call; it's ordinary `dplyr::filter()` + `select()` + `left_join()`/`inner_join()` written by the caller against the lazy tables |
+| **`mapIds(x, keys, keytype, column)`** | Single-valued key→value lookup, with multiVals disambiguation logic | No equivalent; same `filter()`+`select()`+`collect()` pattern, caller handles 1:many themselves (e.g. `nrow()>1` just means multiple rows come back) |
+| **`ENTREZID`** | Row names / keytype | `hs_gene()$gene_id` |
+| **`SYMBOL`** | keytype/column | `hs_gene()$symbol` |
+| **`GENENAME`** | column | `hs_gene()$description` |
+| **`GENETYPE`** | column | `hs_gene()$gene_type` |
+| **`CHR`** | column | `hs_gene()$chromosome` |
+| **`MAP`** | column | `hs_gene()$map_location` |
+| **`ALIAS`, `ENSEMBL`, `HGNC`, `MIM`, ...** | separate keytypes, each its own internal mapping table | all rows of `hs_alias()` (`annotation.identifier_mapping`), discriminated by `source_namespace`/`target_namespace` rather than being separate keytypes |
+| **`GO`** (direct annotations) | column, via `select(..., columns="GO")` | `hs_go()`: `go_id`, `evidence`, `qualifier`, `category` |
+| **`GOALL`** (ancestor closure over the GO DAG) | precomputed column, one `select()` call | not precomputed — a hand-written `WITH RECURSIVE` CTE over `ontology.relationship`/`ontology.term` (above); the DAG walk is explicit SQL, not a library feature |
+| **`PMID`** | column | `hs_pubmed()$pubmed_id` |
+| **Multi-table joins** (e.g. symbol → GO → PubMed in one call) | not expressible in a single `select()`/`mapIds()` call — requires multiple calls and manual merging | ordinary `dplyr` joins across the four lazy tables in one pipeline, same as joining any other tables |
+| **Offline / cold-start speed** | instant, local SQLite, ~0.1s/query | live: ~4–16s/query (S3/catalog metadata overhead per call, independent of result size) |
+| **Local caching** | implicit — the whole package *is* a local cache (a shipped SQLite file) | opt-in: `ice_cache_refresh()` materializes all four tables into a local `BiocFileCache`-managed DuckDB file; `cache = TRUE` on any accessor reads from it (~0.09s/query once refreshed, see Milestone 8 below) |
+| **Versioning / reproducibility** | pinned to the installed package version | not yet addressed by the cache; live data reflects `bioc-on-ice`'s row-level `valid_from`/`valid_to`/`provenance.release` model — open question (`PlanFor3.24.md` Milestone 8) whether joins across tables are point-in-time consistent |
+| **Dependencies** | `AnnotationDbi`, `RSQLite`, Bioconductor infrastructure | `DBI`, `dbplyr`, `dplyr`, `duckdb`, `BiocFileCache` (cache only) — no `AnnotationDbi` dependency at all |
+
+The throughline: `org.Hs.eg.db` hides its schema behind a fixed
+keytype/column API that `select()`/`mapIds()` interpret; `org.Hs.eg.ice`
+exposes the schema directly as lazy tables and leaves the "keytype" logic
+(which column, which namespace) to ordinary `dplyr` verbs the caller writes.
+
 ## Connecting
 
 ```r
