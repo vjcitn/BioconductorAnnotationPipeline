@@ -899,6 +899,64 @@ Still not started: the release-tagging helper
 it, and raising the cross-table-atomicity question with `bioc-on-ice`
 upstream — this prototype sidesteps all three rather than solving them.
 
+### 9. `IceOrgDb`: an iceberg-backed `OrgDb` lookalike for BiocPy's `orgdb` (Python) — PROPOSED, deferred
+
+A separate project, `BiocPy/orgdb` (cloned locally as `orgdb/` in this repo),
+ports `AnnotationDbi`'s `OrgDb` query surface to Python:
+
+- `OrgDbRegistry` (`src/orgdb/orgdbregistry.py`) downloads AnnotationHub's
+  full `annotationhub.sqlite3` metadata file (via `pybiocfilecache.
+  BiocFileCache`), filters `title LIKE 'org.%.sqlite'`, and builds a
+  `{orgdb_id: OrgDbRecord}` map (species/id_type/bioc_version/url).
+  `load_db()` downloads the per-species `org.*.sqlite` file (same
+  `BiocFileCache`) and wraps it in `OrgDb`.
+- `OrgDb` (`src/orgdb/orgdb.py`) opens that SQLite file directly and
+  hardcodes a `COLUMN -> (table, field)` map (`_define_tables`, ~300
+  lines) mirroring R's internal `AnnotationDbi::.definePossibleTables` --
+  including per-species special-casing (human gets `OMIM`/`UCSCKG`,
+  mouse gets `MGI` and drops `MAP`, yeast gets an entirely different
+  mapping, etc.). `columns()`/`keytypes()`/`keys()`/`select()`/`mapIds()`
+  all key off that dict; `select()` dynamically builds a
+  `JOIN ... USING (_id)` query across whichever tables the requested
+  columns live in.
+
+So the whole stack is: AnnotationHub registry lookup (SQLite) -> bulk
+download one full per-species SQLite file -> query it locally -- the same
+bulk-download-then-query model the R OrgDb packages use, plus an extra
+layer of indirection (the AnnotationHub metadata lookup) that
+`org.Hs.eg.ice` doesn't need at all.
+
+**Two independent swap-in points, not equally valuable:**
+1. The registry's AnnotationHub dependency is species/package discovery,
+   not data access -- AH's metadata DB already does that job reasonably.
+   Lower value to replace with iceberg, more plumbing for little gain.
+2. `OrgDb`'s per-species `_table_map` + full-file download is the strong
+   fit. `bioc-on-ice`'s schema is already normalized across species
+   (`ncbi__gene`, `identifier_mapping`, `ncbi__gene_go`,
+   `ncbi__gene_pubmed`, filtered by `taxon_id`), so an `IceOrgDb` backend
+   could collapse most of that ~300-line per-species mapping dict into
+   "filter by taxon_id, pick a namespace" -- the same simplification
+   `org.Hs.eg.ice` made over `AnnotationDbi` in R. `columns()`/
+   `keytypes()`/`select()`/`mapIds()` could stay API-compatible with the
+   existing `OrgDb` while querying DuckDB-over-Iceberg instead of local
+   SQLite -- no full-file download for a single-gene lookup, with the
+   same `BiocFileCache`-backed opt-in local-cache pattern just built for
+   `org.Hs.eg.ice` (Milestone 8) available for latency-sensitive use.
+   `pybiocfilecache` is already a dependency of `orgdb`, so that part is
+   free.
+
+**Scope (if/when picked up):** a new `IceOrgDb` class alongside the
+existing `OrgDb` in `BiocPy/orgdb` -- not a rewrite, so the SQLite/
+AnnotationHub path keeps working for species/releases `bioc-on-ice`
+doesn't cover. Same open questions as Milestone 8 apply here too
+(release-tagging via `provenance.release`/`resolve_release`, the
+cross-table-atomicity caveat) since any Python caching layer would face
+the identical reproducibility design question.
+
+**Deferred: revisit once there's feedback on the `org.Hs.eg.ice` (R)
+approach** -- no point building a second-language analog of a pattern
+that might still change shape in the R prototype.
+
 ## Open questions carried forward
 - ~~Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through
   the Bimap-aware path or the generic `.definePossibleTables()` fallback?~~
