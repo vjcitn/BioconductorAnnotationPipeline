@@ -686,6 +686,46 @@ Not yet started: no code written for this milestone yet (as of
 2026-10-21); the mapping and gap analysis above have been traced against
 `bioc-on-ice`'s schema source and README but not run against live data.
 
+### 7. A less-interventional, tidyverse/SQL-native access layer — PROPOSED, not started
+
+Depends on Milestone 6 existing (or at least the `ATTACH ... TYPE ICEBERG`
+connection it establishes). `AnnotationDbi::select()`/`mapIds()`/
+`keytypes()`/`columns()` impose a bespoke query DSL bounded by
+`.definePossibleTables()`'s per-organism keytype whitelist — the same
+whitelist that makes Milestones 1/5/6 as laborious as they are. Once the
+data actually lives in Iceberg tables (ordinary rows, joinable by any
+column, in SQL), routing every query back through that keytype matrix
+throws away exactly the generality Milestone 6 buys.
+
+**Objective, stated narrowly on purpose:** expose the biocOnIce tables as
+dbplyr lazy tables over the same DuckDB `ATTACH ... TYPE ICEBERG`
+connection Milestone 6 uses, so ordinary `dplyr` verbs (`filter()`,
+`select()`, `inner_join()`, `collect()`) or raw SQL work directly against
+`annotation.ncbi__gene`, `annotation.identifier_mapping`,
+`annotation.ncbi__gene_go`, `ontology.term`/`relationship`, etc. — any
+column as a join key, any species by `taxon_id`, any join across tables
+that a keytype-bounded `select()` call could never express in one call
+(e.g. gene → GO → ontology ancestor closure via a recursive CTE, as
+`bioc-on-ice`'s own README demonstrates). DuckDB does the query pushdown;
+this layer adds no query engine of its own.
+
+**Thinness is the objective, not a constraint to work around.** Explicitly
+in scope: a connection helper and documentation pointing at the tables
+directly. Explicitly out of scope, to guard against scope creep: no new
+query abstraction, no reimplementing `select()`'s semantics with different
+syntax, no caching/materialization layer — if dbplyr or raw SQL can already
+say it, this milestone does not wrap it again.
+
+**Transitional compatibility, not replacement.** `AnnotationDbi::select()`/
+`mapIds()`/`keytypes()`/`columns()` stay working throughout — as thin
+wrappers translating to the same underlying SQL, not as a parallel
+implementation — so existing scripts and packages depending on this
+pipeline's output are not broken while the direct-table path is adopted.
+Retiring the compatibility shim, if ever, is a separate future decision,
+not part of this milestone.
+
+Not yet started: no code written; depends on Milestone 6 landing first.
+
 ## Open questions carried forward
 - ~~Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through
   the Bimap-aware path or the generic `.definePossibleTables()` fallback?~~
