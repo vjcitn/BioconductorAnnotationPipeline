@@ -30,7 +30,8 @@ suppressPackageStartupMessages({
     library(RSQLite)
 })
 
-DB0_SUPPORTED_SPECIES <- c("human", "mouse", "rat", "zebrafish", "chimp", "bovine")
+DB0_SUPPORTED_SPECIES <- c("human", "mouse", "rat", "zebrafish", "chimp", "bovine",
+                            "chicken", "canine")
 
 ## ── Parse args ───────────────────────────────────────────────────────────────
 args <- commandArgs(trailingOnly = TRUE)

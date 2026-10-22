@@ -567,11 +567,55 @@ Added `bovine) DBSCHEMA="BOVINE_DB"; HAS_MAP=0` to `make_db0.sh` and
 `"bovine"` to `DB0_SUPPORTED_SPECIES` — no other code changes. Not yet
 run against real server data.
 
+**chicken** and **canine**, the next tier predicted above, generalize the
+same way. `.definePossibleTables("OrgDb", "Gallus gallus")` drops `MAP`/
+`cytogenetic_locations`, `OMIM`, and `UCSCKG` relative to human and adds
+nothing; `.definePossibleTables("OrgDb", "Canis familiaris")` drops those
+same three plus `PFAM`/`IPI` and `PROSITE`, again adding nothing. Diffing
+`bindb_chicken.sql` and `bindb_canine.sql` against `bindb_human.sql`
+confirms every table this script renames (`gene_synonyms.symbol`,
+`ensembl.ensid`, `chromosome_locations.chromosome`) is named identically
+in both species' scripts — no new rename rule needed for either, matching
+the Plan's own prediction for this tier. `genetype` is real and populated
+for both (consistent with both species keeping `GENETYPE`).
+
+The one genuine difference is `MAP`. Chicken's `bindb_meta_chicken.sql`
+already has its `cytogenetic_locations`-derived `map_counts`/
+`map_metadata` 'MAP' inserts commented out, so `HAS_MAP=0` is a harmless
+no-op there, same as zebrafish/chimp. Canine's `bindb_meta_canine.sql`,
+by contrast, still unconditionally inserts a real `map_counts` 'MAP' row
+from `cytogenetic_locations` (canine's `bindb_canine.sql` does build a
+real, populated `cytogenetic_locations` table from NCBI's
+`gene_map_location`) despite `.definePossibleTables()` dropping `MAP` for
+canine — a genuine phantom entry, same failure class as mouse/rat/bovine,
+so `HAS_MAP=0`'s conditional `DELETE` actually does something here.
+
+This also resolves an open question from earlier in this pass: both
+`bindb_human.sql` and `bindb_chicken.sql` have their `pfam`/`prosite`
+`CREATE TABLE` blocks entirely commented out (a dead, never-run
+`ATTACH DATABASE 'ipisrc.sqlite'` reference), including for human, which
+*does* keep `PFAM`/`IPI`/`PROSITE` as real keytypes. So PFAM/IPI/PROSITE
+population is not a per-species `bindb_<species>.sql` concern at all for
+any currently-built species — `make_db0.sh`'s existing universal `pfam`
+stub comment already documents the real mechanism: `assemble_species.sh`
+populates `pfam` from the Makefile's optional `PFAM.sqlite` (built by
+`providers/pfam`) joined against a non-empty `uniprot` table, independent
+of species, and `make_db0.sh` stubs an empty table when that didn't run.
+Canine dropping `PFAM`/`IPI`/`PROSITE` from `.definePossibleTables()`
+therefore needs no `make_db0.sh` change either way — the existing
+unconditional stub-or-rename logic is already harmless for species that
+don't have those keytypes, same as it already is for bovine/zebrafish.
+
+Added `chicken) DBSCHEMA="CHICKEN_DB"; HAS_MAP=0` and
+`canine) DBSCHEMA="CANINE_DB"; HAS_MAP=0` to `make_db0.sh`, and
+`"chicken"`/`"canine"` to `DB0_SUPPORTED_SPECIES` — no other code
+changes. Not yet run against real server data.
+
 The next easiest species to generalize, by the same diff-against-
-`.definePossibleTables()` method: `chicken`/`canine`/`rhesus` (each drops
-a handful of keytypes but adds none, so no new table names to reconcile,
-just confirming `bindb_<species>.sql` already uses the retained ones'
-expected names). Species that *add* genuinely new tables not covered by
+`.definePossibleTables()` method: `rhesus` (drops a handful of keytypes
+but adds none, so no new table names to reconcile, just confirming
+`bindb_rhesus.sql` already uses the retained ones' expected names).
+Species that *add* genuinely new tables not covered by
 `NCBIORG.DB`'s template — `fly` (FLYBASE/FLYBASECG/FLYBASEPROT), `worm`
 (WORMBASE), `yeast` (ORF/DESCRIPTION/COMMON/INTERPRO/SMART/SGD — also a
 wholesale table-set replacement, not an addition), `arabidopsis`

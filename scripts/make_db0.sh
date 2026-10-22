@@ -13,9 +13,9 @@
 # Per-species rename rules live in the `case` block below, derived by
 # diffing annosrc/organism_annotation/script/bindb_<species>.sql (and its
 # meta scripts) against .definePossibleTables()'s expectations. `human`,
-# `mouse`, `rat`, `zebrafish`, `chimp`, and `bovine` are implemented; see
-# PlanFor3.24.md Milestone 5 for the plan to generalize to the remaining
-# species in config/species.tsv.
+# `mouse`, `rat`, `zebrafish`, `chimp`, `bovine`, `chicken`, and `canine`
+# are implemented; see PlanFor3.24.md Milestone 5 for the plan to
+# generalize to the remaining species in config/species.tsv.
 #
 # The renaming SQL below the `case` block is intentionally NOT further
 # species-gated: bindb_mouse.sql and bindb_rat.sql were confirmed
@@ -57,6 +57,15 @@ fi
 # phantom entry, same failure class as the ENTREZID/ENZYME2GENE fixes
 # below: checkMAPCOUNTS() get()s 'org.Mm.egMAP', which makeAnnDbPkg()
 # never creates since MAP isn't in mouse's possible-tables list.
+#
+# chicken's own bindb_meta_chicken.sql already has its 'MAP' map_counts
+# insert commented out (consistent with chicken dropping MAP/
+# cytogenetic_locations), so HAS_MAP=0 is a harmless no-op there, same as
+# zebrafish/chimp. canine's bindb_meta_canine.sql, by contrast, *does*
+# unconditionally insert a real 'MAP' map_counts row from
+# cytogenetic_locations despite canine dropping MAP from
+# .definePossibleTables() -- a genuine phantom entry, same class as
+# mouse/rat/bovine, so HAS_MAP=0 is a real fix for canine.
 case "$SPECIES" in
     human)     DBSCHEMA="HUMAN_DB";     HAS_MAP=1 ;;
     mouse)     DBSCHEMA="MOUSE_DB";     HAS_MAP=0 ;;
@@ -64,6 +73,8 @@ case "$SPECIES" in
     zebrafish) DBSCHEMA="ZEBRAFISH_DB"; HAS_MAP=0 ;;
     chimp)     DBSCHEMA="CHIMP_DB";     HAS_MAP=0 ;;
     bovine)    DBSCHEMA="BOVINE_DB";    HAS_MAP=0 ;;
+    chicken)   DBSCHEMA="CHICKEN_DB";   HAS_MAP=0 ;;
+    canine)    DBSCHEMA="CANINE_DB";    HAS_MAP=0 ;;
     *)
         echo "ERROR: make_db0.sh has no schema-conformance rules for '$SPECIES' yet" >&2
         echo "       see PlanFor3.24.md Milestone 5" >&2
