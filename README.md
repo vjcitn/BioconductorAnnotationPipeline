@@ -13,6 +13,13 @@ This pipeline is currently being redesigned. See [SIMPLIFY/SIMPLIFICATION_PLAN.m
 
 The old operational instructions (EC2 instance setup, `malbec1` upload steps, release-to-release artifact carryover) have been retired along with the scripts they described.
 
+### org.Hs.eg.ice
+
+A demonstration package (see `PlanFor3.24.md` Milestone 7) offering thin dplyr/DuckDB
+accessors over the public [bioc-on-ice](https://github.com/seandavi/bioc-on-ice) Iceberg
+catalog, as a less-interventional alternative to AnnotationDbi's query surface.
+Reference/vignette site: https://vjcitn.github.io/BioconductorAnnotationPipeline/org.Hs.eg.ice/
+
 ## Data Sources
 
 | Provider | What it supplies |
