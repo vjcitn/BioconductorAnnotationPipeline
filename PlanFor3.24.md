@@ -1025,6 +1025,78 @@ would need to invent or ship.
 milestone; it is a design note capturing the rationale and scope before
 work starts, per discussion on 2026-10-22.
 
+### 11. "BiocAnnoNG": domain-specific routing and verification over one `bioc-on-ice` backend — PROPOSED, not started
+
+Milestone 10 generalizes `org.Hs.eg.ice` across taxa, but stays within one
+domain: gene/alias/GO/PubMed annotation. `ice_con()`'s actual table list
+is far wider than that one domain -- a live listing includes
+`gwas_catalog__study`/`gwas_catalog__association`, `obo__go`/`obo__mondo`/
+`obo__uberon`/`obo__doid`/`obo__cl`/`obo__efo`/`obo__hsapdv`/`obo__mmusdv`,
+`cellxgene__dataset`, `cellosaurus__cell_line`/`__disease`/`__xref`,
+`biogrid__interactions`, `complexportal__complex`, `encode__experiment`/
+`__file`, `eqtlcatalogue__dataset`, `bedbase__bed`/`__bedset`,
+`icite__citation`/`__metrics`, `pubtator3__gene`/`__disease`/`__chemical`/
+`__mutation`, `rnacentral__rna`/`__id_mapping`, `mane__transcript`,
+`hgnc__gene`/`__complete_set`, `intact__mitab`, `bugsigdb__full_dump`,
+`wikipathways__pathway`/`__gmt`/`__gene_pathway`, alongside the
+`ncbi__gene*`/`identifier_mapping` tables `org.Hs.eg.ice` already uses.
+Several separate Bioconductor packages each maintain their own
+ingestion/caching logic against a source this catalog has already landed:
+`gwascat` (GWAS Catalog), ontology-lookup packages built on OBO files
+(`obo__*`), cellxgene-facing packages, and others. The pattern proven for
+gene annotation -- a thin `dplyr`/`DBI` accessor layer plus the Milestone
+8 opt-in `BiocFileCache` caching discipline, no bespoke per-package
+ingestion -- is the same pattern each of these domains could reuse,
+rather than each domain reinventing its own.
+
+**This is explicitly not "build one package that does everything."**
+The two disciplines this milestone establishes are:
+- **Domain-specific routing**: each domain keeps its own thin accessor
+  module (its own function names, its own table family, its own
+  natural key) rather than funneling every domain through one generic
+  interface. A GWAS module's cache key is naturally a study accession or
+  trait; an ontology module's is an ontology name (`go`, `mondo`,
+  `uberon`, ...); a cellxgene module's is a dataset id. None of these are
+  taxon-keyed the way Milestone 10's cache redesign is, so that
+  milestone's per-taxon keying does not transfer as-is -- each domain
+  module needs its own appropriate cache-key scheme, following the same
+  atomic-build-then-swap discipline Milestone 8 hardened, not the same
+  key shape.
+- **Domain-specific verification**: before any domain module is offered
+  as a replacement/alternative for an existing package's data access,
+  that domain needs its own version of Milestone 10's coverage audit and
+  Milestone 4/4.5's "validate against both APIs" discipline -- does
+  `bioc-on-ice`'s `obo__mondo` actually match what the current
+  ontology-lookup package ships, row for row and relationship for
+  relationship, before anyone is asked to trust it as a substitute.
+  Verification is per-domain and does not generalize the way the
+  underlying `connect_ice()`/caching plumbing does.
+
+**Scope:**
+- Shared plumbing only: `connect_ice()`/`ice_con()` and the `BiocFileCache`
+  atomic-refresh discipline (Milestones 7-8, hardened against interrupted
+  refreshes) are the only pieces meant to be reused verbatim across
+  domains.
+- Pick one additional domain (candidates: GWAS Catalog via
+  `gwas_catalog__*`, or one OBO ontology via `obo__*`) as the second proof
+  point after gene annotation, following the same thin-accessor-plus-
+  opt-in-cache shape `org.Hs.eg.ice` established, before generalizing
+  further.
+- Explicitly out of scope: committing to retire or deprecate any existing
+  domain package (`gwascat`, any OBO/ontology package, any cellxgene
+  package) -- each such decision is case-by-case and belongs to that
+  package's own maintainers, not something this project can decide for
+  them; building a single unified interface across domains; and picking
+  up a second domain before Milestone 10 (the taxon generalization,
+  itself the first instance of this same routing-plus-verification
+  pattern) is further along.
+
+**Vision note, not yet implemented.** No code has been written for this
+milestone; it names the direction -- domain-specific routing and
+domain-specific verification as the two disciplines any `bioc-on-ice`-backed
+package needs, gene annotation (Milestones 7-8, 10) being the first
+worked instance -- per discussion on 2026-10-22.
+
 ## Open questions carried forward
 - ~~Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through
   the Bimap-aware path or the generic `.definePossibleTables()` fallback?~~
