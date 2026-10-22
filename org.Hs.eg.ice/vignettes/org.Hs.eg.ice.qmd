@@ -1,0 +1,205 @@
+---
+title: "Querying human gene annotation via biocOnIce with org.Hs.eg.ice"
+author: "Bioconductor Core Team"
+date: last-modified
+format: html
+vignette: >
+  %\VignetteIndexEntry{Querying human gene annotation via biocOnIce}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+execute:
+  eval: false
+---
+
+## Overview
+
+`org.Hs.eg.ice` is a demonstration package: human gene annotation served
+from the [biocOnIce](https://github.com/seandavi/bioc-on-ice) public
+Iceberg catalog, queried directly with `dplyr`/`DBI`, with **no
+dependency on `AnnotationDbi`** -- no `OrgDb` class, no Bimap objects, no
+`select()`/`mapIds()`/`keytypes()` keytype whitelist. See
+`PlanFor3.24.md` Milestone 7 in the
+[BioconductorAnnotationPipeline](https://github.com/vjcitn/BioconductorAnnotationPipeline)
+repository for the design rationale, and Milestone 8 for the local-caching
+layer shown below.
+
+Code in this vignette is shown but not evaluated at build time (`eval:
+false` above): it queries a live, anonymous, unauthenticated network
+endpoint, and this package has not yet been `R CMD check`ed against it in
+a build/CI environment. Treat the output shown in comments as
+illustrative, captured from an interactive session.
+
+```{r setup}
+library(org.Hs.eg.ice)
+library(dplyr)
+```
+
+## The four accessors
+
+Each accessor is a lazy `dplyr` table, already filtered to human
+(`taxon_id = 9606`) and to currently-valid rows. Nothing else -- every
+join, every column selection, is ordinary `dplyr` written by the caller.
+
+- `hs_gene()` -- `annotation.ncbi__gene`: `gene_id`, `symbol`,
+  `description`, `gene_type`, `chromosome`, `map_location`.
+- `hs_alias()` -- `annotation.identifier_mapping`: every cross-reference
+  namespace NCBI/Ensembl assert, discriminated by `source_namespace`/
+  `target_namespace`.
+- `hs_go()` -- `annotation.ncbi__gene_go`: direct GO annotations, `go_id`/
+  `evidence`/`qualifier`/`category`.
+- `hs_pubmed()` -- `annotation.ncbi__gene_pubmed`: `gene_id`/`pubmed_id`.
+
+## The comparison this package exists to make
+
+The `AnnotationDbi` way:
+
+```{r orgdb-way}
+library(org.Hs.eg.db)
+mapIds(org.Hs.eg.db, keys = "TP53", keytype = "SYMBOL", column = "ENTREZID")
+select(org.Hs.eg.db, keys = "TP53", keytype = "SYMBOL",
+       columns = c("ENTREZID", "GENENAME"))
+```
+
+The direct way:
+
+```{r ice-way}
+hs_gene() |>
+    filter(symbol == "TP53") |>
+    select(gene_id, symbol, description) |>
+    collect()
+```
+
+A join `select()`/`mapIds()` cannot express in one call -- symbol to its
+direct GO annotations:
+
+```{r ice-join}
+hs_gene() |>
+    filter(symbol == "TP53") |>
+    inner_join(hs_go(), by = c("gene_id", "taxon_id")) |>
+    select(symbol, go_id, go_term, evidence, category) |>
+    collect()
+```
+
+## `GOALL`: the GO ancestor closure as a recursive CTE
+
+OrgDb's `GOALL` (the ancestor closure over the GO DAG) needs
+`ontology.relationship`, a table this package does not wrap -- attach it
+directly, as `bioc-on-ice`'s own README shows for cell types:
+
+```{r goall}
+con <- ice_con()
+DBI::dbGetQuery(con, "
+    WITH RECURSIVE ancestors(go_id) AS (
+        SELECT go_id FROM bioc.annotation.ncbi__gene_go
+        WHERE gene_id = '7157' AND taxon_id = 9606 AND valid_to IS NULL
+        UNION
+        SELECT r.object_id
+        FROM bioc.ontology.relationship r
+        JOIN ancestors a ON r.subject_id = a.go_id
+        WHERE r.predicate = 'is_a' AND r.ontology = 'go' AND r.valid_to IS NULL
+    )
+    SELECT DISTINCT t.term_id, t.name
+    FROM ancestors a
+    JOIN bioc.ontology.term t ON t.term_id = a.go_id AND t.valid_to IS NULL;
+")
+```
+
+That query is exactly what `GOALL`/`select(..., columns = "GOALL")` can
+never return in one `AnnotationDbi` call -- this package doesn't need to
+invent an API for it, because the recursive CTE is already SQL.
+
+## Connecting
+
+```{r connecting}
+hs_gene()   # opens the shared connection (ice_con()) on first use, anonymous, no token
+```
+
+Every accessor takes an explicit `con` argument if you want an independent
+connection instead of the package's shared one:
+
+```{r explicit-con}
+con <- connect_ice()
+hs_gene(con)
+disconnect_ice(con)
+```
+
+## Local caching (provisional, Milestone 8)
+
+Every accessor above stays live by default. Live-catalog latency is real
+-- a single filtered query over the network can take seconds, dominated
+by S3/catalog metadata overhead rather than result size (`PlanFor3.24.md`
+Milestone 8 measured 0.099s against `org.Hs.eg.db` locally versus 4.15s
+against a live `hs_gene()`/`hs_pubmed()` join). If that's a problem for a
+session, `ice_cache_refresh()` pulls all four tables once into a local
+`BiocFileCache`-managed DuckDB file; pass `cache = TRUE` to any accessor
+to read from it instead:
+
+```{r cache-refresh}
+ice_cache_refresh()                       # one-time, explicit, slow call
+
+hs_gene(cache = TRUE) |>
+    filter(symbol == "ORMDL3") |>
+    left_join(hs_pubmed(cache = TRUE), by = "gene_id") |>
+    collect()
+```
+
+A real end-to-end run measured **0.090s cached versus 15.987s live** for
+this query -- about 178x. The refresh itself is dominated almost
+entirely by the `alias`/`identifier_mapping` table (6.59M rows, ~739s of
+an ~869s total refresh); `gene`, `go`, and `pubmed` together took under
+two minutes. If cross-reference lookups (`hs_alias()`) aren't needed,
+`ice_cache_refresh(skip_alias = TRUE)` skips that table and keeps the
+refresh under two minutes:
+
+```{r cache-skip-alias}
+ice_cache_refresh(skip_alias = TRUE)
+hs_gene(cache = TRUE) |> filter(symbol == "ORMDL3") |> collect()   # fine
+hs_alias(cache = TRUE)   # errors: "No 'alias' table in the local cache ..."
+```
+
+Nothing calls `ice_cache_refresh()` automatically, and nothing expires the
+cache automatically -- call it again when you want a fresher copy, or
+`ice_cache_clear()` to remove it.
+
+This caching layer is provisional: it does **not** yet tag the cache with
+a `bioc-on-ice` `provenance.release` identifier, and makes no
+cross-table-consistency claim beyond what the live catalog itself
+provides. See `PlanFor3.24.md` Milestone 8's open caveat on cross-table
+atomicity -- row-level versioning is applied per table independently, so
+filtering `hs_gene()` and `hs_pubmed()` to "the same" nominal release
+does not, by itself, prove a join between them is point-in-time
+consistent.
+
+## AnnotationDbi concept &rarr; org.Hs.eg.ice equivalent
+
+| AnnotationDbi concept (`org.Hs.eg.db`) | org.Hs.eg.db | org.Hs.eg.ice |
+|---|---|---|
+| **Object model** | `OrgDb` S4 class, Bimap objects under the hood | No class at all -- four plain `dplyr::tbl()` lazy tables |
+| **`keytypes(x)`** | Fixed whitelist (`ENTREZID`, `SYMBOL`, `ALIAS`, `ENSEMBL`, `GO`, `PMID`, ...) | No such function. "Keytype" is whichever column you `filter()` on -- e.g. `hs_alias() |> filter(target_namespace == "ALIAS")` is OrgDb's `ALIAS` keytype |
+| **`columns(x)`** | Fixed list of retrievable columns | No enumeration function -- the columns are whatever's in the four tables' schemas |
+| **`select(x, keys, keytype, columns)`** | One call does filter + column choice + join | Ordinary `dplyr::filter()` + `select()` + `left_join()`/`inner_join()` written by the caller |
+| **`mapIds(x, keys, keytype, column)`** | Single-valued lookup with `multiVals` logic | No equivalent; `filter()`+`select()`+`collect()`, caller handles 1:many |
+| **`ENTREZID`** | Row names / keytype | `hs_gene()$gene_id` |
+| **`SYMBOL`** | keytype/column | `hs_gene()$symbol` |
+| **`GENENAME`** | column | `hs_gene()$description` |
+| **`GENETYPE`** | column | `hs_gene()$gene_type` |
+| **`CHR`** | column | `hs_gene()$chromosome` |
+| **`MAP`** | column | `hs_gene()$map_location` |
+| **`ALIAS`, `ENSEMBL`, `HGNC`, `MIM`, ...** | separate keytypes, each its own internal table | all rows of `hs_alias()`, discriminated by `source_namespace`/`target_namespace` |
+| **`GO`** (direct) | column | `hs_go()`: `go_id`, `evidence`, `qualifier`, `category` |
+| **`GOALL`** (ancestor closure) | precomputed column | hand-written `WITH RECURSIVE` CTE over `ontology.relationship`/`ontology.term` (above) |
+| **`PMID`** | column | `hs_pubmed()$pubmed_id` |
+| **Multi-table joins** | not expressible in one call | ordinary `dplyr` joins across the four lazy tables |
+| **Offline / cold-start speed** | instant, local SQLite, ~0.1s/query | live: ~4-16s/query; cached: ~0.09s/query |
+| **Local caching** | implicit (the package *is* a local cache) | opt-in `ice_cache_refresh()` + `cache = TRUE` (above) |
+| **Versioning / reproducibility** | pinned to installed package version | not yet addressed by the cache; open cross-table-atomicity question (Milestone 8) |
+| **Dependencies** | `AnnotationDbi`, `RSQLite`, Bioconductor infrastructure | `DBI`, `dbplyr`, `dplyr`, `duckdb`, `BiocFileCache` (cache only) -- no `AnnotationDbi` |
+
+## Status
+
+Tests exist: `tests/testthat/test-accessors.R` has live-catalog tests
+(`skip`s cleanly if the catalog is unreachable) and offline
+signature/cache-state checks. Not yet `R CMD check`ed against the live
+catalog, not published. This vignette documents the intended workflow but
+is not yet evaluated during build for the same reason (`execute: eval:
+false` above).

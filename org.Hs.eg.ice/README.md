@@ -167,8 +167,11 @@ telling you to refresh again without `skip_alias`.
 
 ## Status
 
-Skeleton only (`PlanFor3.24.md` Milestone 7's demo package), plus a
-provisional local cache (Milestone 8, above). Not published, not
-`R CMD check`ed against the live catalog yet. `tests/testthat/
+Four accessors (`PlanFor3.24.md` Milestone 7) plus a provisional local
+cache (Milestone 8, above). Real tests exist: `tests/testthat/
 test-accessors.R` has live-catalog tests (`skip`s cleanly if the catalog
-is unreachable) and offline signature/cache-state checks.
+is unreachable) and offline signature/cache-state checks. A Quarto
+vignette (`vignettes/org.Hs.eg.ice.qmd`) documents the workflow but isn't
+evaluated at build time yet (`execute: eval: false`), since the package
+hasn't been `R CMD check`ed against the live catalog in a build/CI
+environment. Not published.

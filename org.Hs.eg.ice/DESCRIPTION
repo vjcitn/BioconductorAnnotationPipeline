@@ -22,6 +22,9 @@ Imports:
     tools
 Suggests:
     testthat (>= 3.0.0),
-    withr
+    withr,
+    quarto,
+    org.Hs.eg.db
+VignetteBuilder: quarto
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.1
