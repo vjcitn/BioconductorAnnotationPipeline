@@ -724,6 +724,35 @@ pipeline's output are not broken while the direct-table path is adopted.
 Retiring the compatibility shim, if ever, is a separate future decision,
 not part of this milestone.
 
+**Demo package: `org.Hs.eg.ice/`** (new top-level directory in this repo,
+sibling to `scripts/`/`providers/`, not a subdirectory of either — not yet
+created). Concrete vehicle for the thinness objective above, human-only
+(`taxon_id = 9606`):
+
+- `DESCRIPTION` imports `duckdb`, `dbplyr`, `DBI`. **No `Depends`/`Imports`
+  on `AnnotationDbi`** — no `OrgDb` S4 class, no Bimap objects, no
+  `select()`/`mapIds()`/`keytypes()` methods defined by this package at
+  all. This is the point: a complete, working alternative to
+  `org.Hs.eg.db`'s query surface with none of its machinery.
+- `R/connect.R`: one connection helper, performing the same
+  `INSTALL iceberg; LOAD iceberg; ATTACH ... TYPE ICEBERG, AUTHORIZATION_TYPE
+  'none'` Milestone 6 already establishes.
+- A handful of thin exported accessors, each returning a `dbplyr` lazy
+  table already filtered to `taxon_id = 9606` — e.g. `hs_gene()`,
+  `hs_alias()`, `hs_go()`, `hs_pubmed()` — over
+  `annotation.ncbi__gene`/`identifier_mapping`/`ncbi__gene_go`/
+  `ncbi__gene_pubmed` respectively. No query logic beyond that filter: the
+  user writes the `filter()`/`join()`/`collect()`.
+- A vignette or `README.md` showing the canonical comparison: the
+  `mapIds(org.Hs.eg.db, ...)` call next to the equivalent
+  `hs_gene() |> filter(...) |> left_join(hs_go(), by = "gene_id") |>
+  collect()` pipeline, including a GO-ancestor-closure join (the recursive
+  CTE over `ontology.relationship` that a keytype-bounded `select()` could
+  not express in one call).
+- Explicitly a demo/reference implementation, not a replacement for
+  `org.Hs.eg.db` in this pipeline's own build — `make package`/`make
+  check` are untouched by this.
+
 Not yet started: no code written; depends on Milestone 6 landing first.
 
 ## Open questions carried forward
