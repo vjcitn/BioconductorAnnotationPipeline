@@ -1,6 +1,6 @@
 Package: org.Hs.eg.ice
 Title: Human Gene Annotation via the biocOnIce Iceberg Catalog
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person("Bioconductor", "Core Team",
     email = "maintainer@bioconductor.org", role = c("aut", "cre"))
 Description: Thin dplyr/DuckDB accessors over the biocOnIce public Iceberg

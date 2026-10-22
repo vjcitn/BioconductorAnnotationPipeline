@@ -7,8 +7,6 @@ vignette: >
   %\VignetteIndexEntry{Querying human gene annotation via biocOnIce}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
-execute:
-  eval: false
 ---
 
 ## Overview
@@ -23,11 +21,12 @@ dependency on `AnnotationDbi`** -- no `OrgDb` class, no Bimap objects, no
 repository for the design rationale, and Milestone 8 for the local-caching
 layer shown below.
 
-Code in this vignette is shown but not evaluated at build time (`eval:
-false` above): it queries a live, anonymous, unauthenticated network
-endpoint, and this package has not yet been `R CMD check`ed against it in
-a build/CI environment. Treat the output shown in comments as
-illustrative, captured from an interactive session.
+All code below runs live against the anonymous, unauthenticated
+`biocOnIce` endpoint at build time, except one chunk flagged `eval:
+false` where it's explicitly noted why (a full cache refresh including
+the ~6.6M-row `alias` table takes ~15 minutes -- too slow for a vignette
+build, though the code itself is exercised elsewhere with
+`skip_alias = TRUE`).
 
 ```{r setup}
 library(org.Hs.eg.ice)
@@ -62,10 +61,14 @@ select(org.Hs.eg.db, keys = "TP53", keytype = "SYMBOL",
 
 The direct way:
 
+`org.Hs.eg.db` loads `AnnotationDbi`, whose `select()` masks
+`dplyr::select()` -- qualify explicitly as `dplyr::select()` from here on
+in a session that has both packages loaded.
+
 ```{r ice-way}
 hs_gene() |>
     filter(symbol == "TP53") |>
-    select(gene_id, symbol, description) |>
+    dplyr::select(gene_id, symbol, description) |>
     collect()
 ```
 
@@ -76,7 +79,7 @@ direct GO annotations:
 hs_gene() |>
     filter(symbol == "TP53") |>
     inner_join(hs_go(), by = c("gene_id", "taxon_id")) |>
-    select(symbol, go_id, go_term, evidence, category) |>
+    dplyr::select(symbol, go_id, go_term, evidence, category) |>
     collect()
 ```
 
@@ -132,29 +135,44 @@ Milestone 8 measured 0.099s against `org.Hs.eg.db` locally versus 4.15s
 against a live `hs_gene()`/`hs_pubmed()` join). If that's a problem for a
 session, `ice_cache_refresh()` pulls all four tables once into a local
 `BiocFileCache`-managed DuckDB file; pass `cache = TRUE` to any accessor
-to read from it instead:
+to read from it instead.
 
-```{r cache-refresh}
-ice_cache_refresh()                       # one-time, explicit, slow call
+The `alias`/`identifier_mapping` table dominates refresh time -- 6.59M
+rows, ~740s on its own -- versus well under two minutes combined for
+`gene`, `go`, and `pubmed`. A full refresh is too slow to run at vignette
+build time, so it's shown but not evaluated here:
 
+```{r cache-refresh-full}
+#| eval: false
+ice_cache_refresh()                       # one-time, explicit, ~15 minutes
+```
+
+`skip_alias = TRUE` omits that table and keeps the refresh well under two
+minutes -- this does run at build time:
+
+```{r cache-skip-alias}
+system.time(ice_cache_refresh(skip_alias = TRUE))
+```
+
+```{r cached-query}
 hs_gene(cache = TRUE) |>
     filter(symbol == "ORMDL3") |>
-    left_join(hs_pubmed(cache = TRUE), by = "gene_id") |>
     collect()
 ```
 
-A real end-to-end run measured **0.090s cached versus 15.987s live** for
-this query -- about 178x. The refresh itself is dominated almost
-entirely by the `alias`/`identifier_mapping` table (6.59M rows, ~739s of
-an ~869s total refresh); `gene`, `go`, and `pubmed` together took under
-two minutes. If cross-reference lookups (`hs_alias()`) aren't needed,
-`ice_cache_refresh(skip_alias = TRUE)` skips that table and keeps the
-refresh under two minutes:
+A real end-to-end run (full refresh, `alias` included) measured **0.090s
+cached versus 15.987s live** for a `hs_gene()`/`hs_pubmed()` join on this
+same gene -- about 178x. `hs_alias(cache = TRUE)` errors cleanly when
+`alias` was skipped:
 
-```{r cache-skip-alias}
-ice_cache_refresh(skip_alias = TRUE)
-hs_gene(cache = TRUE) |> filter(symbol == "ORMDL3") |> collect()   # fine
-hs_alias(cache = TRUE)   # errors: "No 'alias' table in the local cache ..."
+```{r cache-alias-error}
+#| error: true
+hs_alias(cache = TRUE)
+```
+
+```{r cache-cleanup}
+ice_cache_clear()
+ice_cache_exists()
 ```
 
 Nothing calls `ice_cache_refresh()` automatically, and nothing expires the
@@ -200,6 +218,6 @@ consistent.
 Tests exist: `tests/testthat/test-accessors.R` has live-catalog tests
 (`skip`s cleanly if the catalog is unreachable) and offline
 signature/cache-state checks. Not yet `R CMD check`ed against the live
-catalog, not published. This vignette documents the intended workflow but
-is not yet evaluated during build for the same reason (`execute: eval:
-false` above).
+catalog, not published. This vignette's code runs live at build time
+(the only exception is `cache-refresh-full` above, flagged `eval: false`
+because a full refresh takes ~15 minutes).
