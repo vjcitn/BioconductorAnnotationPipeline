@@ -27,6 +27,12 @@ nothing calls it for you.
 Provisional: does not yet tag the cache with a \code{bioc-on-ice}
 \code{provenance.release} identifier (\code{PlanFor3.24.md} Milestone 8).
 
+The new cache is built in a temporary file and only swapped in once every
+table has been pulled and written successfully. If the refresh is
+interrupted or errors partway through, the previous cache (if any) is left
+exactly as it was -- \code{ice_cache_exists()} cannot report a half-written
+cache, and no temporary file is left behind.
+
 \code{alias} (\code{hs_alias()}/\code{identifier_mapping}) is by far the largest of the
 four tables -- on a real refresh it was ~6.6M rows and ~740s, versus well
 under two minutes combined for the other three. Set \code{skip_alias = TRUE} to

@@ -36,6 +36,12 @@
 #' Provisional: does not yet tag the cache with a `bioc-on-ice`
 #' `provenance.release` identifier (`PlanFor3.24.md` Milestone 8).
 #'
+#' The new cache is built in a temporary file and only swapped in once every
+#' table has been pulled and written successfully. If the refresh is
+#' interrupted or errors partway through, the previous cache (if any) is left
+#' exactly as it was -- `ice_cache_exists()` cannot report a half-written
+#' cache, and no temporary file is left behind.
+#'
 #' `alias` (`hs_alias()`/`identifier_mapping`) is by far the largest of the
 #' four tables -- on a real refresh it was ~6.6M rows and ~740s, versus well
 #' under two minutes combined for the other three. Set `skip_alias = TRUE` to
@@ -64,10 +70,21 @@ ice_cache_refresh <- function(con = ice_con(), skip_alias = FALSE) {
     } else {
         BiocFileCache::bfcrpath(bfc, rids = rid)
     }
-    if (file.exists(path)) file.remove(path)
 
-    cache_con <- DBI::dbConnect(duckdb::duckdb(), dbdir = path)
-    on.exit(DBI::dbDisconnect(cache_con, shutdown = TRUE), add = TRUE)
+    # Build the new cache in a temporary file next to the real one (so the
+    # final rename is same-filesystem) and only replace `path` once every
+    # table has been written -- an interrupted/failed refresh then leaves
+    # the previous cache, if any, untouched and no temp file behind.
+    tmp_path <- tempfile(pattern = "ice_cache_", tmpdir = dirname(path),
+                          fileext = ".duckdb")
+    cache_con <- DBI::dbConnect(duckdb::duckdb(), dbdir = tmp_path)
+    finished <- FALSE
+    on.exit({
+        if (DBI::dbIsValid(cache_con)) {
+            DBI::dbDisconnect(cache_con, shutdown = TRUE)
+        }
+        if (!finished && file.exists(tmp_path)) file.remove(tmp_path)
+    }, add = TRUE)
 
     pull <- function(label, accessor) {
         message("org.Hs.eg.ice: pulling ", label, " ...")
@@ -88,6 +105,11 @@ ice_cache_refresh <- function(con = ice_con(), skip_alias = FALSE) {
         message("org.Hs.eg.ice: writing ", nm, " to local cache ...")
         DBI::dbWriteTable(cache_con, nm, tables[[nm]], overwrite = TRUE)
     }
+
+    DBI::dbDisconnect(cache_con, shutdown = TRUE)
+    if (file.exists(path)) file.remove(path)
+    file.rename(tmp_path, path)
+    finished <- TRUE
 
     message("org.Hs.eg.ice: local cache refreshed at ", path)
     invisible(path)

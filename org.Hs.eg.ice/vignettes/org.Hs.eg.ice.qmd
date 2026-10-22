@@ -90,7 +90,14 @@ hs_gene() |>
 
 OrgDb's `GOALL` (the ancestor closure over the GO DAG) needs
 `ontology.relationship`, a table this package does not wrap -- attach it
-directly, as `bioc-on-ice`'s own README shows for cell types:
+directly, as `bioc-on-ice`'s own README shows for cell types.
+
+A CTE (**common table expression**) is a named, temporary result set
+defined with `WITH name AS (...)` immediately before the query that uses
+it. `WITH RECURSIVE` lets the CTE refer to itself, so the query below
+starts from one gene's direct GO terms and repeatedly joins back into
+`ontology.relationship` to pick up each term's `is_a` parents, one level
+of the DAG at a time, until no new ancestors are found:
 
 ```{r goall}
 con <- ice_con()
