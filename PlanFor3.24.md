@@ -755,6 +755,115 @@ created). Concrete vehicle for the thinness objective above, human-only
 
 Not yet started: no code written; depends on Milestone 6 landing first.
 
+### 8. User-driven local caching of iceberg slices via `BiocFileCache` — PROPOSED, not started
+
+Motivated by measured latency on the `org.Hs.eg.ice` demo package
+(Milestone 7): a single-row lookup that's instant against `org.Hs.eg.db`
+takes seconds against the live iceberg tables.
+
+```r
+> system.time(AnnotationDbi::select(org.Hs.eg.db, keys="ORMDL3", keytype="SYMBOL", columns="PMID"))
+   user  system elapsed
+  0.095   0.003   0.099
+> system.time(hs_gene() |> filter(symbol == "ORMDL3") |> left_join(hs_pubmed(), by="gene_id"))
+   user  system elapsed
+  0.104   0.010   4.151
+```
+
+The gap isn't data volume — it's S3/catalog metadata overhead on every
+query against the remote iceberg tables (`bioc-on-ice`), paid per call
+regardless of how small the result is. Milestone 7 explicitly ruled out
+a caching/materialization layer as out of scope for the thin-accessor
+demo; this milestone is where that tradeoff gets made, but kept
+user-driven rather than baked into the package's default behavior —
+the accessors stay thin and live by default (Milestone 7's ethos
+unchanged), and caching is something a user reaches for, not something
+the package decides for them.
+
+**Objective:** add caching as an opt-in function in `org.Hs.eg.ice`
+(sketch: `ice_cache_refresh()`/`ice_cache_use()`), built on
+`BiocFileCache` rather than a bespoke file-management scheme — standard
+Bioconductor idiom for "a local copy of something that lives remotely,"
+with its existing add/update/purge/age-out machinery reused instead of
+reinvented. A user who wants speed calls it and gets a local `BiocFileCache`
+entry; a user who wants always-live data and is fine with the latency
+just... doesn't, and keeps using `hs_gene()`/`hs_alias()`/`hs_go()`/
+`hs_pubmed()` straight against the live iceberg connection as today.
+Neither path is the "right" one — this milestone's job is to make both
+available and let the user decide per-session, not to pick a default
+caching policy on their behalf.
+
+**Reproducibility: ride `bioc-on-ice`'s own row-level versioning, not
+Iceberg snapshots.** Two earlier drafts of this section proposed pinning
+reproducibility to Iceberg's own time-travel (first a per-Bioc-release
+snapshot tag, then a raw snapshot id). Both are wrong moves: checking
+`bioc-on-ice`'s own `SPEC.md` (§A, "Versioning and point-in-time", and
+`AGENTS.md`'s pointer to it as the design source of truth) shows the
+project deliberately does *not* use Iceberg time travel as its
+reproducibility mechanism. Its stated criterion:
+
+> "All snapshots except the current one are expired, and both
+> point-in-time queries still return identical results. This is the
+> criterion that proves history lives in the rows; if it fails, the
+> versioning model is wrong." — `bioc-on-ice/SPEC.md`
+
+History lives in row-level `first_seen`/`retired_in`/`valid_from`/
+`valid_to` columns and a `provenance.release` table keyed by
+`(release, source, artifact)`, precisely *because* Iceberg snapshot/tag
+retention is expected to be pruned by routine lake maintenance
+(compaction, expiry) — pinning reproducibility to snapshot history would
+mean fighting that maintenance indefinitely. `bioc-on-ice` already
+exposes a resolution path for this (`resolve_release` in its MCP
+surface; `provenance.release` queryable directly by `release` + `source`
++ `artifact`), so this milestone should consume that rather than invent
+a parallel iceberg-snapshot-based versioning scheme:
+- Every accessor result (cached or live) should carry the
+  `bioc-on-ice` release identifier actually read — resolved via
+  `provenance.release`/`resolve_release`, not an Iceberg snapshot id —
+  as an attribute on the returned lazy table or tibble, so "what catalog
+  state produced this answer" is always answerable.
+- A `BiocFileCache` entry's staleness check compares against the same
+  release identifier: "does the live catalog's current `release` for
+  this artifact still match the one this cache entry was built from,"
+  using `bioc-on-ice`'s own versioning primitive rather than a
+  snapshot id that the project's own design says may not persist.
+
+**Caveat, not yet resolved: cross-table atomicity.** Row-level
+versioning is applied per table/artifact independently
+(`provenance.release` is keyed by `(release, source, artifact)`), which
+is not the same guarantee a single coordinated Iceberg snapshot would
+give. `hs_gene() |> left_join(hs_pubmed(), ...)` joins two tables whose
+`valid_from`/`valid_to`/`first_seen`/`retired_in` churn on their own
+schedules; `resolve_release` filtering each side to the same nominal
+release does not, by itself, prove the join is point-in-time consistent
+*across* tables the way a single Iceberg snapshot read would. Before
+leaning on this for reproducibility claims, confirm with the
+`bioc-on-ice` maintainers whether `resolve_release` (or some other
+primitive) actually guarantees cross-table point-in-time consistency, or
+whether it only guarantees per-table correctness and callers are
+expected to reason about skew between tables themselves. Worth raising
+upstream directly rather than assuming either answer.
+
+**Scope:**
+- `org.Hs.eg.ice` gains `ice_cache_refresh()` (pulls the four accessor
+  tables via `collect()`, stores the result under `BiocFileCache`,
+  tagged with the `bioc-on-ice` release resolved at refresh time) and
+  `ice_cache_use()`/an argument on the existing accessors to read from
+  the cache instead of live iceberg when one exists.
+- A helper wrapping `resolve_release`/`provenance.release` to discover
+  the current release for each artifact an accessor reads — needed by
+  both the live-query tagging and the cache-staleness check above.
+- Explicitly out of scope: any caching behavior enabled by default,
+  automatic background refresh, generalizing beyond human until this
+  pattern is proven out on `org.Hs.eg.ice`, and resolving the
+  cross-table-atomicity caveat above (that's an upstream question, not
+  something this milestone's own code can settle unilaterally).
+
+Not yet started: no code written; depends on Milestone 7's `org.Hs.eg.ice`
+accessors (already prototyped) as the thing being cached, and on
+raising the cross-table-atomicity question with `bioc-on-ice`
+upstream.
+
 ## Open questions carried forward
 - ~~Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through
   the Bimap-aware path or the generic `.definePossibleTables()` fallback?~~
