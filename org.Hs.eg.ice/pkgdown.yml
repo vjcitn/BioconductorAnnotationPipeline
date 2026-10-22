@@ -1,0 +1,9 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  org.Hs.eg.ice: org.Hs.eg.ice.html
+last_built: 2026-10-22T18:04Z
+urls:
+  reference: https://vjcitn.github.io/BioconductorAnnotationPipeline/org.Hs.eg.ice/reference
+  article: https://vjcitn.github.io/BioconductorAnnotationPipeline/org.Hs.eg.ice/articles
