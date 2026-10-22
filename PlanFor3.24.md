@@ -957,6 +957,74 @@ the identical reproducibility design question.
 approach** -- no point building a second-language analog of a pattern
 that might still change shape in the R prototype.
 
+### 10. `org.eg.ice`: generalize the taxon-9606 discipline to any organism, in place of per-species `OrgDb`/AnnotationHub resources — PROPOSED, not started
+
+Motivation: AnnotationHub currently serves on the order of 2,000 resources
+that are per-species `OrgDb`/`org.*.sqlite` bundles (and the companion
+`orgdb` Python registry, Milestone 9) -- one full SQLite file per organism,
+each its own AnnotationHub record, each downloaded and queried locally
+(see the `AH119541` example: a single-organism SQLite with `genes`,
+`alias`, `go`, `go_all`, `pubmed`, etc., the same shape `org.Hs.eg.db`
+has). `org.Hs.eg.ice` (Milestones 7-8) already proves the alternative for
+one organism: query `bioc-on-ice` directly instead of shipping/downloading
+a per-species bundle. The question this milestone asks is whether that
+alternative generalizes cleanly enough to retire the AH per-species
+resources, or at least stop minting new ones.
+
+**Why this is mostly already done, not a new build.** `R/accessors.R`
+already filters every table on `taxon_id == HS_TAXON` -- `HS_TAXON` is a
+single hardcoded constant (`9606L`), not a structural assumption. The
+`bioc-on-ice` tables themselves are not per-species at all:
+`annotation.ncbi__gene`/`identifier_mapping`/`ncbi__gene_go`/
+`ncbi__gene_pubmed` are landed **whole, for all 51,796 taxa NCBI Gene
+carries** (`bioc-on-ice/README.md`'s "Derived (all 51,796 taxa)" table),
+filtered by `taxon_id` at query time rather than split into one table set
+per organism. Generalizing the live-query side of `org.Hs.eg.ice` is
+therefore replacing one constant with a parameter, not redesigning the
+accessors. `bioc-on-ice` also already carries a `taxonomy.taxon` table
+(`taxon_id`, `parent_taxon_id`, `scientific_name`, `common_name`, `rank`,
+`ncbi_taxonomy_id` -- `bioc-on-ice/SPEC.md` §1 "Taxonomy"), so resolving a
+species name (`"Mus musculus"`) to a `taxon_id` (`10090`) is a join
+against a table that already exists upstream, not a mapping this package
+would need to invent or ship.
+
+**Scope:**
+- Rename/generalize `org.Hs.eg.ice`'s four accessors (or introduce an
+  `org.eg.ice` successor package -- naming TBD) to take a `taxon_id`
+  argument instead of hardcoding `HS_TAXON`, with an optional
+  species-name convenience (`hs_gene(taxon = "Mus musculus")`) resolved
+  via a thin wrapper over `taxonomy.taxon`.
+- Redesign the `BiocFileCache` caching layer (Milestone 8) to key cache
+  entries **per taxon**, not under the single fixed `rname =
+  "org.Hs.eg.ice_cache"` it uses today -- caching mouse must not evict or
+  collide with an already-cached human entry. `ice_cache_refresh()` would
+  take a `taxon_id` argument and derive its `rname`/registration key from
+  it; `ice_cache_exists()`/`ice_cache_con()`/`ice_cache_clear()` likewise
+  become taxon-scoped. The atomic-swap discipline just hardened in
+  Milestone 8 (build in a temp file, swap in only on full success)
+  carries over unchanged per taxon.
+- A coverage audit before any retirement claim: for some representative
+  sample of the ~2,000 AH per-species resources (not just the handful
+  Milestone 5 already validated -- mouse, rat, zebrafish, chimp, bovine),
+  confirm `bioc-on-ice`'s tables actually have non-trivial rows for that
+  `taxon_id` and that the four accessors' output is a reasonable match
+  for what the corresponding `org.*.sqlite`/`OrgDb` would return. Some
+  AH-listed organisms may be thin or absent in `bioc-on-ice` even though
+  the schema supports every taxon in principle -- "the table has a
+  `taxon_id` column for everything" is not the same claim as "every
+  organism's data actually landed with useful row counts."
+- Explicitly out of scope for this milestone: actually deprecating or
+  requesting removal of any AnnotationHub resource (a Bioconductor-core
+  decision, not something this project can decide unilaterally); a
+  taxon-name-resolution UI beyond the thin `taxonomy.taxon` wrapper above;
+  and the same release-tagging/cross-table-atomicity open questions
+  Milestone 8 already carries forward -- generalizing to N taxa does not
+  resolve those, it just means they'd apply N times over instead of once.
+
+**Sketch, not yet implemented.** No code has been written for this
+milestone; it is a design note capturing the rationale and scope before
+work starts, per discussion on 2026-10-22.
+
 ## Open questions carried forward
 - ~~Does `makeAnnDbPkg()`'s generated `OrgDb` object route `GOALL` through
   the Bimap-aware path or the generic `.definePossibleTables()` fallback?~~
