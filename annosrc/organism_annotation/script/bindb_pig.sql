@@ -84,29 +84,29 @@ CREATE INDEX c22 ON gene_synonyms(_id);
 -- and 2) filter out all but the ones that start
 -- with ensemble in here.
 
--- CREATE TEMP TABLE ensembl_orgi (
---  _id INTEGER REFERENCES genes(_id),
---  ensid TEXT
--- );
+CREATE TEMP TABLE ensembl_orgi (
+ _id INTEGER REFERENCES genes(_id),
+ ensid TEXT
+);
 
--- INSERT INTO ensembl_orgi
---  SELECT g._id, i.dbXref
---  FROM genes as g CROSS JOIN genesrc.gene_dbXref as i
---  WHERE i.gene_id=g.gene_id AND i.dbXref != "-"
---  AND i.dbXref LIKE '%Ensembl:%';
+INSERT INTO ensembl_orgi
+ SELECT g._id, i.dbXref
+ FROM genes as g CROSS JOIN genesrc.gene_dbXref as i
+ WHERE i.gene_id=g.gene_id AND i.dbXref != "-"
+ AND i.dbXref LIKE '%Ensembl:%';
 
--- CREATE TABLE ensembl (
---  _id INTEGER REFERENCES genes(_id),
---  ensid TEXT
--- );
+CREATE TABLE ensembl (
+ _id INTEGER REFERENCES genes(_id),
+ ensid TEXT
+);
 
--- INSERT INTO ensembl
---  SELECT DISTINCT _id, ltrim(ltrim(ensid,'Ensembl'),':')
---  FROM ensembl_orgi;
+INSERT INTO ensembl
+ SELECT DISTINCT _id, ltrim(ltrim(ensid,'Ensembl'),':')
+ FROM ensembl_orgi;
 
--- DROP TABLE ensembl_orgi;
--- VACUUM;
--- CREATE INDEX c23 ON ensembl(_id);
+DROP TABLE ensembl_orgi;
+VACUUM;
+CREATE INDEX c23 ON ensembl(_id);
 
 
 
