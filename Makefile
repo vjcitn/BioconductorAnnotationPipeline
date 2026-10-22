@@ -137,7 +137,7 @@ $(DATA_ROOT)/db/PFAM.sqlite:
 UNIPROT_DEP := $(wildcard $(DATA_ROOT)/db/uniprot.sqlite)
 PFAM_DEP    := $(wildcard $(DATA_ROOT)/db/PFAM.sqlite)
 
-$(DATA_ROOT)/db/chipsrc_%.sqlite: $(DATA_ROOT)/db/genesrc.sqlite $(DATA_ROOT)/db/gosrc.sqlite $(DATA_ROOT)/db/gpsrc.sqlite $(UNIPROT_DEP) $(PFAM_DEP)
+$(DATA_ROOT)/db/chipsrc_%.sqlite: $(DATA_ROOT)/db/genesrc.sqlite $(DATA_ROOT)/db/gosrc.sqlite $(DATA_ROOT)/db/gpsrc.sqlite $(UNIPROT_DEP) $(PFAM_DEP) annosrc/organism_annotation/script/bindb_%.sql
 	@mkdir -p $(DATA_ROOT)/db
 	bash scripts/assemble_species.sh $*
 
