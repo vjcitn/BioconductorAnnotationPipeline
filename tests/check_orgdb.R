@@ -215,6 +215,18 @@ genes_pragma_early <- dbGetQuery(org_conn, "PRAGMA table_info(genes)")
 gene_id_col        <- genes_pragma_early$name[genes_pragma_early$name != "_id"][1L]
 cat("  package gene ID column:", gene_id_col, "\n")
 
+## GO table column names differ by build path: species built via
+## build_via_db0() keep the legacy lowercase go_id/evidence columns, while
+## species built via build_via_make_org_package() get makeOrgPackage()'s
+## native goTable columns (GO/EVIDENCE, uppercase). Detect which this
+## package actually has rather than assuming either.
+go_bp_pragma <- tryCatch(dbGetQuery(org_conn, "PRAGMA table_info(go_bp)"),
+                          error = function(e) data.frame(name = character(0)))
+go_cols      <- go_bp_pragma$name[go_bp_pragma$name != "_id"]
+go_col       <- if ("GO" %in% go_cols) "GO" else if ("go_id" %in% go_cols) "go_id" else go_cols[1L]
+evidence_col <- if ("EVIDENCE" %in% go_cols) "EVIDENCE" else if ("evidence" %in% go_cols) "evidence" else go_cols[2L]
+cat("  package GO columns:", go_col, evidence_col, "\n")
+
 cat("  querying package gene count ...\n")
 n_pkg_genes <- tryCatch(
     dbGetQuery(org_conn, "SELECT count(*) FROM genes")[[1L]],
@@ -228,28 +240,29 @@ n_chip_go <- dbGetQuery(chip,
        UNION ALL SELECT _id,go_id,evidence FROM go_mf
        UNION ALL SELECT _id,go_id,evidence FROM go_cc)")[[1L]]
 
-## The package's GO tables come from makeOrgPackage()'s native goTable
-## mechanism (see NonDb0ModelOrganisms.md), which hardcodes the column
-## names GID/GO/EVIDENCE -- not chipsrc's go_id/evidence. Query the two
-## sides with their own actual column names.
+## The package's GO tables' column names depend on build path (see go_col/
+## evidence_col detection above) -- not necessarily chipsrc's go_id/evidence.
+## Query the two sides with their own actual column names.
 cat("  querying package GO row count ...\n")
 n_pkg_go <- if (!is.null(org_conn)) {
-    tryCatch(dbGetQuery(org_conn,
+    tryCatch(dbGetQuery(org_conn, sprintf(
         "SELECT count(*) FROM (
-           SELECT _id,GO,EVIDENCE FROM go_bp
-           UNION ALL SELECT _id,GO,EVIDENCE FROM go_mf
-           UNION ALL SELECT _id,GO,EVIDENCE FROM go_cc)")[[1L]],
+           SELECT _id,\"%s\",\"%s\" FROM go_bp
+           UNION ALL SELECT _id,\"%s\",\"%s\" FROM go_mf
+           UNION ALL SELECT _id,\"%s\",\"%s\" FROM go_cc)",
+        go_col, evidence_col, go_col, evidence_col, go_col, evidence_col))[[1L]],
         error = function(e) -1L)
 } else { -1L }
 check_near("GO direct annotation rows match chipsrc", n_pkg_go, n_chip_go, tol = 0)
 
 cat("  querying GOALL row count ...\n")
 n_pkg_goall <- if (!is.null(org_conn)) {
-    tryCatch(dbGetQuery(org_conn,
+    tryCatch(dbGetQuery(org_conn, sprintf(
         "SELECT count(*) FROM (
-           SELECT _id,GO,EVIDENCE FROM go_bp_all
-           UNION ALL SELECT _id,GO,EVIDENCE FROM go_mf_all
-           UNION ALL SELECT _id,GO,EVIDENCE FROM go_cc_all)")[[1L]],
+           SELECT _id,\"%s\",\"%s\" FROM go_bp_all
+           UNION ALL SELECT _id,\"%s\",\"%s\" FROM go_mf_all
+           UNION ALL SELECT _id,\"%s\",\"%s\" FROM go_cc_all)",
+        go_col, evidence_col, go_col, evidence_col, go_col, evidence_col))[[1L]],
         error = function(e) 0L)
 } else { 0L }
 ## When chipsrc has 0 GO rows the species simply has no GO annotations in
@@ -423,22 +436,24 @@ if (file.exists(known_file)) {
             }
 
             ## GO term present (check direct annotations only). The
-            ## package's go_bp/go_mf/go_cc tables come from makeOrgPackage()'s
-            ## goTable mechanism, whose column is "GO", not chipsrc's "go_id".
+            ## package's go_bp/go_mf/go_cc column names depend on build path
+            ## (see go_col detection above) -- not necessarily chipsrc's "go_id".
             if (nzchar(row$go_id %||% "")) {
                 id_sub <- sprintf(
                     "(SELECT _id FROM genes WHERE \"%s\" = '%s')",
                     gene_id_col, gid)
                 go_res <- tryCatch(dbGetQuery(org_conn, sprintf(
-                    "SELECT GO FROM go_bp
-                       WHERE _id = %s AND GO = '%s'
+                    "SELECT \"%s\" FROM go_bp
+                       WHERE _id = %s AND \"%s\" = '%s'
                      UNION
-                     SELECT GO FROM go_mf
-                       WHERE _id = %s AND GO = '%s'
+                     SELECT \"%s\" FROM go_mf
+                       WHERE _id = %s AND \"%s\" = '%s'
                      UNION
-                     SELECT GO FROM go_cc
-                       WHERE _id = %s AND GO = '%s'",
-                    id_sub, row$go_id, id_sub, row$go_id, id_sub, row$go_id))[[1L]],
+                     SELECT \"%s\" FROM go_cc
+                       WHERE _id = %s AND \"%s\" = '%s'",
+                    go_col, id_sub, go_col, row$go_id,
+                    go_col, id_sub, go_col, row$go_id,
+                    go_col, id_sub, go_col, row$go_id))[[1L]],
                     error = function(e) character(0))
                 check(sprintf("gene %s has GO term %s", gid, row$go_id),
                       row$go_id %in% go_res)
