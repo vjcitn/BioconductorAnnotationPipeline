@@ -228,13 +228,17 @@ n_chip_go <- dbGetQuery(chip,
        UNION ALL SELECT _id,go_id,evidence FROM go_mf
        UNION ALL SELECT _id,go_id,evidence FROM go_cc)")[[1L]]
 
+## The package's GO tables come from makeOrgPackage()'s native goTable
+## mechanism (see NonDb0ModelOrganisms.md), which hardcodes the column
+## names GID/GO/EVIDENCE -- not chipsrc's go_id/evidence. Query the two
+## sides with their own actual column names.
 cat("  querying package GO row count ...\n")
 n_pkg_go <- if (!is.null(org_conn)) {
     tryCatch(dbGetQuery(org_conn,
         "SELECT count(*) FROM (
-           SELECT _id,go_id,evidence FROM go_bp
-           UNION ALL SELECT _id,go_id,evidence FROM go_mf
-           UNION ALL SELECT _id,go_id,evidence FROM go_cc)")[[1L]],
+           SELECT _id,GO,EVIDENCE FROM go_bp
+           UNION ALL SELECT _id,GO,EVIDENCE FROM go_mf
+           UNION ALL SELECT _id,GO,EVIDENCE FROM go_cc)")[[1L]],
         error = function(e) -1L)
 } else { -1L }
 check_near("GO direct annotation rows match chipsrc", n_pkg_go, n_chip_go, tol = 0)
@@ -243,9 +247,9 @@ cat("  querying GOALL row count ...\n")
 n_pkg_goall <- if (!is.null(org_conn)) {
     tryCatch(dbGetQuery(org_conn,
         "SELECT count(*) FROM (
-           SELECT _id,go_id,evidence FROM go_bp_all
-           UNION ALL SELECT _id,go_id,evidence FROM go_mf_all
-           UNION ALL SELECT _id,go_id,evidence FROM go_cc_all)")[[1L]],
+           SELECT _id,GO,EVIDENCE FROM go_bp_all
+           UNION ALL SELECT _id,GO,EVIDENCE FROM go_mf_all
+           UNION ALL SELECT _id,GO,EVIDENCE FROM go_cc_all)")[[1L]],
         error = function(e) 0L)
 } else { 0L }
 ## When chipsrc has 0 GO rows the species simply has no GO annotations in
@@ -418,20 +422,22 @@ if (file.exists(known_file)) {
                       row$uniprot %in% uni)
             }
 
-            ## GO term present (check direct annotations only)
+            ## GO term present (check direct annotations only). The
+            ## package's go_bp/go_mf/go_cc tables come from makeOrgPackage()'s
+            ## goTable mechanism, whose column is "GO", not chipsrc's "go_id".
             if (nzchar(row$go_id %||% "")) {
                 id_sub <- sprintf(
                     "(SELECT _id FROM genes WHERE \"%s\" = '%s')",
                     gene_id_col, gid)
                 go_res <- tryCatch(dbGetQuery(org_conn, sprintf(
-                    "SELECT go_id FROM go_bp
-                       WHERE _id = %s AND go_id = '%s'
+                    "SELECT GO FROM go_bp
+                       WHERE _id = %s AND GO = '%s'
                      UNION
-                     SELECT go_id FROM go_mf
-                       WHERE _id = %s AND go_id = '%s'
+                     SELECT GO FROM go_mf
+                       WHERE _id = %s AND GO = '%s'
                      UNION
-                     SELECT go_id FROM go_cc
-                       WHERE _id = %s AND go_id = '%s'",
+                     SELECT GO FROM go_cc
+                       WHERE _id = %s AND GO = '%s'",
                     id_sub, row$go_id, id_sub, row$go_id, id_sub, row$go_id))[[1L]],
                     error = function(e) character(0))
                 check(sprintf("gene %s has GO term %s", gid, row$go_id),
