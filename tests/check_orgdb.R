@@ -175,7 +175,25 @@ if (has_map && "MAP" %in% pkg_cols) {
 
 ## Metadata
 check("ORGANISM metadata is not empty",    nzchar(meta_val("ORGANISM") %||% ""))
-check("DBSCHEMA is not NOSCHEMA_DB",       meta_val("DBSCHEMA") != "NOSCHEMA_DB")
+
+## DBSCHEMA expectation differs by which pipeline built the package (see
+## NonDb0ModelOrganisms.md): db0 species (make_db0.sh + makeAnnDbPkg()) get
+## the legacy per-species schema label (e.g. "HUMAN_DB"), matching a sqlite
+## rewritten to that schema's exact table/column contract. Non-db0 species
+## (makeOrgPackage()) are deliberately left at makeOrgPackage()'s own
+## default, "NOSCHEMA_DB" -- its introspective keys()/select() dispatch is
+## what makes the actual tables/columns makeOrgPackage() created queryable.
+## Forcing the legacy label onto a makeOrgPackage()-built sqlite broke
+## keys()/select() for most keytypes without changing the underlying data.
+db0_species <- c("human", "mouse", "rat", "zebrafish", "chimp", "bovine",
+                 "chicken", "canine")
+if (sp %in% db0_species) {
+    check("DBSCHEMA is not NOSCHEMA_DB",   meta_val("DBSCHEMA") != "NOSCHEMA_DB")
+} else {
+    check("DBSCHEMA is NOSCHEMA_DB (intentional for the makeOrgPackage() path)",
+          meta_val("DBSCHEMA") == "NOSCHEMA_DB")
+}
+
 check("CENTRALID is EG (not GID)",         meta_val("CENTRALID") == "EG")
 check("EGSOURCEDATE is present",           nzchar(meta_val("EGSOURCEDATE") %||% ""))
 
