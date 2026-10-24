@@ -11,6 +11,19 @@ BIOC_PKG_VERSION := 3.24.0
 # Default keeps everything under a single gitignored `data/` directory
 # in the repo so a no-argument `make download` still works out of the box.
 DATA_ROOT ?= $(CURDIR)/data
+# `?=` only applies the default above when DATA_ROOT is unset in the
+# environment -- a shell that exports DATA_ROOT=./data (relative) silently
+# skips that default and propagates the relative path to every recipe and
+# script below, which breaks the moment any of them `cd`s elsewhere first.
+# Canonicalize unconditionally so every consumer gets an absolute path
+# regardless of how DATA_ROOT arrived (env, `make DATA_ROOT=...`, or default).
+DATA_ROOT := $(abspath $(DATA_ROOT))
+ifeq ($(strip $(DATA_ROOT)),)
+  $(error DATA_ROOT resolved to an empty path -- check your DATA_ROOT setting)
+endif
+ifeq ($(DATA_ROOT),/)
+  $(error DATA_ROOT resolved to '/' -- refusing to use the filesystem root; check your DATA_ROOT setting)
+endif
 export DATA_ROOT
 
 # Set SPECIES=<name> to operate on one organism; default runs all 19.
