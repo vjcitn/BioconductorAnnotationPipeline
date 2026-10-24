@@ -502,13 +502,29 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     Sys.chmod(sqlite_path, mode = "0644")
     conn <- dbConnect(SQLite(), sqlite_path)
 
-    ## makeOrgPackage stores the frame's first column name (GID) literally
-    ## in the genes table. AnnotationDbi's HUMAN_DB and related schemas
-    ## expect the column to be named gene_id for select()/keys() to work.
-    ## Rename immediately before any other operations touch the table.
+    ## makeOrgPackage() stores the frame's first column name (GID) literally
+    ## in the genes table. NOSCHEMA_DB's introspective dispatch
+    ## (.deriveTableNameFromField()) finds a keytype's table by scanning for
+    ## a column named exactly like the keytype -- and the *default* keytype
+    ## (used by keys()/columns() when no keytype is given) comes from
+    ## CENTRALID via AnnotationDbi:::chooseCentralOrgPkgSymbol(): EG ->
+    ## ENTREZID, TAIR -> TAIR, ORF -> ORF, GID -> GID. Rename genes.GID to
+    ## whatever CENTRALID (set below) resolves to, so that column is
+    ## actually findable -- otherwise columns()/keys()/select() silently
+    ## can't see the central ID at all (see NonDb0ModelOrganisms.md).
+    ## Species whose CENTRALID code isn't one of those four
+    ## (e.g. SGD for yeast) aren't handled by chooseCentralOrgPkgSymbol() at
+    ## all yet; leave GID untouched for those until that's addressed.
+    centralid <- toupper(strsplit(row$pkg_prefix, "\\.")[[1L]][3L])
+    central_keytype <- switch(centralid,
+        "EG"   = "ENTREZID",
+        "TAIR" = "TAIR",
+        "ORF"  = "ORF",
+        NULL)
     gp <- dbGetQuery(conn, "PRAGMA table_info(genes)")
-    if ("GID" %in% gp$name) {
-        dbExecute(conn, "ALTER TABLE genes RENAME COLUMN GID TO gene_id")
+    if (!is.null(central_keytype) && "GID" %in% gp$name) {
+        dbExecute(conn, paste0(
+            "ALTER TABLE genes RENAME COLUMN GID TO ", central_keytype))
     }
 
     ## ── Fix metadata ──────────────────────────────────────────────────────
@@ -532,7 +548,8 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     ##    tables) queryable. Overwriting it with the legacy per-species
     ##    schema label (row$pkg_template, e.g. "WORM_DB") broke keys()/
     ##    select() for most keytypes -- see NonDb0ModelOrganisms.md.
-    centralid   <- toupper(strsplit(row$pkg_prefix, "\\.")[[1L]][3L]) # "EG"
+    ## centralid was already computed above (used there to pick the genes
+    ## table's central-ID column name); reused here for the CENTRALID row.
     species_tag <- paste0(toupper(substr(row$name, 1L, 1L)),
                           substr(row$name, 2L, nchar(row$name)))      # "Human"
     for (md in list(
