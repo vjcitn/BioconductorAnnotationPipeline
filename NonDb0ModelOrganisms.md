@@ -1,6 +1,13 @@
 # Finding: non-db0 species fail modern `keys()`/`select()` API despite correct data
 
-## Status: diagnosed, not yet fixed — discuss before changing `scripts/make_orgdb.R`
+## Status: fixed and verified across all non-db0 species (branch `fix/legacy-orgdb-schema-dispatch`)
+
+Both fixes proposed below were implemented in `scripts/make_orgdb.R` and
+verified via `make check` on `anno324` for every non-db0 species: worm,
+pig, xenopus, fly, anopheles, rhesus, ecoliK12, ecoliSakai (yeast and
+arabidopsis use other dedicated schema paths and were not part of this
+pass). See "Resolution" below for what changed and what else turned up
+along the way.
 
 ## Summary
 
@@ -183,7 +190,7 @@ handled post-hoc via SQL ATTACH ... do not pass here"), apparently written
 to match the legacy `WORM_DB`-style split-table shape rather than
 `makeOrgPackage()`'s own native mechanism.
 
-## Two fixes, now better scoped — **not yet implemented, pending discussion**
+## Two fixes, now better scoped — **implemented** (see Resolution below)
 
 1. **Revert the `DBSCHEMA` override** — stop forcing it to
    `row$pkg_template` for non-db0 species; let `makeOrgPackage()`'s own
@@ -221,3 +228,76 @@ All species in `config/species.tsv` not in `DB0_SUPPORTED_SPECIES`: worm
 and both ecoli strains. Worm is the only one empirically checked so far;
 the mechanism (unconditional `DBSCHEMA` override in
 `build_via_make_org_package()`) applies identically to all of them.
+
+## Resolution
+
+Both fixes were implemented in `scripts/make_orgdb.R`:
+
+1. **`DBSCHEMA` override removed.** `build_via_make_org_package()` no
+   longer forces `row$pkg_template`; `makeOrgPackage()`'s own
+   `NOSCHEMA_DB` default stands, restoring introspective `keys()`/
+   `select()` dispatch for every keytype whose backing table/column name
+   matches it exactly.
+2. **GO routed through `makeOrgPackage()`'s native `goTable` argument**
+   instead of post-hoc `go_bp`/`go_mf`/`go_cc` SQL injection. This also
+   gave GOALL/EVIDENCEALL/ONTOLOGYALL ancestor propagation (via
+   `GO.db`) for free, which the old injection never provided.
+
+A separate, related bug was found and fixed in the same pass: the
+`genes` table's central-ID column was being renamed unconditionally to
+`gene_id`, which doesn't match any of the central-keytype names
+`AnnotationDbi:::chooseCentralOrgPkgSymbol()` actually resolves to
+(`ENTREZID` for `CENTRALID="EG"`, etc.) — breaking the *default*
+`keys()`/`columns()` keytype even after fix (1) and (2) above. Fixed by
+renaming to whatever `chooseCentralOrgPkgSymbol()` would resolve to,
+instead of a hardcoded name.
+
+### Verification and what else turned up
+
+`make check` (`tests/check_orgdb.R`) was run against a clean rebuild of
+every non-db0 species, each time pulling in whatever fix was shipped
+most recently:
+
+- **worm**: initial run after fix (1)+(2) still showed 3 failures
+  (`columns() contains ENTREZID` and two GO-related checks) — this is
+  what led to the central-ID rename fix above, and to discovering that
+  `tests/check_orgdb.R` itself was querying the package's GO tables
+  using chipsrc's column-naming convention (`go_id`/`evidence`) instead
+  of `makeOrgPackage()`'s native `goTable` columns (`GID`/`GO`/
+  `EVIDENCE`). Fixed in the test script; worm then passed cleanly.
+- **chicken, canine**: these are actually `DB0_SUPPORTED_SPECIES` (built
+  via `build_via_db0()`, not the legacy path this doc is about), and
+  surfaced a *different* schema convention — the classic lowercase
+  `go_id`/`evidence` columns, the opposite of worm's uppercase
+  `GO`/`EVIDENCE`. `tests/check_orgdb.R` was generalized to introspect
+  the package's actual GO column names (`PRAGMA table_info(go_bp)`)
+  rather than assume either convention, the same pattern already used
+  for the gene-ID column.
+- **pig, xenopus**: building their `chipsrc_*.sqlite` from scratch (the
+  first time for these two) hit an unrelated latent bug: a relative
+  `DATA_ROOT` (set in the build shell's environment, bypassing the
+  Makefile's `?=` default) broke `scripts/assemble_species.sh`'s
+  `cd "$DBDIR"` step, since later references to `$OUT_TMP` were computed
+  from the same relative path and no longer resolved after the `cd`.
+  Fixed by canonicalizing `DBDIR` to an absolute path in that script, and
+  separately by making the top-level `Makefile` canonicalize `DATA_ROOT`
+  unconditionally (via `$(abspath ...)`) and abort loudly if it resolves
+  to empty or `/`, so a relative/bad `DATA_ROOT` can't silently propagate
+  again in the future.
+- **anopheles, fly, rhesus, ecoliK12**: passed cleanly once the above
+  fixes were in place — no new issues.
+- **ecoliSakai**: has zero rows in NCBI's `gene2go`, so
+  `build_via_make_org_package()` correctly never builds any GO-related
+  tables or passes a `goTable` at all. `tests/check_orgdb.R` was
+  unconditionally requiring the GO-family columns
+  (`GO`/`GOALL`/`EVIDENCE`/`EVIDENCEALL`/`ONTOLOGY`/`ONTOLOGYALL`) and
+  comparing the resulting error sentinel against chipsrc's real count of
+  0 — both read as failures. Fixed by gating those checks on chipsrc
+  actually having GO rows, the same pattern already used for
+  ALIAS/GENETYPE/MAP.
+
+Net effect: `scripts/make_orgdb.R`'s fix for this doc's finding is
+correct and sufficient on its own, but required `tests/check_orgdb.R` to
+stop assuming a single GO-schema convention and a single DATA_ROOT
+convention before it could actually be verified end-to-end across every
+affected species.
