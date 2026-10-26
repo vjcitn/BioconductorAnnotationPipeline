@@ -119,13 +119,32 @@ meta_val <- function(key) {
 ## so these columns are absent from columns() for those species even when the
 ## underlying data is present — a known AnnotationDbi schema limitation.
 required_cols <- c("ENTREZID","SYMBOL","GENENAME","REFSEQ",
-                   "GO","GOALL","EVIDENCE","EVIDENCEALL",
-                   "ONTOLOGY","ONTOLOGYALL",
                    "PMID","ACCNUM")
+go_cols_expected <- c("GO","GOALL","EVIDENCE","EVIDENCEALL",
+                      "ONTOLOGY","ONTOLOGYALL")
 pkg_cols <- tryCatch(columns(org), error = function(e) character(0))
 
 for (col in required_cols) {
     check(paste0("columns() contains ", col), col %in% pkg_cols)
+}
+
+## GO-related columns only exist when chipsrc actually had GO annotations to
+## build them from (e.g. ecoliSakai has none in NCBI gene2go, so
+## build_via_make_org_package() never passes a goTable and no go_* tables or
+## columns get created at all -- that's correct, not a bug).
+has_go_src <- tryCatch({
+    n <- dbGetQuery(chip, "SELECT count(*) FROM (
+        SELECT _id FROM go_bp UNION ALL
+        SELECT _id FROM go_mf UNION ALL
+        SELECT _id FROM go_cc)")[[1L]]
+    n > 0L
+}, error = function(e) FALSE)
+if (has_go_src) {
+    for (col in go_cols_expected) {
+        check(paste0("columns() contains ", col), col %in% pkg_cols)
+    }
+} else {
+    cat("  NOTE  GO columns skipped — no GO annotations in chipsrc for", sp, "\n")
 }
 
 ## ALIAS: present for most species but absent from some AnnotationDbi schemas
@@ -175,7 +194,25 @@ if (has_map && "MAP" %in% pkg_cols) {
 
 ## Metadata
 check("ORGANISM metadata is not empty",    nzchar(meta_val("ORGANISM") %||% ""))
-check("DBSCHEMA is not NOSCHEMA_DB",       meta_val("DBSCHEMA") != "NOSCHEMA_DB")
+
+## DBSCHEMA expectation differs by which pipeline built the package (see
+## NonDb0ModelOrganisms.md): db0 species (make_db0.sh + makeAnnDbPkg()) get
+## the legacy per-species schema label (e.g. "HUMAN_DB"), matching a sqlite
+## rewritten to that schema's exact table/column contract. Non-db0 species
+## (makeOrgPackage()) are deliberately left at makeOrgPackage()'s own
+## default, "NOSCHEMA_DB" -- its introspective keys()/select() dispatch is
+## what makes the actual tables/columns makeOrgPackage() created queryable.
+## Forcing the legacy label onto a makeOrgPackage()-built sqlite broke
+## keys()/select() for most keytypes without changing the underlying data.
+db0_species <- c("human", "mouse", "rat", "zebrafish", "chimp", "bovine",
+                 "chicken", "canine")
+if (sp %in% db0_species) {
+    check("DBSCHEMA is not NOSCHEMA_DB",   meta_val("DBSCHEMA") != "NOSCHEMA_DB")
+} else {
+    check("DBSCHEMA is NOSCHEMA_DB (intentional for the makeOrgPackage() path)",
+          meta_val("DBSCHEMA") == "NOSCHEMA_DB")
+}
+
 check("CENTRALID is EG (not GID)",         meta_val("CENTRALID") == "EG")
 check("EGSOURCEDATE is present",           nzchar(meta_val("EGSOURCEDATE") %||% ""))
 
@@ -197,6 +234,18 @@ genes_pragma_early <- dbGetQuery(org_conn, "PRAGMA table_info(genes)")
 gene_id_col        <- genes_pragma_early$name[genes_pragma_early$name != "_id"][1L]
 cat("  package gene ID column:", gene_id_col, "\n")
 
+## GO table column names differ by build path: species built via
+## build_via_db0() keep the legacy lowercase go_id/evidence columns, while
+## species built via build_via_make_org_package() get makeOrgPackage()'s
+## native goTable columns (GO/EVIDENCE, uppercase). Detect which this
+## package actually has rather than assuming either.
+go_bp_pragma <- tryCatch(dbGetQuery(org_conn, "PRAGMA table_info(go_bp)"),
+                          error = function(e) data.frame(name = character(0)))
+go_cols      <- go_bp_pragma$name[go_bp_pragma$name != "_id"]
+go_col       <- if ("GO" %in% go_cols) "GO" else if ("go_id" %in% go_cols) "go_id" else go_cols[1L]
+evidence_col <- if ("EVIDENCE" %in% go_cols) "EVIDENCE" else if ("evidence" %in% go_cols) "evidence" else go_cols[2L]
+cat("  package GO columns:", go_col, evidence_col, "\n")
+
 cat("  querying package gene count ...\n")
 n_pkg_genes <- tryCatch(
     dbGetQuery(org_conn, "SELECT count(*) FROM genes")[[1L]],
@@ -210,24 +259,39 @@ n_chip_go <- dbGetQuery(chip,
        UNION ALL SELECT _id,go_id,evidence FROM go_mf
        UNION ALL SELECT _id,go_id,evidence FROM go_cc)")[[1L]]
 
+## The package's GO tables' column names depend on build path (see go_col/
+## evidence_col detection above) -- not necessarily chipsrc's go_id/evidence.
+## Query the two sides with their own actual column names.
 cat("  querying package GO row count ...\n")
 n_pkg_go <- if (!is.null(org_conn)) {
-    tryCatch(dbGetQuery(org_conn,
+    tryCatch(dbGetQuery(org_conn, sprintf(
         "SELECT count(*) FROM (
-           SELECT _id,go_id,evidence FROM go_bp
-           UNION ALL SELECT _id,go_id,evidence FROM go_mf
-           UNION ALL SELECT _id,go_id,evidence FROM go_cc)")[[1L]],
+           SELECT _id,\"%s\",\"%s\" FROM go_bp
+           UNION ALL SELECT _id,\"%s\",\"%s\" FROM go_mf
+           UNION ALL SELECT _id,\"%s\",\"%s\" FROM go_cc)",
+        go_col, evidence_col, go_col, evidence_col, go_col, evidence_col))[[1L]],
         error = function(e) -1L)
 } else { -1L }
-check_near("GO direct annotation rows match chipsrc", n_pkg_go, n_chip_go, tol = 0)
+## When chipsrc has 0 GO rows the species has no GO annotations in NCBI
+## gene2go at all (e.g. ecoliSakai) -- build_via_make_org_package() never
+## passes a goTable in that case, so the package has no go_bp/go_mf/go_cc
+## tables to query; n_pkg_go would be a -1 error sentinel, not a real
+## mismatch. Skip rather than compare against that sentinel.
+if (n_chip_go == 0L) {
+    cat("  NOTE  GO annotations absent in chipsrc for", sp,
+        "— direct GO row-count check skipped\n")
+} else {
+    check_near("GO direct annotation rows match chipsrc", n_pkg_go, n_chip_go, tol = 0)
+}
 
 cat("  querying GOALL row count ...\n")
 n_pkg_goall <- if (!is.null(org_conn)) {
-    tryCatch(dbGetQuery(org_conn,
+    tryCatch(dbGetQuery(org_conn, sprintf(
         "SELECT count(*) FROM (
-           SELECT _id,go_id,evidence FROM go_bp_all
-           UNION ALL SELECT _id,go_id,evidence FROM go_mf_all
-           UNION ALL SELECT _id,go_id,evidence FROM go_cc_all)")[[1L]],
+           SELECT _id,\"%s\",\"%s\" FROM go_bp_all
+           UNION ALL SELECT _id,\"%s\",\"%s\" FROM go_mf_all
+           UNION ALL SELECT _id,\"%s\",\"%s\" FROM go_cc_all)",
+        go_col, evidence_col, go_col, evidence_col, go_col, evidence_col))[[1L]],
         error = function(e) 0L)
 } else { 0L }
 ## When chipsrc has 0 GO rows the species simply has no GO annotations in
@@ -400,21 +464,25 @@ if (file.exists(known_file)) {
                       row$uniprot %in% uni)
             }
 
-            ## GO term present (check direct annotations only)
+            ## GO term present (check direct annotations only). The
+            ## package's go_bp/go_mf/go_cc column names depend on build path
+            ## (see go_col detection above) -- not necessarily chipsrc's "go_id".
             if (nzchar(row$go_id %||% "")) {
                 id_sub <- sprintf(
                     "(SELECT _id FROM genes WHERE \"%s\" = '%s')",
                     gene_id_col, gid)
                 go_res <- tryCatch(dbGetQuery(org_conn, sprintf(
-                    "SELECT go_id FROM go_bp
-                       WHERE _id = %s AND go_id = '%s'
+                    "SELECT \"%s\" FROM go_bp
+                       WHERE _id = %s AND \"%s\" = '%s'
                      UNION
-                     SELECT go_id FROM go_mf
-                       WHERE _id = %s AND go_id = '%s'
+                     SELECT \"%s\" FROM go_mf
+                       WHERE _id = %s AND \"%s\" = '%s'
                      UNION
-                     SELECT go_id FROM go_cc
-                       WHERE _id = %s AND go_id = '%s'",
-                    id_sub, row$go_id, id_sub, row$go_id, id_sub, row$go_id))[[1L]],
+                     SELECT \"%s\" FROM go_cc
+                       WHERE _id = %s AND \"%s\" = '%s'",
+                    go_col, id_sub, go_col, row$go_id,
+                    go_col, id_sub, go_col, row$go_id,
+                    go_col, id_sub, go_col, row$go_id))[[1L]],
                     error = function(e) character(0))
                 check(sprintf("gene %s has GO term %s", gid, row$go_id),
                       row$go_id %in% go_res)
