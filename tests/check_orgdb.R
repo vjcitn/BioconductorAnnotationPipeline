@@ -119,13 +119,32 @@ meta_val <- function(key) {
 ## so these columns are absent from columns() for those species even when the
 ## underlying data is present — a known AnnotationDbi schema limitation.
 required_cols <- c("ENTREZID","SYMBOL","GENENAME","REFSEQ",
-                   "GO","GOALL","EVIDENCE","EVIDENCEALL",
-                   "ONTOLOGY","ONTOLOGYALL",
                    "PMID","ACCNUM")
+go_cols_expected <- c("GO","GOALL","EVIDENCE","EVIDENCEALL",
+                      "ONTOLOGY","ONTOLOGYALL")
 pkg_cols <- tryCatch(columns(org), error = function(e) character(0))
 
 for (col in required_cols) {
     check(paste0("columns() contains ", col), col %in% pkg_cols)
+}
+
+## GO-related columns only exist when chipsrc actually had GO annotations to
+## build them from (e.g. ecoliSakai has none in NCBI gene2go, so
+## build_via_make_org_package() never passes a goTable and no go_* tables or
+## columns get created at all -- that's correct, not a bug).
+has_go_src <- tryCatch({
+    n <- dbGetQuery(chip, "SELECT count(*) FROM (
+        SELECT _id FROM go_bp UNION ALL
+        SELECT _id FROM go_mf UNION ALL
+        SELECT _id FROM go_cc)")[[1L]]
+    n > 0L
+}, error = function(e) FALSE)
+if (has_go_src) {
+    for (col in go_cols_expected) {
+        check(paste0("columns() contains ", col), col %in% pkg_cols)
+    }
+} else {
+    cat("  NOTE  GO columns skipped — no GO annotations in chipsrc for", sp, "\n")
 }
 
 ## ALIAS: present for most species but absent from some AnnotationDbi schemas
@@ -253,7 +272,17 @@ n_pkg_go <- if (!is.null(org_conn)) {
         go_col, evidence_col, go_col, evidence_col, go_col, evidence_col))[[1L]],
         error = function(e) -1L)
 } else { -1L }
-check_near("GO direct annotation rows match chipsrc", n_pkg_go, n_chip_go, tol = 0)
+## When chipsrc has 0 GO rows the species has no GO annotations in NCBI
+## gene2go at all (e.g. ecoliSakai) -- build_via_make_org_package() never
+## passes a goTable in that case, so the package has no go_bp/go_mf/go_cc
+## tables to query; n_pkg_go would be a -1 error sentinel, not a real
+## mismatch. Skip rather than compare against that sentinel.
+if (n_chip_go == 0L) {
+    cat("  NOTE  GO annotations absent in chipsrc for", sp,
+        "— direct GO row-count check skipped\n")
+} else {
+    check_near("GO direct annotation rows match chipsrc", n_pkg_go, n_chip_go, tol = 0)
+}
 
 cat("  querying GOALL row count ...\n")
 n_pkg_goall <- if (!is.null(org_conn)) {
