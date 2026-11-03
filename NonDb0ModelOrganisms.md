@@ -301,3 +301,80 @@ correct and sufficient on its own, but required `tests/check_orgdb.R` to
 stop assuming a single GO-schema convention and a single DATA_ROOT
 convention before it could actually be verified end-to-end across every
 affected species.
+
+## Reviewer follow-up (2026-11-03)
+
+### 1. Why `dbmeta(..., "DBSCHEMA")` now reports `NOSCHEMA_DB`, not e.g. `WORM_DB`
+
+A reviewer noted that `org.Ag.eg_dbconn()` and friends report `DBSCHEMA =
+NOSCHEMA_DB` for org.Ag.eg.db, org.Ce.eg.db, org.Dm.eg.db, org.EcK12.eg.db,
+org.EcSakai.eg.db, org.Mmu.eg.db, org.Ss.eg.db, org.Xl.eg.db, and asked why
+it doesn't report the organism-specific legacy name (`ANOPHELES_DB`,
+`WORM_DB`, etc.) the way historically-published packages do.
+
+This is intentional, and reverting it would reintroduce the exact bug
+this branch fixed. Checked directly in the installed `AnnotationDbi`
+source (`R/createAnnObjs.NCBIORG_DBs.R`): `createAnnObjs.WORM_DB()`,
+`createAnnObjs.ANOPHELES_DB()`, etc. are not just labels — each dispatches
+to `createAnnObjs.NCBI_DB()`, which builds `AnnDbBimap` seeds against a
+**fixed legacy table/column layout** (`accessions`, `alias`, `ensembl`,
+lowercase `go_id`/`evidence`, ...). That's exactly the layout
+`makeOrgPackage()` doesn't produce (see "Root cause" above). Relabeling
+`DBSCHEMA` back to the legacy name without conforming the actual tables
+to match would break package *load* (`createAnnObjs.WORM_DB` runs at
+`library()` time), not just `keys()`/`select()`.
+
+`NOSCHEMA_DB` is `makeOrgPackage()`'s own schema label
+(`AnnotationForge::.addEssentialMetadata()`'s default), and its dispatch
+introspects the actual tables rather than assuming a fixed layout — so
+it's the accurate label for what these packages actually are.
+
+Getting these packages to honestly report the organism-specific legacy
+name would require physically rewriting their tables to the legacy
+layout first, the same way `make_db0.sh` already does for the 8 db0
+species. That's the real scope of Milestone 5 in `PlanFor3.24.md`
+(extending `make_db0.sh`-style conformance to Ag/Ce/Dm/EcK12/EcSakai/
+Mmu/Ss/Xl) — not a one-line relabel.
+
+### 2. `dbschema()` warns and returns nothing for `NOSCHEMA_DB` packages
+
+Calling `org.Ag.eg_dbschema()` (or the equivalent for any other
+`NOSCHEMA_DB` package) produces warnings like:
+
+```
+Warning messages:
+1: In file(con, "r") :
+  file("") only supports open = "w+" and open = "w+b": using the former
+2: In max(ii) : no non-missing arguments to max; returning -Inf
+```
+
+and no usable output, which blocks writing raw SQL against the package
+by hand. Traced to `AnnotationDbi::dbschema()`
+(`R/AnnDbObj-lowAPI.R:125-134`): it looks up a `.sql` schema dump via
+`system.file("DBschemas", paste0("schemas_", version), paste0(schema,
+".sql"), package="AnnotationDbi")`. `inst/DBschemas/schemas_2.1/` only
+ships `.sql` files for the fixed legacy schemas (`WORM_DB.sql`,
+`HUMAN_DB.sql`, ... 32 files total) — there is no `NOSCHEMA_DB.sql`,
+because `NOSCHEMA_DB` is introspective by design and has no fixed schema
+to dump. `system.file()` returns `""`, and `dbschema()` fails open
+silently with the warnings above.
+
+This is a gap in `AnnotationDbi` itself, not something introduced by
+this pipeline's switch to `NOSCHEMA_DB` — any `makeOrgPackage()`-built
+package from any user hits the same thing. The supported workaround is
+direct introspection instead of `dbschema()`:
+
+```r
+con <- org.Ag.eg_dbconn()
+DBI::dbListTables(con)
+lapply(DBI::dbListTables(con), function(t) DBI::dbListFields(con, t))
+```
+
+### 3. `org.Sc.sgd.db` is stale (separate follow-up, not a schema-dispatch issue)
+
+A reviewer flagged that `org.Sc.sgd.db` is built from GO data dated
+2025-07-22 and Ensembl data dated 2025-Sep03. Yeast uses a dedicated
+schema path (not `build_via_make_org_package()`/`NOSCHEMA_DB`, and not
+`build_via_db0()`), so this is unrelated to the dispatch bug this branch
+fixes. Tracked separately as a data-refresh task: rebuild yeast against
+current GO and Ensembl snapshots.
