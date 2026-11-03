@@ -1,7 +1,7 @@
 # Default DATA_ROOT: all downloaded/built data (raw downloads, intermediate
 # SQLite files, built package tarballs). Never tracked in git; set
 # DATA_ROOT=<external dir> on the build server to keep this out of the repo
-# tree entirely. See SIMPLIFY/SIMPLIFICATION_PLAN.md.
+# tree entirely.
 /data/
 
 # Legacy/ad-hoc locations from before DATA_ROOT existed; ignored as a
@@ -9,7 +9,3 @@
 /db/
 /packages/
 providers/*/raw/
-
-# pkgdown's local build output -- published to the gh-pages branch by
-# .github/workflows/pkgdown-org-hs-eg-ice.yml, never committed on master.
-/org.Hs.eg.ice/docs/

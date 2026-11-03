@@ -4,21 +4,13 @@ Generates the Bioconductor annotation packages — `org.Hs.eg.db`, `org.Mm.eg.db
 
 ## Status
 
-This pipeline is currently being redesigned. See [SIMPLIFY/SIMPLIFICATION_PLAN.md](SIMPLIFY/SIMPLIFICATION_PLAN.md) for the proposed direction:
+Makefile-driven `download` and `package` targets, with a single
+`config/species.tsv` as the source of truth for all 19 organisms. Ensembl
+IDs are sourced from NCBI Gene `dbXrefs` for all organisms except yeast.
 
-- Makefile-driven `download` and `package` targets replacing the old `master.sh` / `src_*.sh` system
-- A single `config/species.tsv` as the source of truth for all 19 organisms
-- Ensembl FTP provider removed (FTP site restructured; Ensembl IDs sourced from NCBI Gene `dbXrefs` for all organisms except yeast — see plan for details)
-- Dead code (UniGene, KEGG, inparanoid, ChipDb, goext) removed
-
-The old operational instructions (EC2 instance setup, `malbec1` upload steps, release-to-release artifact carryover) have been retired along with the scripts they described.
-
-### org.Hs.eg.ice
-
-A demonstration package (see `PlanFor3.24.md` Milestone 7) offering thin dplyr/DuckDB
-accessors over the public [bioc-on-ice](https://github.com/seandavi/bioc-on-ice) Iceberg
-catalog, as a less-interventional alternative to AnnotationDbi's query surface.
-Reference/vignette site: https://vjcitn.github.io/BioconductorAnnotationPipeline/org.Hs.eg.ice/
+The old operational instructions (EC2 instance setup, `malbec1` upload steps,
+release-to-release artifact carryover) have been retired along with the
+scripts they described.
 
 ## Data Sources
 
