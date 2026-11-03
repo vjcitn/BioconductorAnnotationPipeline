@@ -31,8 +31,32 @@ Reference/vignette site: https://vjcitn.github.io/BioconductorAnnotationPipeline
 | TAIR | Arabidopsis-specific data |
 | PlasmoDB | Malaria-specific data |
 | PFAM | Protein family domains |
+| UniProt | UniProt accessions; also enriches ENSEMBLPROT/ENSEMBLTRANS |
 | FlyBase | Fly-specific gene data |
 
 ## Species
 
 19 organisms: human, mouse, rat, fly, zebrafish, yeast, worm, arabidopsis, bovine, canine, chicken, chimp, pig, rhesus, anopheles, xenopus, malaria, ecoliK12, ecoliSakai.
+
+## Build order / gotchas
+
+- **PFAM and UniProt are optional enrichment sources, not auto-built.**
+  `chipsrc_<species>.sqlite`'s Makefile rule only pulls in `db/PFAM.sqlite`
+  and `db/uniprot.sqlite` as prerequisites if those files *already exist*
+  at the time chipsrc is assembled (`Makefile`'s `UNIPROT_DEP`/`PFAM_DEP`
+  are `$(wildcard ...)`, evaluated once at parse time). On a from-scratch
+  build, `make package` will succeed without them, silently producing a
+  package with no `PFAM`/`ENSEMBLPROT`/`ENSEMBLTRANS` data. Build them
+  first if you want that data:
+  ```sh
+  make -C providers/pfam all
+  make -C providers/uniprot all
+  make package SPECIES=<species> ...
+  ```
+- **`GO.db` must be installed (not just built) before building any
+  species on the `makeOrgPackage()`/`NOSCHEMA_DB` path** (i.e. any species
+  *not* in `make_orgdb.R`'s `DB0_SUPPORTED_SPECIES` — currently `human`,
+  `mouse`, `rat`, `zebrafish`, `chimp`, `bovine`). That script's GO/Pfam
+  generation runs through `makeOrgPackage()`'s `goTable` argument, which
+  needs `GO.db`'s ancestor mappings (`GOBPANCESTOR`/etc.) at build time.
+  Run `make godb` and `R CMD INSTALL` the resulting tarball first.
