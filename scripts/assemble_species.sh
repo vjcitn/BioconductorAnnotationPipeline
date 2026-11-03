@@ -11,6 +11,12 @@ SPECIES="${1:?Usage: assemble_species.sh <species>}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATA_ROOT="${DATA_ROOT:-$ROOT/data}"
 DBDIR="$DATA_ROOT/db"
+mkdir -p "$DBDIR"
+## Canonicalize to an absolute path: when DATA_ROOT is relative (e.g. set
+## in the shell as "./data"), the later `cd "$DBDIR"` (below) would make
+## every subsequent relative reference to $OUT_TMP resolve against the new
+## cwd instead of the original one, breaking sqlite3's file open.
+DBDIR="$(cd "$DBDIR" && pwd)"
 CONFIG="$ROOT/config/species.tsv"
 ORGDIR="$ROOT/annosrc/organism_annotation/script"
 

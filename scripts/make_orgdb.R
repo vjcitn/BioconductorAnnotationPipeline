@@ -17,12 +17,26 @@
 ## - All other species: the original makeOrgPackage()-based pipeline, kept
 ##   as-is until each one gets its own make_db0.sh rename rules.
 ##
-## GO tables (go_bp/mf/cc and go_bp/mf/cc_all) are NOT passed through
-## makeOrgPackage in the legacy path because GO.db is itself produced by this
-## pipeline (circular). Instead they are written directly into the OrgDb
-## sqlite via ATTACH after makeOrgPackage creates the package skeleton. The
-## db0 path has no such issue -- make_db0.sh's go/go_all views are already
-## baked into db0_<species>.sqlite before makeAnnDbPkg() ever runs.
+## Legacy-path DBSCHEMA (see NonDb0ModelOrganisms.md): makeOrgPackage()
+## leaves DBSCHEMA at its own default, "NOSCHEMA_DB", whose keys()/select()
+## dispatch introspects the actual table/column names makeOrgPackage()
+## created -- it does NOT need (and must NOT get) the legacy per-species
+## schema label (e.g. "WORM_DB") that AnnotationDbi's historical, fixed-table
+## *_DB classes expect. This pipeline previously overwrote DBSCHEMA with
+## that legacy label post-hoc, which broke keys()/select() for every keytype
+## whose table/column name didn't happen to match the old fixed schema
+## (ACCNUM, ALIAS, ENSEMBL*, ENZYME, GO family, PATH, PMID, REFSEQ, UNIPROT,
+## WORMBASE, ...) even though the underlying data was correct throughout.
+##
+## GO is passed through makeOrgPackage()'s native `goTable` argument (GID/
+## GO/EVIDENCE frame -> unified go/go_all tables, plus go_bp/mf/cc(+_all)
+## via GOBPANCESTOR/GOMFANCESTOR/GOCCANCESTOR), not injected post-hoc via
+## ATTACH. This requires GO.db to be INSTALLED (not just built) before
+## running this script for the legacy path -- `make godb` builds the
+## tarball; `R CMD INSTALL` it (or equivalent) first. Despite both being
+## produced by this same pipeline, this is a build-order requirement, not a
+## true cycle: GO.db's own build (providers/go + genesrc.sqlite) does not
+## depend on any OrgDb package.
 
 suppressPackageStartupMessages({
     library(AnnotationForge)
@@ -57,6 +71,68 @@ bioc_ver <- cli_version
 run_start    <- Sys.time()
 species_list <- strsplit(trimws(species_str), "\\s+")[[1]]
 cat("Building OrgDb packages for:", paste(species_list, collapse = ", "), "\n")
+
+## Legacy (non-db0) species feed GO through makeOrgPackage()'s native
+## `goTable` mechanism, which calls GO.db::GOBPANCESTOR etc. -- GO.db must
+## be installed, not just built. Fail fast rather than partway through.
+if (!all(species_list %in% DB0_SUPPORTED_SPECIES) &&
+    !requireNamespace("GO.db", quietly = TRUE)) {
+    stop("GO.db is not installed, but is required to build GO tables for ",
+         "the legacy (non-db0) OrgDb path. Build it (`make godb`) and ",
+         "install the resulting tarball first, e.g.:\n",
+         "  R CMD INSTALL data/packages/godb/GO.db_<version>.tar.gz",
+         call. = FALSE)
+}
+
+## requireNamespace() above only checks that *some* GO.db is installed, not
+## that it's the one built from this run's GO snapshot. The goTable path
+## calls GO.db::GOBPANCESTOR/GOMFANCESTOR/GOCCANCESTOR to compute GOALL/
+## EVIDENCEALL/ONTOLOGYALL -- a stale installed GO.db (older release than
+## the GOSOURCEDATE chipsrc was built from) silently drops GO IDs newer
+## than its own snapshot, producing incomplete ancestor-expanded mappings
+## with no error, just a chipsrc-row-count mismatch downstream in
+## tests/check_orgdb.R. chipsrc's GOSOURCEDATE (stamped from the live
+## go-basic.obo download in providers/go/Makefile, copied into chipsrc's
+## own metadata by bindb_meta.sql) and GO.db's own GOSOURCEDATE (stamped
+## by scripts/make_godb.R from the same GO.sqlite lineage) should agree if
+## GO.db was built and installed from the same pipeline run as chipsrc.
+check_godb_matches_chipsrc <- function(db, sp) {
+    ## GOSOURCEDATE metadata is inserted unconditionally by some
+    ## bindb_<species>.sql scripts (e.g. ecoliSakai, from `go.metadata`)
+    ## even when the species ends up with zero actual go_bp/go_mf/go_cc
+    ## rows -- such builds never pass a goTable or compute ancestor
+    ## mappings, so a GO.db snapshot mismatch can't affect them. Gate on
+    ## real GO rows, not just the metadata row's presence.
+    n_go_rows <- sum(vapply(c("go_bp", "go_mf", "go_cc"), function(tbl) {
+        tryCatch(
+            dbGetQuery(db, sprintf("SELECT count(*) AS n FROM %s", tbl))$n[1L],
+            error = function(e) 0L)
+    }, integer(1L)))
+    if (n_go_rows == 0L) return(invisible())  # no GO data for this species
+
+    chip_date <- tryCatch(
+        dbGetQuery(db, "SELECT value FROM metadata WHERE name = 'GOSOURCEDATE'")$value[1L],
+        error = function(e) NA_character_)
+    if (is.na(chip_date) || !nzchar(chip_date)) return(invisible())  # no GOSOURCEDATE recorded
+
+    if (!requireNamespace("GO.db", quietly = TRUE))
+        return(invisible())  # already fatal earlier for non-db0 runs; defensive only
+
+    godb_date <- tryCatch(
+        AnnotationDbi::dbmeta(GO.db::GO_dbconn(), "GOSOURCEDATE"),
+        error = function(e) NA_character_)
+
+    if (!is.na(godb_date) && !identical(chip_date, godb_date)) {
+        stop("Installed GO.db's GOSOURCEDATE (", godb_date, ") does not match ",
+             sp, "'s chipsrc GOSOURCEDATE (", chip_date, "). Building GOALL/",
+             "EVIDENCEALL/ONTOLOGYALL against a mismatched GO.db snapshot can ",
+             "silently drop GO IDs newer than GO.db's own build. Rebuild and ",
+             "reinstall GO.db from this run's GO.sqlite (`make godb`) before ",
+             "building the legacy OrgDb path, e.g.:\n",
+             "  R CMD INSTALL data/packages/godb/GO.db_<version>.tar.gz",
+             call. = FALSE)
+    }
+}
 
 ## ── Pre-flight: check for completed builds (tarball exists) ──────────────────
 ## A source directory without a tarball is a failed/partial build and is
@@ -198,6 +274,8 @@ fix_escaped_rd_underscores <- function(pkg_dir) {
 build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     db <- dbConnect(SQLite(), chip)
 
+    check_godb_matches_chipsrc(db, sp)
+
     ## ── Extract frames from chipsrc ───────────────────────────────────────────
 
     gene_info <- safe_query(db, sp = sp,
@@ -272,6 +350,36 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
         "SELECT g.gene_id AS GID, u.ucsc_id AS UCSCKG
          FROM genes g JOIN ucsc u ON g._id = u._id")
 
+    pfam <- safe_query(db, sp = sp,
+        "SELECT g.gene_id AS GID, p.pfam_id AS PFAM
+         FROM genes g JOIN pfam p ON g._id = p._id")
+
+    ## GO: base (non-ancestor-expanded) rows only, one query per ontology,
+    ## combined into a single GID/GO/EVIDENCE frame (column order matters --
+    ## makeOrgPackage()'s goTable mechanism requires exactly this order).
+    ## The *_all (ancestor-expanded) tables are NOT sourced from chipsrc here
+    ## -- makeOrgPackage() computes go_all/go_bp_all/go_mf_all/go_cc_all
+    ## itself via GO.db::GOBPANCESTOR/GOMFANCESTOR/GOCCANCESTOR.
+    go_bp <- safe_query(db, sp = sp,
+        "SELECT g.gene_id AS GID, c.go_id AS GO, c.evidence AS EVIDENCE
+         FROM genes g JOIN go_bp c ON g._id = c._id")
+    go_mf <- safe_query(db, sp = sp,
+        "SELECT g.gene_id AS GID, c.go_id AS GO, c.evidence AS EVIDENCE
+         FROM genes g JOIN go_mf c ON g._id = c._id")
+    go_cc <- safe_query(db, sp = sp,
+        "SELECT g.gene_id AS GID, c.go_id AS GO, c.evidence AS EVIDENCE
+         FROM genes g JOIN go_cc c ON g._id = c._id")
+
+    ## Record what identifier space chipsrc's genes.gene_id actually lives
+    ## in (set explicitly in each bindb_<species>.sql, e.g. 'EG' for NCBI
+    ## Gene IDs) -- this is the source of truth for what GID holds, unlike
+    ## config/species.tsv's pkg_prefix, which only reflects the *target*
+    ## package name/keytype and can disagree with the data (see arabidopsis
+    ## below).
+    chipsrc_centralid <- tryCatch(
+        dbGetQuery(db, "SELECT value FROM metadata WHERE name = 'CENTRALID'")$value[1L],
+        error = function(e) NA_character_)
+
     dbDisconnect(db)
 
     ## Deduplicate all frames
@@ -301,6 +409,20 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     path        <- unique(path)
     enzyme      <- unique(enzyme)
     ucsckg      <- unique(ucsckg)
+    pfam        <- unique(pfam)
+
+    ## Combine the three ontologies into one GID/GO/EVIDENCE frame for
+    ## makeOrgPackage()'s goTable mechanism. Each safe_query() call returns
+    ## a zero-column data.frame() (not a 3-column, 0-row one) when the
+    ## underlying table doesn't exist for this species -- filter those out
+    ## before rbind(), which requires matching columns.
+    go_parts <- Filter(function(d) ncol(d) > 0L, list(go_bp, go_mf, go_cc))
+    go <- if (length(go_parts) > 0L) {
+        unique(do.call(rbind, go_parts))
+    } else {
+        data.frame(GID = character(0), GO = character(0),
+                  EVIDENCE = character(0))
+    }
 
     ## Core frames (always passed — non-empty by construction for any species
     ## with NCBI gene data)
@@ -327,13 +449,21 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
         uniprot     = uniprot,
         path        = path,
         enzyme      = enzyme,
-        ucsckg      = ucsckg
+        ucsckg      = ucsckg,
+        pfam        = pfam
     )
     for (nm in names(opt)) {
         if (nrow(opt[[nm]]) > 0L) frames[[nm]] <- opt[[nm]]
     }
 
-    ## GO is handled post-hoc via SQL ATTACH (see below); do not pass here.
+    ## GO is passed via goTable (see makeOrgPackage() call below), not as
+    ## an ordinary frame -- it needs its own entry in `data` either way, but
+    ## only when non-empty (an empty goTable frame would make
+    ## .makeNewGOTables() build tables with zero rows; just fall back to no
+    ## GO support for that edge case, same as this pipeline's prior
+    ## behavior when chipsrc had no GO data).
+    has_go <- nrow(go) > 0L
+    if (has_go) frames[["go"]] <- go
 
     full_organism <- paste(row$genus, row$species)
 
@@ -359,7 +489,7 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
             tax_id     = as.character(row$taxid),
             genus      = genus_code,
             species    = species_code,
-            goTable    = NA
+            goTable    = if (has_go) "go" else NA
         )
     ))
 
@@ -434,13 +564,38 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     Sys.chmod(sqlite_path, mode = "0644")
     conn <- dbConnect(SQLite(), sqlite_path)
 
-    ## makeOrgPackage stores the frame's first column name (GID) literally
-    ## in the genes table. AnnotationDbi's HUMAN_DB and related schemas
-    ## expect the column to be named gene_id for select()/keys() to work.
-    ## Rename immediately before any other operations touch the table.
+    ## makeOrgPackage() stores the frame's first column name (GID) literally
+    ## in the genes table. NOSCHEMA_DB's introspective dispatch
+    ## (.deriveTableNameFromField()) finds a keytype's table by scanning for
+    ## a column named exactly like the keytype -- and the *default* keytype
+    ## (used by keys()/columns() when no keytype is given) comes from
+    ## CENTRALID via AnnotationDbi:::chooseCentralOrgPkgSymbol(): EG ->
+    ## ENTREZID, TAIR -> TAIR, ORF -> ORF, GID -> GID. Rename genes.GID to
+    ## whatever CENTRALID (set below) resolves to, so that column is
+    ## actually findable -- otherwise columns()/keys()/select() silently
+    ## can't see the central ID at all (see NonDb0ModelOrganisms.md).
+    ##
+    ## Derive this from chipsrc's own CENTRALID metadata, NOT from
+    ## config/species.tsv's pkg_prefix. pkg_prefix only encodes the
+    ## *target* package naming convention and can disagree with what the
+    ## data actually is -- e.g. arabidopsis's pkg_prefix is "org.At.tair",
+    ## but bindb_arabidopsis.sql sets CENTRALID='EG' and populates GID from
+    ## NCBI's gene_info.gene_id, not a real TAIR locus identifier. Labeling
+    ## that column "TAIR" would make keys(keytype="TAIR") silently return
+    ## NCBI Gene IDs. Species whose CENTRALID code isn't one of the three
+    ## handled below (e.g. SGD for yeast) aren't handled by
+    ## chooseCentralOrgPkgSymbol() at all yet; leave GID untouched for
+    ## those until that's addressed.
+    centralid <- toupper(chipsrc_centralid)
+    central_keytype <- switch(centralid,
+        "EG"   = "ENTREZID",
+        "TAIR" = "TAIR",
+        "ORF"  = "ORF",
+        NULL)
     gp <- dbGetQuery(conn, "PRAGMA table_info(genes)")
-    if ("GID" %in% gp$name) {
-        dbExecute(conn, "ALTER TABLE genes RENAME COLUMN GID TO gene_id")
+    if (!is.null(central_keytype) && "GID" %in% gp$name) {
+        dbExecute(conn, paste0(
+            "ALTER TABLE genes RENAME COLUMN GID TO ", central_keytype))
     }
 
     ## ── Fix metadata ──────────────────────────────────────────────────────
@@ -456,15 +611,21 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     dbExecute(conn, "DETACH DATABASE chipmeta")
 
     ## 2. Correct the standard entries that makeOrgPackage set incorrectly
-    ##    because we passed abbreviated genus/species codes for naming, and
-    ##    because goTable=NA causes it to write NOSCHEMA_DB / GID defaults.
-    centralid   <- toupper(strsplit(row$pkg_prefix, "\\.")[[1L]][3L]) # "EG"
+    ##    because we passed abbreviated genus/species codes for naming.
+    ##    DBSCHEMA is deliberately NOT touched here -- makeOrgPackage()
+    ##    already left it at its own default, "NOSCHEMA_DB", whose
+    ##    introspective keys()/select() dispatch is what makes the actual
+    ##    tables/columns created above (including the goTable-derived GO
+    ##    tables) queryable. Overwriting it with the legacy per-species
+    ##    schema label (row$pkg_template, e.g. "WORM_DB") broke keys()/
+    ##    select() for most keytypes -- see NonDb0ModelOrganisms.md.
+    ## centralid was already computed above (used there to pick the genes
+    ## table's central-ID column name); reused here for the CENTRALID row.
     species_tag <- paste0(toupper(substr(row$name, 1L, 1L)),
                           substr(row$name, 2L, nchar(row$name)))      # "Human"
     for (md in list(
         list("ORGANISM",  full_organism),
         list("SPECIES",   species_tag),
-        list("DBSCHEMA",  row$pkg_template),
         list("CENTRALID", centralid)
     )) {
         dbExecute(conn,
@@ -472,70 +633,6 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
             params = list(md[[2L]], md[[1L]]))
     }
 
-    ## ── Populate GO tables directly from chipsrc ──────────────────────────
-    ## go_bp/mf/cc     -> GO, EVIDENCE, ONTOLOGY
-    ## go_bp/mf/cc_all -> GOALL, EVIDENCEALL, ONTOLOGYALL
-    ##
-    ## The OrgDb genes table gene-ID column name varies by AnnotationForge
-    ## version. Discover it via PRAGMA, then use SQL ATTACH for the join
-    ## (fast, no R data frames, negligible RAM).
-
-    gp <- dbGetQuery(conn, "PRAGMA table_info(genes)")
-    gene_col <- gp$name[grepl("text|char", gp$type, ignore.case = TRUE)][1L]
-    if (is.na(gene_col))
-        gene_col <- gp$name[gp$name != "_id"][1L]
-    cat("  OrgDb genes gene-ID column:", gene_col, "\n")
-
-    dbExecute(conn,
-        paste0("ATTACH DATABASE '", normalizePath(chip), "' AS chip"))
-
-    for (ont in c("bp", "mf", "cc")) {
-        for (sfx in c("", "_all")) {
-            tbl <- paste0("go_", ont, sfx)
-            dbExecute(conn, sprintf(
-                "CREATE TABLE %s (_id INTEGER, go_id TEXT, evidence TEXT)",
-                tbl))
-            dbExecute(conn, sprintf(
-                'INSERT INTO %s
-                 SELECT og.rowid, c.go_id, c.evidence
-                 FROM genes og
-                 JOIN chip.genes cg ON og."%s" = cg.gene_id
-                 JOIN chip.%s c ON cg._id = c._id',
-                tbl, gene_col, tbl))
-            dbExecute(conn, sprintf(
-                "CREATE INDEX %s__id ON %s(_id)", tbl, tbl))
-            nr <- dbGetQuery(conn,
-                sprintf("SELECT count(*) FROM %s", tbl))[[1L]]
-            cat(sprintf("  %s: %d rows\n", tbl, nr))
-        }
-    }
-
-    ## ── Populate pfam table from chipsrc (if present) ─────────────────────
-    ## makeOrgPackage cannot create pfam correctly (schema expects _id +
-    ## pfam_id; HUMAN_DB schema requires that exact structure). Inject
-    ## post-hoc via ATTACH, same pattern as GO tables.
-    chip_tables <- dbGetQuery(conn,
-        "SELECT name FROM chip.sqlite_master WHERE type='table'")$name
-    if ("pfam" %in% chip_tables) {
-        n_pfam_src <- dbGetQuery(conn,
-            "SELECT count(*) FROM chip.pfam")[[1L]]
-        if (n_pfam_src > 0L) {
-            dbExecute(conn,
-                "CREATE TABLE pfam (_id INTEGER, pfam_id TEXT)")
-            dbExecute(conn, sprintf(
-                'INSERT INTO pfam
-                 SELECT og.rowid, c.pfam_id
-                 FROM genes og
-                 JOIN chip.genes cg ON og."%s" = cg.gene_id
-                 JOIN chip.pfam c ON cg._id = c._id',
-                gene_col))
-            dbExecute(conn, "CREATE INDEX pfam__id ON pfam(_id)")
-            nr <- dbGetQuery(conn, "SELECT count(*) FROM pfam")[[1L]]
-            cat(sprintf("  pfam: %d rows\n", nr))
-        }
-    }
-
-    dbExecute(conn, "DETACH DATABASE chip")
     dbDisconnect(conn)
 
     src_dir
