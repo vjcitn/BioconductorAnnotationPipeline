@@ -97,10 +97,23 @@ if (!all(species_list %in% DB0_SUPPORTED_SPECIES) &&
 ## by scripts/make_godb.R from the same GO.sqlite lineage) should agree if
 ## GO.db was built and installed from the same pipeline run as chipsrc.
 check_godb_matches_chipsrc <- function(db, sp) {
+    ## GOSOURCEDATE metadata is inserted unconditionally by some
+    ## bindb_<species>.sql scripts (e.g. ecoliSakai, from `go.metadata`)
+    ## even when the species ends up with zero actual go_bp/go_mf/go_cc
+    ## rows -- such builds never pass a goTable or compute ancestor
+    ## mappings, so a GO.db snapshot mismatch can't affect them. Gate on
+    ## real GO rows, not just the metadata row's presence.
+    n_go_rows <- sum(vapply(c("go_bp", "go_mf", "go_cc"), function(tbl) {
+        tryCatch(
+            dbGetQuery(db, sprintf("SELECT count(*) AS n FROM %s", tbl))$n[1L],
+            error = function(e) 0L)
+    }, integer(1L)))
+    if (n_go_rows == 0L) return(invisible())  # no GO data for this species
+
     chip_date <- tryCatch(
         dbGetQuery(db, "SELECT value FROM metadata WHERE name = 'GOSOURCEDATE'")$value[1L],
         error = function(e) NA_character_)
-    if (is.na(chip_date) || !nzchar(chip_date)) return(invisible())  # no GO data for this species
+    if (is.na(chip_date) || !nzchar(chip_date)) return(invisible())  # no GOSOURCEDATE recorded
 
     if (!requireNamespace("GO.db", quietly = TRUE))
         return(invisible())  # already fatal earlier for non-db0 runs; defensive only
