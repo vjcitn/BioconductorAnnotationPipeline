@@ -17,7 +17,19 @@ DATA_ROOT ?= $(CURDIR)/data
 # script below, which breaks the moment any of them `cd`s elsewhere first.
 # Canonicalize unconditionally so every consumer gets an absolute path
 # regardless of how DATA_ROOT arrived (env, `make DATA_ROOT=...`, or default).
-DATA_ROOT := $(abspath $(DATA_ROOT))
+#
+# `make DATA_ROOT=./rel ...` sets DATA_ROOT with command-line origin, which
+# GNU Make gives higher precedence than any plain `:=` assignment here --
+# without `override`, this reassignment would be silently dropped and even
+# *this* process would keep the raw relative value (verified empirically).
+# `override` fixes that for this process, but a command-line variable is
+# also auto-forwarded verbatim to every `$(MAKE) -C ...` sub-make via
+# MAKEOVERRIDES/MAKEFLAGS, bypassing this canonicalization entirely in the
+# ~15 provider sub-makes below -- so also strip DATA_ROOT out of
+# MAKEOVERRIDES, forcing sub-makes to inherit the canonical value via the
+# `export` below instead.
+override DATA_ROOT := $(abspath $(DATA_ROOT))
+MAKEOVERRIDES := $(filter-out DATA_ROOT=%,$(MAKEOVERRIDES))
 ifeq ($(strip $(DATA_ROOT)),)
   $(error DATA_ROOT resolved to an empty path -- check your DATA_ROOT setting)
 endif

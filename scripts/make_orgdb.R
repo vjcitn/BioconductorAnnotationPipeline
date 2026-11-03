@@ -84,6 +84,43 @@ if (!all(species_list %in% DB0_SUPPORTED_SPECIES) &&
          call. = FALSE)
 }
 
+## requireNamespace() above only checks that *some* GO.db is installed, not
+## that it's the one built from this run's GO snapshot. The goTable path
+## calls GO.db::GOBPANCESTOR/GOMFANCESTOR/GOCCANCESTOR to compute GOALL/
+## EVIDENCEALL/ONTOLOGYALL -- a stale installed GO.db (older release than
+## the GOSOURCEDATE chipsrc was built from) silently drops GO IDs newer
+## than its own snapshot, producing incomplete ancestor-expanded mappings
+## with no error, just a chipsrc-row-count mismatch downstream in
+## tests/check_orgdb.R. chipsrc's GOSOURCEDATE (stamped from the live
+## go-basic.obo download in providers/go/Makefile, copied into chipsrc's
+## own metadata by bindb_meta.sql) and GO.db's own GOSOURCEDATE (stamped
+## by scripts/make_godb.R from the same GO.sqlite lineage) should agree if
+## GO.db was built and installed from the same pipeline run as chipsrc.
+check_godb_matches_chipsrc <- function(db, sp) {
+    chip_date <- tryCatch(
+        dbGetQuery(db, "SELECT value FROM metadata WHERE name = 'GOSOURCEDATE'")$value[1L],
+        error = function(e) NA_character_)
+    if (is.na(chip_date) || !nzchar(chip_date)) return(invisible())  # no GO data for this species
+
+    if (!requireNamespace("GO.db", quietly = TRUE))
+        return(invisible())  # already fatal earlier for non-db0 runs; defensive only
+
+    godb_date <- tryCatch(
+        AnnotationDbi::dbmeta(GO.db::GO_dbconn(), "GOSOURCEDATE"),
+        error = function(e) NA_character_)
+
+    if (!is.na(godb_date) && !identical(chip_date, godb_date)) {
+        stop("Installed GO.db's GOSOURCEDATE (", godb_date, ") does not match ",
+             sp, "'s chipsrc GOSOURCEDATE (", chip_date, "). Building GOALL/",
+             "EVIDENCEALL/ONTOLOGYALL against a mismatched GO.db snapshot can ",
+             "silently drop GO IDs newer than GO.db's own build. Rebuild and ",
+             "reinstall GO.db from this run's GO.sqlite (`make godb`) before ",
+             "building the legacy OrgDb path, e.g.:\n",
+             "  R CMD INSTALL data/packages/godb/GO.db_<version>.tar.gz",
+             call. = FALSE)
+    }
+}
+
 ## ── Pre-flight: check for completed builds (tarball exists) ──────────────────
 ## A source directory without a tarball is a failed/partial build and is
 ## cleaned up automatically. Only block if a tarball already exists, which
@@ -224,6 +261,8 @@ fix_escaped_rd_underscores <- function(pkg_dir) {
 build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     db <- dbConnect(SQLite(), chip)
 
+    check_godb_matches_chipsrc(db, sp)
+
     ## ── Extract frames from chipsrc ───────────────────────────────────────────
 
     gene_info <- safe_query(db, sp = sp,
@@ -317,6 +356,16 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     go_cc <- safe_query(db, sp = sp,
         "SELECT g.gene_id AS GID, c.go_id AS GO, c.evidence AS EVIDENCE
          FROM genes g JOIN go_cc c ON g._id = c._id")
+
+    ## Record what identifier space chipsrc's genes.gene_id actually lives
+    ## in (set explicitly in each bindb_<species>.sql, e.g. 'EG' for NCBI
+    ## Gene IDs) -- this is the source of truth for what GID holds, unlike
+    ## config/species.tsv's pkg_prefix, which only reflects the *target*
+    ## package name/keytype and can disagree with the data (see arabidopsis
+    ## below).
+    chipsrc_centralid <- tryCatch(
+        dbGetQuery(db, "SELECT value FROM metadata WHERE name = 'CENTRALID'")$value[1L],
+        error = function(e) NA_character_)
 
     dbDisconnect(db)
 
@@ -512,10 +561,19 @@ build_via_make_org_package <- function(sp, row, chip, outdir, bioc_ver) {
     ## whatever CENTRALID (set below) resolves to, so that column is
     ## actually findable -- otherwise columns()/keys()/select() silently
     ## can't see the central ID at all (see NonDb0ModelOrganisms.md).
-    ## Species whose CENTRALID code isn't one of those four
-    ## (e.g. SGD for yeast) aren't handled by chooseCentralOrgPkgSymbol() at
-    ## all yet; leave GID untouched for those until that's addressed.
-    centralid <- toupper(strsplit(row$pkg_prefix, "\\.")[[1L]][3L])
+    ##
+    ## Derive this from chipsrc's own CENTRALID metadata, NOT from
+    ## config/species.tsv's pkg_prefix. pkg_prefix only encodes the
+    ## *target* package naming convention and can disagree with what the
+    ## data actually is -- e.g. arabidopsis's pkg_prefix is "org.At.tair",
+    ## but bindb_arabidopsis.sql sets CENTRALID='EG' and populates GID from
+    ## NCBI's gene_info.gene_id, not a real TAIR locus identifier. Labeling
+    ## that column "TAIR" would make keys(keytype="TAIR") silently return
+    ## NCBI Gene IDs. Species whose CENTRALID code isn't one of the three
+    ## handled below (e.g. SGD for yeast) aren't handled by
+    ## chooseCentralOrgPkgSymbol() at all yet; leave GID untouched for
+    ## those until that's addressed.
+    centralid <- toupper(chipsrc_centralid)
     central_keytype <- switch(centralid,
         "EG"   = "ENTREZID",
         "TAIR" = "TAIR",
