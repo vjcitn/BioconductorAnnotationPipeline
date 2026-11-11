@@ -227,6 +227,16 @@ INSERT OR IGNORE INTO ensembl_trs (_id, trs_id)
     JOIN up.uniprot2ensembl_trs et ON u.uniprot_id = et.uniprot_id;
 CREATE INDEX IF NOT EXISTS ensembl_trs__id ON ensembl_trs(_id);
 
+-- UPSOURCE* provenance: build_uniprot.sh stamps these into uniprot.sqlite's
+-- own metadata table when it builds it, but nothing previously copied them
+-- into chipsrc's metadata table, so the final package's header never showed
+-- where (or when) its UniProt data came from -- same copy-the-source's-own-
+-- metadata pattern every bindb_<species>.sql already uses for KEGG
+-- ("SELECT * FROM kegg.metadata WHERE name LIKE 'KEGGSOURCE%'"), just for a
+-- real source instead of this script's KEGG stub above.
+INSERT OR REPLACE INTO metadata
+    SELECT * FROM up.metadata WHERE name LIKE 'UPSOURCE%';
+
 DETACH DATABASE up;
 EOF
     echo "  uniprot rows:     $(sqlite3 "$OUT_TMP" 'SELECT count(*) FROM uniprot;')"

@@ -56,6 +56,7 @@ help:
 	@echo "  make check-r-deps          # verify all required R packages are installed"
 	@echo "  make download              # download data for all species"
 	@echo "  make download SPECIES=human  # download only what human needs"
+	@echo "  make reassemble SPECIES=human # force-rebuild chipsrc_human.sqlite"
 	@echo "  make package  SPECIES=human  # build org.Hs.eg.db (and human.db0)"
 	@echo "  make package               # build all OrgDb packages"
 	@echo "  make clean-raw             # remove downloaded files (preserves built SQLites)"
@@ -165,6 +166,21 @@ PFAM_DEP    := $(wildcard $(DATA_ROOT)/db/PFAM.sqlite)
 $(DATA_ROOT)/db/chipsrc_%.sqlite: $(DATA_ROOT)/db/genesrc.sqlite $(DATA_ROOT)/db/gosrc.sqlite $(DATA_ROOT)/db/gpsrc.sqlite $(UNIPROT_DEP) $(PFAM_DEP) annosrc/organism_annotation/script/bindb_%.sql
 	@mkdir -p $(DATA_ROOT)/db
 	bash scripts/assemble_species.sh $*
+
+# scripts/assemble_species.sh itself is deliberately NOT a prerequisite above:
+# it's invoked by every species' rule via `bash scripts/...`, so listing it
+# would force a rebuild of every already-built chipsrc the moment the script
+# is touched at all, even for species whose SQL path it doesn't change. Use
+# this target instead, after editing assemble_species.sh (or a bindb_<species>.sql
+# it runs), to force-rebuild just the species you actually need refreshed:
+#   make reassemble SPECIES=human
+#   make reassemble                 # all 19 species
+.PHONY: reassemble
+reassemble:
+	@for sp in $(TARGET_SPECIES); do \
+	    rm -f $(DATA_ROOT)/db/chipsrc_$$sp.sqlite; \
+	done
+	$(MAKE) $(foreach sp,$(TARGET_SPECIES),$(DATA_ROOT)/db/chipsrc_$(sp).sqlite)
 
 # ── db0 (schema-conformant intermediate) ─────────────────────────────────────
 # Renames/stubs chipsrc_<species>.sqlite's tables and columns to match
