@@ -60,3 +60,17 @@ Reference/vignette site: https://vjcitn.github.io/BioconductorAnnotationPipeline
   generation runs through `makeOrgPackage()`'s `goTable` argument, which
   needs `GO.db`'s ancestor mappings (`GOBPANCESTOR`/etc.) at build time.
   Run `make godb` and `R CMD INSTALL` the resulting tarball first.
+- **UniProt-derived mapping counts (`UNIPROT`/`ENSEMBLPROT`/`ENSEMBLTRANS`
+  keys) can shrink substantially between builds through no fault of this
+  pipeline.** As of 2026-11-11, a human `idmapping_selected.tab.gz` pull
+  yielded only ~39,700 GeneID cross-references, versus ~116,900 seen in an
+  earlier (March 2026) build from a different source pipeline. Independent
+  re-parsing of the downloaded file confirmed the pipeline faithfully
+  reflects what UniProt currently publishes — this isn't a parsing bug.
+  UniProt has precedent for periodic mass "redundancy reduction" passes
+  over its TrEMBL records (e.g. the 2015_03 release dropped TrEMBL from
+  ~92M to ~47M entries); see
+  https://ftp.uniprot.org/pub/databases/uniprot/knowledgebase/idmapping/README
+  for the current archived-release notes describing this practice. Treat
+  large swings in UniProt key counts as expected upstream volatility, not
+  a build defect.
