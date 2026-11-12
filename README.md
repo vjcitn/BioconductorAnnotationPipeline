@@ -9,7 +9,13 @@ This pipeline is currently being redesigned. See [SIMPLIFY/SIMPLIFICATION_PLAN.m
 - Makefile-driven `download` and `package` targets replacing the old `master.sh` / `src_*.sh` system
 - A single `config/species.tsv` as the source of truth for all 19 organisms
 - Ensembl FTP provider removed (FTP site restructured; Ensembl IDs sourced from NCBI Gene `dbXrefs` for all organisms except yeast — see plan for details)
-- Dead code (UniGene, KEGG, inparanoid, ChipDb, goext) removed
+- Dead code (UniGene, inparanoid, ChipDb, goext) removed
+- KEGG as a *downloadable provider* is gone (no longer redistributable),
+  but the `ATTACH DATABASE 'keggsrc.sqlite'` consumption code in every
+  `bindb_<species>.sql` was kept: `assemble_species.sh` only auto-creates
+  an empty stub when no `keggsrc.sqlite` is present, so a user-supplied
+  file in the required schema populates `PATH`/`ENZYME` for real — see
+  "Build order / gotchas" below
 
 The old operational instructions (EC2 instance setup, `malbec1` upload steps, release-to-release artifact carryover) have been retired along with the scripts they described.
 
@@ -32,6 +38,7 @@ Reference/vignette site: https://vjcitn.github.io/BioconductorAnnotationPipeline
 | PlasmoDB | Malaria-specific data |
 | PFAM | Protein family domains |
 | UniProt | UniProt accessions; also enriches ENSEMBLPROT/ENSEMBLTRANS |
+| KEGG | `PATH`/`ENZYME` — optional; no downloadable provider exists, supply your own `keggsrc.sqlite` (see gotchas below) |
 | FlyBase | Fly-specific gene data |
 
 ## Species
@@ -60,6 +67,33 @@ Reference/vignette site: https://vjcitn.github.io/BioconductorAnnotationPipeline
   generation runs through `makeOrgPackage()`'s `goTable` argument, which
   needs `GO.db`'s ancestor mappings (`GOBPANCESTOR`/etc.) at build time.
   Run `make godb` and `R CMD INSTALL` the resulting tarball first.
+- **`PATH`/`ENZYME` need a real `keggsrc.sqlite` — there is no provider
+  for it.** KEGG bulk downloads have been license-restricted for years,
+  so `assemble_species.sh` auto-creates an empty stub at
+  `$DATA_ROOT/db/keggsrc.sqlite` (`if [ ! -f "$KEGGSTUB" ]`) whenever one
+  isn't already there, which every `bindb_<species>.sql` then attaches
+  and queries — producing a package that builds fine but reports zero
+  `PATH`/`ENZYME` keys. If you have a legacy KEGG snapshot, drop it at
+  that same path *before* assembling and it's used as-is instead of the
+  stub; required schema (confirmed 2026-11-12 against a working
+  2011-vintage snapshot — `KEGGSOURCEDATE` in its `metadata` table read
+  `2011-Mar15`, so expect pathway/EC coverage frozen at whatever date
+  your file was built, not current KEGG):
+  - `metadata(name, value)` with `KEGGSOURCENAME`/`KEGGSOURCEURL`/`KEGGSOURCEDATE` rows
+  - `pathway2gene(pathway_id, gene_or_orf_id)` — `gene_or_orf_id` is the
+    Entrez gene ID; `pathway_id`'s last 5 characters are read as the KEGG
+    pathway number (e.g. `hsa00232` -> `00232`). Arabidopsis reads from
+    `ath_NCBI_pathway2gene` instead.
+  - One `<code>_ec(ec_id, gene_or_orf_id)` table per KEGG organism code
+    actually in use: `hsa`, `mmu`, `rno`, `dre`, `dme`, `cel`, `sce`,
+    `cfa`, `bta`, `ssc`, `gga`, `mcc`, `ptr`, `xla`, `ath_ncbi`, `aga`,
+    `eco`, `ecs` (see the stub-creation block in `assemble_species.sh`
+    for the authoritative list).
+  ```sh
+  cp /path/to/legacy/keggsrc.sqlite "$DATA_ROOT/db/keggsrc.sqlite"
+  make reassemble SPECIES=<species>   # or omit SPECIES for all 19
+  make package SPECIES=<species> ...
+  ```
 - **UniProt-derived mapping counts (`UNIPROT`/`ENSEMBLPROT`/`ENSEMBLTRANS`
   keys) can shrink substantially between builds through no fault of this
   pipeline.** As of 2026-11-11, a human `idmapping_selected.tab.gz` pull
